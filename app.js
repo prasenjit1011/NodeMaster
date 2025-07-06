@@ -3,11 +3,19 @@ console.log('\n\n-: App Started :-');
 
 const express   = require('express');
 const app       = express();
-const PORT      = process.env.PORT || 8080;
+const PORT      = process.env.PORT || 8040;
 
 app.use('/test', (req, res, next)=>{
     console.log('-: Welcome Page :-');
     res.send('-: Welcome Test Page:-');
+});
+
+app.use('/aboutus', (req, res, next)=>{
+    let data = {
+        "title":"About Us",
+        "content":"Loren ipsum txt. Loren ipsum txt."
+    }
+    res.json(data);
 });
 
 app.use('/home', (req, res, next)=>{
