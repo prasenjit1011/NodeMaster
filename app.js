@@ -3,12 +3,21 @@ console.log('\n\n-: App Started :-');
 
 const express   = require('express');
 const app       = express();
+const PORT      = process.env.PORT || 8080;
+
+app.use('/test', (req, res, next)=>{
+    console.log('-: Welcome Page :-');
+    res.send('-: Welcome Test Page:-');
+});
+
+app.use('/home', (req, res, next)=>{
+    console.log('-: Welcome Home Page :-');
+    res.send('-: Welcome My Home Page:-');
+});
 
 app.use('/', (req, res, next)=>{
     console.log('-: Welcome :-');
-    res.send('-: Welcome :-');
-
-    next()
+    res.send('-: Welcome Home Page:-');
 });
 
 // Centralized Error Handler
@@ -18,4 +27,4 @@ app.use((err, req, res, next) => {
 });
 
 console.log('-: App Running :-');
-app.listen(3000);
+app.listen(PORT);
