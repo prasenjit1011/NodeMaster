@@ -28,7 +28,7 @@ const sub = redis.createClient();
 // GET API to send notification
 app.get('/notify', async (req, res) => {
   const title = req.query.title || "Default Title";
-  const message = req.query.message || "Default Message";
+  const message = req.query.message || "Default Message "+new Date().toLocaleTimeString();
 
   const data = { title, message, time: new Date() };
 

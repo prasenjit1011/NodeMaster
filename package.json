@@ -9,6 +9,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "amqplib": "^1.0.3",
     "body-parser": "^1.20.2",
     "cors": "^2.8.6",
     "ejs": "^3.1.9",
