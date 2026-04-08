@@ -1,0 +1,63 @@
+{
+  "compilerOptions": {
+    /* ========================
+       Project Structure
+    ======================== */
+    "rootDir": "./src",
+    "outDir": "./dist",
+
+    /* ========================
+       Environment
+    ======================== */
+    "target": "ES2020",
+    "module": "CommonJS",
+    "lib": ["ES2020"],
+    "types": ["node", "jest"],
+
+    /* ========================
+       Module Resolution (TS 6 SAFE)
+    ======================== */
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+
+    /* ========================
+       Output
+    ======================== */
+    "sourceMap": true,
+    "declaration": false,
+
+    /* ========================
+       Strictness
+    ======================== */
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true,
+
+    /* ========================
+       Code Quality
+    ======================== */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "noFallthroughCasesInSwitch": true,
+    "forceConsistentCasingInFileNames": true,
+
+    /* ========================
+       Performance
+    ======================== */
+    "skipLibCheck": true,
+
+    /* ========================
+       TS 6 Compatibility Fix
+    ======================== */
+    "ignoreDeprecations": "6.0",
+
+    /* ========================
+       Tooling Compatibility
+    ======================== */
+    "isolatedModules": true
+  },
+
+  "include": ["src/**/*.ts", "src/test/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
+}
