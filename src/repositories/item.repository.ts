@@ -1,74 +1,80 @@
-import { query } from "../config/db";
-
-// Strong Type
-export interface Item {
-  id?: number;
-  name: string;
-  price: number;
-}
-
-// DB Result Types (MySQL/MariaDB)
-interface InsertResult {
-  insertId: number;
-}
-
-interface UpdateResult {
-  affectedRows: number;
-}
+import prisma from "../config/db";
+import { Item, CreateItemDTO, UpdateItemDTO } from "../models/item.model";
 
 export class ItemRepository {
 
-  async findAll(): Promise<Item[]> {
-    const rows = await query<Item[]>("SELECT * FROM items order by id desc");
-    return rows;
+  async findAll(){
+    // return [{
+    //   id: 1,
+    //   name: "Sample Item",
+    //   price: 9.99
+    // }];
+    const items = await prisma.item.findMany({
+      orderBy: { id: "desc" },
+    });
+
+    return items.map(item => ({
+      id: item.id,
+      name: item.name ?? "",
+      price: item.price ?? 0,
+    }));
   }
 
   async findById(id: number): Promise<Item | null> {
-    const rows = await query<Item[]>(
-      "SELECT * FROM items WHERE id = ?",
-      [id]
-    );
+    const item = await prisma.item.findUnique({
+      where: { id },
+    });
 
-    return rows[0] || null;
-  }
-
-  async create(item: Item): Promise<Item> {
-    const { name, price } = item;
-
-    const result = await query<InsertResult>(
-      "INSERT INTO items (name, price) VALUES (?, ?)",
-      [name, price]
-    );
+    if (!item) return null;
 
     return {
-      id: result.insertId,
-      name,
-      price
+      id: item.id,
+      name: item.name ?? "",
+      price: item.price ?? 0,
     };
   }
 
-  // ✅ Return updated item instead of boolean (recommended)
-  async update(id: number, item: Partial<Item>): Promise<Item | null> {
-    const { name, price } = item;
+  async create(data: CreateItemDTO): Promise<Item> {
+    const createdItem = await prisma.item.create({
+      data,
+    });
 
-    const result = await query<UpdateResult>(
-      "UPDATE items SET name = ?, price = ? WHERE id = ?",
-      [name, price, id]
-    );
+    return {
+      id: createdItem.id,
+      name: createdItem.name ?? "",
+      price: createdItem.price ?? 0,
+    };
+  }
 
-    if (result.affectedRows === 0) {
+  async update(id: number, data: UpdateItemDTO): Promise<Item | null> {
+    try {
+      const updatedItem = await prisma.item.update({
+        where: { id },
+        data: {
+          ...(data.name !== undefined && { name: data.name }),
+          ...(data.price !== undefined && { price: data.price }),
+        },
+      });
+
+      return {
+        id: updatedItem.id,
+        name: updatedItem.name ?? "",
+        price: updatedItem.price ?? 0,
+      };
+    } catch (error) {
+      // If record not found
       return null;
     }
-
-    return this.findById(id);
   }
 
   async delete(id: number): Promise<boolean> {
-    const result = await query<UpdateResult>(
-      "DELETE FROM items WHERE id = ?",
-      [id]
-    );
-
-    return result.affectedRows > 0;
+    try {
+      await prisma.item.delete({
+        where: { id },
+      });
+      return true;
+    } catch (error) {
+      return false;
+    }
   }
 }

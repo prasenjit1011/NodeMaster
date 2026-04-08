@@ -27,8 +27,8 @@ export class ItemService {
   }
 
   async updateItem(id: number, item: Partial<Item>): Promise<boolean> {
-    // update query
-    return true; // or false
+    const updatedItem = await this.repo.update(id, item);
+    return !!updatedItem;
   }
 
   async deleteItem(id: number): Promise<boolean> {

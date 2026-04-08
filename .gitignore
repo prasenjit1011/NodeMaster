@@ -38,3 +38,6 @@ temp/
 # 🚀 Optional: lock files (keep if team project)
 # package-lock.json
 # yarn.lock
+/src/generated/prisma
+
+/src/generated/prisma
