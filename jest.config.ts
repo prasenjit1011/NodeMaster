@@ -3,5 +3,5 @@ export default {
   testEnvironment: "node",
   clearMocks: true,
   moduleFileExtensions: ["ts", "js"],
-  testMatch: ["**/tests/**/*.test.ts"],
+  testMatch: ["**/src/test/**/*.test.ts"],
 };

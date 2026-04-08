@@ -1,34 +1,51 @@
-import mariadb, { Pool, PoolConnection } from "mariadb";
+import { PrismaClient } from "@prisma/client";
 import dotenv from "dotenv";
 
 dotenv.config();
 
-// Create Pool
-const pool: Pool = mariadb.createPool({
-  host: process.env.DB_HOST as string,
-  user: process.env.DB_USER as string,
-  password: process.env.DB_PASSWORD as string,
-  database: process.env.DB_NAME as string,
-  port: Number(process.env.DB_PORT) || 3306,
-  connectionLimit: 5,
+// Initialize Prisma Client
+let prisma: PrismaClient;
+
+function getPrismaInstance(): PrismaClient {
+  if (!prisma) {
+    try {
+      prisma = new PrismaClient({
+        errorFormat: "pretty",
+      });
+      console.log("✅ Prisma Client initialized");
+    } catch (error) {
+      console.error("❌ Prisma initialization failed:", (error as Error).message);
+      throw error;
+    }
+  }
+  return prisma;
+}
+
+// Initialize on module load
+const prismaInstance: PrismaClient = (() => {
+  try {
+    return new PrismaClient({
+      errorFormat: "pretty",
+    });
+  } catch (error) {
+    console.error("⚠️ Prisma Client initialization failed:", (error as Error).message);
+    throw error;
+  }
+})();
+
+// Graceful shutdown
+process.on("SIGINT", async () => {
+  if (prismaInstance) {
+    await prismaInstance.$disconnect();
+  }
+  process.exit(0);
 });
 
-// Generic Query Function
-export async function query<T>(
-  sql: string,
-  params: unknown[] = []
-): Promise<T> {
-  let conn: PoolConnection | undefined;
-
-  try {
-    conn = await pool.getConnection();
-    const result = await conn.query(sql, params);
-
-    return result as T;
-  } catch (error) {
-    console.error("DB Error:", error);
-    throw error;
-  } finally {
-    if (conn) conn.release();
+process.on("SIGTERM", async () => {
+  if (prismaInstance) {
+    await prismaInstance.$disconnect();
   }
-}
+  process.exit(0);
+});
+
+export default prismaInstance;
