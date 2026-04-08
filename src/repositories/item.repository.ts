@@ -19,7 +19,7 @@ interface UpdateResult {
 export class ItemRepository {
 
   async findAll(): Promise<Item[]> {
-    const rows = await query<Item[]>("SELECT * FROM items");
+    const rows = await query<Item[]>("SELECT * FROM items order by id desc");
     return rows;
   }
 
