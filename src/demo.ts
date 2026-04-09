@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import dotenv from "dotenv";
-import itemRoutes from "./routes/item.routes";
+import itemRoutes from "./modules/item/item.routes";
 
 dotenv.config();
 

@@ -1,5 +1,6 @@
-import { prisma } from '../config/db';
-import { Item, CreateItemDTO, UpdateItemDTO } from "../models/item.model";
+import { prisma } from '../../config/db';
+import { Item, CreateItemDTO, UpdateItemDTO } from "./item.model";
+
 
 export class ItemRepository {
 

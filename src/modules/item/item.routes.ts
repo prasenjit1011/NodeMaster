@@ -1,12 +1,11 @@
 import { FastifyInstance } from "fastify";
-import { ItemController } from "../controllers/item.controller";
-import { verifyToken } from '../middleware/auth.middleware';
+import { ItemController } from "./item.controller";
 
 import {
   validateCreateItem,
   validateUpdateItem,
   validateId,
-} from "../middleware/item.validation";
+} from "./item.validation";
 
 export default async function itemRoutes(app: FastifyInstance) {
   
