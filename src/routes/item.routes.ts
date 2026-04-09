@@ -1,5 +1,7 @@
 import { FastifyInstance } from "fastify";
 import { ItemController } from "../controllers/item.controller";
+import { verifyToken } from '../middleware/auth.middleware';
+
 import {
   validateCreateItem,
   validateUpdateItem,
@@ -21,7 +23,7 @@ export default async function itemRoutes(app: FastifyInstance) {
   // ✅ CREATE item
   app.post(
     "/",
-    { preHandler: [validateCreateItem] },
+    { preHandler: [verifyToken,validateCreateItem] },
     ItemController.create
   );
 
