@@ -30,12 +30,15 @@ export class OrderController {
     reply: FastifyReply
   ) {
     try {
+      console.log('Create order request headers:', req.headers);
 
-      return reply.status(200).send({ message: '--HelloWorld---' });
 
-      // 🔥 Get customer_id from token
       const user = (req as any).user;
+      
+
+      // 🔥 This comes from token
       const customerId = user.id;
+
 
       const order = await orderService.createOrder(customerId, req.body);
 

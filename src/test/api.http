@@ -1,6 +1,6 @@
 ### Base URL
 @baseUrl = http://localhost:3000
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NTQsImVtYWlsIjoiYWpvaG5AZXhhbXBsZS5jb20iLCJpYXQiOjE3NzU3MzA4MDksImV4cCI6MTc3NTgxNzIwOX0.bEW9SCI3LAhhHR3lZplKOXIS4MoKFs8hVcygWpyhFPo
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NTQsImVtYWlsIjoiYWpvaG5AZXhhbXBsZS5jb20iLCJpYXQiOjE3NzU3NDUwMDksImV4cCI6MTc3NTgzMTQwOX0.dikdytwepxz-XoRxNNeZLQyYC6ODOWdXivfVz1pG9Gg
 ##################################################
 ### 🔹 Home
 GET {{baseUrl}}/
@@ -66,6 +66,6 @@ Authorization: Bearer {{token}}
 {
   "items": [
     { "item_id": 2, "quantity": 3 },
-    { "item_id": 1, "quantity": 1 }
+    { "item_id": 1, "quantity": 41 }
   ]
 }
