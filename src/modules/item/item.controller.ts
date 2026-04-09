@@ -1,7 +1,7 @@
 // controllers/item.controller.ts
 
 import { FastifyRequest, FastifyReply } from "fastify";
-import { ItemService } from "../services/item.service";
+import { ItemService } from "./item.service";
 
 const service = new ItemService();
 

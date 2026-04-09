@@ -37,18 +37,18 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "name": "New Item 15D",
+  "name": "New Item 15E",
   "price": 145
 }
 
 ##################################################
 ### 🔐 Update Item (Protected)
-PUT {{baseUrl}}/items/1
+PUT {{baseUrl}}/items/25
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "name": "Updated Item ASDPP",
+  "name": "Updated Item DPP",
   "price": 200
 }
 

@@ -1,6 +1,6 @@
 import Fastify from "fastify";
 import compress from "@fastify/compress";
-import itemRoutes from "./routes/item.routes";
+import itemRoutes from "./modules/item/item.routes";
 import http from "http";
 import authRoutes from "./routes/auth.routes";
 import fastifyJwt from '@fastify/jwt';

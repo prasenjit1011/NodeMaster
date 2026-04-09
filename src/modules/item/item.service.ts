@@ -1,4 +1,4 @@
-import { ItemRepository } from "../repositories/item.repository";
+import { ItemRepository } from "./item.repository";
 
 // Types
 export interface Item {
