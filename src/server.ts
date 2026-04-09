@@ -1,49 +1,102 @@
 import { buildApp } from "./app";
 import dotenv from "dotenv";
+import cluster from "cluster";
+import os from "os";
 
 dotenv.config();
 
-const app = buildApp();
+const PORT = Number(process.env.PORT) || 3000;
+const HOST = process.env.HOST || "0.0.0.0";
+const numCPUs = os.cpus().length;
 
-const start = async () => {
-  try {
-    const PORT = Number(process.env.PORT) || 3000;
+// -----------------------------
+// CLUSTER SETUP
+// -----------------------------
+if (cluster.isPrimary) {
+  console.log(`Primary process ${process.pid} is running`);
 
-    await app.listen({ port: PORT, host: "0.0.0.0" });
-
-    app.log.info(`Server running on http://localhost:${PORT}`);
-  } catch (err) {
-    app.log.error(err);
-    process.exit(1);
+  // Fork workers
+  for (let i = 0; i < numCPUs; i++) {
+    cluster.fork();
   }
-};
 
-start();
+  // Restart worker if it crashes
+  cluster.on("exit", (worker, code, signal) => {
+    console.error(
+      `Worker ${worker.process.pid} died. Restarting...`
+    );
+    cluster.fork();
+  });
 
-// // -----------------------------
-// // Graceful Shutdown
-// // -----------------------------
-// const shutdown = async (signal) => {
-//   app.log.info(`Received ${signal}. Shutting down...`);
+} else {
+  // -----------------------------
+  // WORKER PROCESS
+  // -----------------------------
+  const app = buildApp();
 
-//   // Force exit if something hangs
-//   const forceExit = setTimeout(() => {
-//     app.log.error("Could not close connections in time, forcing shutdown");
-//     process.exit(1);
-//   }, 10000); // 10 seconds
+  // -----------------------------
+  // Start Server
+  // -----------------------------
+  async function start() {
+    try {
+      await app.listen({ port: PORT, host: HOST });
+      app.log.info(
+        `Worker ${process.pid} running on http://localhost:${PORT}`
+      );
+    } catch (err) {
+      app.log.error({ err }, "Failed to start server");
+      process.exit(1);
+    }
+  }
 
-//   try {
-//     await app.close(); // Fastify handles open requests gracefully
-//     clearTimeout(forceExit);
+  // -----------------------------
+  // Graceful Shutdown
+  // -----------------------------
+  let isShuttingDown = false;
 
-//     app.log.info("Shutdown complete");
-//     process.exit(0);
-//   } catch (err) {
-//     app.log.error("Error during shutdown", err);
-//     process.exit(1);
-//   }
-// };
+  async function shutdown(signal: string) {
+    if (isShuttingDown) return;
+    isShuttingDown = true;
 
-// // Listen to system signals
-// process.on("SIGINT", shutdown);   // Ctrl+C
-// process.on("SIGTERM", shutdown);  // Docker/K8s
+    app.log.info(`Worker ${process.pid} received ${signal}`);
+
+    const forceExit = setTimeout(() => {
+      app.log.error("Force shutdown due to timeout");
+      process.exit(1);
+    }, 10000).unref();
+
+    try {
+      await app.close();
+      clearTimeout(forceExit);
+
+      app.log.info("Shutdown complete");
+      process.exit(0);
+    } catch (err) {
+      app.log.error({ err }, "Error during shutdown");
+      process.exit(1);
+    }
+  }
+
+  // -----------------------------
+  // Signals
+  // -----------------------------
+  ["SIGINT", "SIGTERM"].forEach((signal) => {
+    process.once(signal, shutdown);
+  });
+
+  // -----------------------------
+  // Global Errors (SAFE)
+  // -----------------------------
+  process.on("uncaughtException", (err) => {
+    app.log.error({ err }, "Uncaught Exception");
+    shutdown("uncaughtException");
+  });
+
+  process.on("unhandledRejection", (err) => {
+    app.log.error({ err }, "Unhandled Rejection");
+    shutdown("unhandledRejection");
+  });
+
+  // -----------------------------
+  start();
+}
