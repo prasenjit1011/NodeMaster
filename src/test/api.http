@@ -12,22 +12,20 @@ Content-Type: application/json
 
 {
   "name": "John",
-  "email": "ajohn@example.com",
+  "email": "bjohn@example.com",
   "password": "123456"
 }
 
 ##################################################
 ### 🔹 Login User (Store Token)
 POST {{baseUrl}}/auth/login
-Content-Type: application/json
+Content-Type: application/json; charset=utf-8
 
 {
-  "email": "john@example.com",
+  "email": "ajohn@example.com",
   "password": "123456"
 }
-> {%
-    console.log("TOKEN:", response.body.token);
-%}
+
 ##################################################
 ### 🔹 Get All Items
 GET {{baseUrl}}/items
@@ -36,10 +34,10 @@ GET {{baseUrl}}/items
 ### 🔐 Create Item (Protected)
 POST {{baseUrl}}/items
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NTQsImVtYWlsIjoiYWpvaG5AZXhhbXBsZS5jb20iLCJpYXQiOjE3NzU3MTc3MjUsImV4cCI6MTc3NTgwNDEyNX0.TK5uGpK2PWOY_vw7Dl0Vn2DZBudCrcl83mRB21gzL3A
 
 {
-  "name": "New Item 1",
+  "name": "New Item 15A",
   "price": 145
 }
 
@@ -47,7 +45,7 @@ Authorization: Bearer {{token}}
 ### 🔐 Update Item (Protected)
 PUT {{baseUrl}}/items/1
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Authorization: Bearer token
 
 {
   "name": "Updated Item",
