@@ -1,35 +1,59 @@
-GET http://localhost:3000/
+### Base URL
+@baseUrl = http://localhost:3000
 
-###
-GET http://localhost:3000/items
+##################################################
+### 🔹 Home
+GET {{baseUrl}}/
 
-###
-GET http://localhost:3000/items/6
-
-###
-POST http://localhost:3000/items
+##################################################
+### 🔹 Register User
+POST {{baseUrl}}/auth/register
 Content-Type: application/json
+
+{
+  "name": "John",
+  "email": "ajohn@example.com",
+  "password": "123456"
+}
+
+##################################################
+### 🔹 Login User (Store Token)
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "123456"
+}
+> {%
+    console.log("TOKEN:", response.body.token);
+%}
+##################################################
+### 🔹 Get All Items
+GET {{baseUrl}}/items
+
+##################################################
+### 🔐 Create Item (Protected)
+POST {{baseUrl}}/items
+Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
   "name": "New Item 1",
   "price": 145
 }
 
-### Request with authentication
-POST http://localhost:3000/auth/register
+##################################################
+### 🔐 Update Item (Protected)
+PUT {{baseUrl}}/items/1
 Content-Type: application/json
+Authorization: Bearer {{token}}
 
 {
-  "name": "John",
-  "email": "john@example.com",
-  "password": "123456"
+  "name": "Updated Item",
+  "price": 200
 }
 
-###
-POST http://localhost:3000/auth/login
-Content-Type: application/json
-
-{
-  "email": "john@example.com",
-  "password": "123456"
-}
+##################################################
+### 🔹 Get Item Details
+GET {{baseUrl}}/items/1

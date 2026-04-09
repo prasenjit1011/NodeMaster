@@ -3,6 +3,9 @@ import compress from "@fastify/compress";
 import itemRoutes from "./routes/item.routes";
 import http from "http";
 import authRoutes from "./routes/auth.routes";
+import fastifyJwt from '@fastify/jwt';
+
+
 
 // Keep-alive agent (for outbound HTTP calls if needed)
 export const agent = new http.Agent({
@@ -20,6 +23,9 @@ export const buildApp = () => {
     global: true,
   });
 
+  
+
+  app.register(fastifyJwt, {secret: process.env.JWT_SECRET || 'supersecret'});
   app.register(itemRoutes, { prefix: "/items" });
   app.register(authRoutes, { prefix: '/auth' });
   app.get("/", async () => "Welcome to the Item API!");
