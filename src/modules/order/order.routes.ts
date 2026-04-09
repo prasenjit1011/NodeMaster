@@ -1,5 +1,5 @@
 import { OrderController } from './order.controller';
-import { authMiddleware } from '../../middleware/auth.middleware';
+import { authMiddleware } from '../auth/auth.middleware';
 
 export default async function orderRoutes(fastify: any) {
   const controller = new OrderController();

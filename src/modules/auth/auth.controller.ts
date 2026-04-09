@@ -1,5 +1,5 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
-import * as authService from '../services/auth.service';
+import * as authService from './auth.service';
 
 export const registerController = async (req: FastifyRequest, reply: FastifyReply) => {
   try {
