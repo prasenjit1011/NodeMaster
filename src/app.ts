@@ -2,6 +2,7 @@ import Fastify from "fastify";
 import compress from "@fastify/compress";
 import itemRoutes from "./routes/item.routes";
 import http from "http";
+import authRoutes from "./routes/auth.routes";
 
 // Keep-alive agent (for outbound HTTP calls if needed)
 export const agent = new http.Agent({
@@ -20,7 +21,7 @@ export const buildApp = () => {
   });
 
   app.register(itemRoutes, { prefix: "/items" });
-
+  app.register(authRoutes, { prefix: '/auth' });
   app.get("/", async () => "Welcome to the Item API!");
 
   return app;

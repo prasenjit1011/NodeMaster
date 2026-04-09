@@ -14,3 +14,22 @@ Content-Type: application/json
   "name": "New Item 1",
   "price": 145
 }
+
+### Request with authentication
+POST http://localhost:3000/auth/register
+Content-Type: application/json
+
+{
+  "name": "John",
+  "email": "john@example.com",
+  "password": "123456"
+}
+
+###
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+  "email": "john@example.com",
+  "password": "123456"
+}

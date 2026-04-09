@@ -1,14 +1,9 @@
-import prisma from "../config/db";
+import { prisma } from '../config/db';
 import { Item, CreateItemDTO, UpdateItemDTO } from "../models/item.model";
 
 export class ItemRepository {
 
   async findAll(){
-    // return [{
-    //   id: 1,
-    //   name: "Sample Item",
-    //   price: 9.99
-    // }];
     const items = await prisma.item.findMany({
       orderBy: { id: "desc" },
     });
