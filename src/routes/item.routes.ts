@@ -23,14 +23,14 @@ export default async function itemRoutes(app: FastifyInstance) {
   // ✅ CREATE item
   app.post(
     "/",
-    { preHandler: [verifyToken,validateCreateItem] },
+    { preHandler: [validateCreateItem] },
     ItemController.create
   );
 
   // ✅ UPDATE item
   app.put(
     "/:id",
-    { preHandler: [validateId, validateUpdateItem] },
+    { preHandler: [validateUpdateItem] },
     ItemController.update
   );
 
