@@ -2,7 +2,7 @@ import Fastify from "fastify";
 import compress from "@fastify/compress";
 import itemRoutes from "./modules/item/item.routes";
 import http from "http";
-import authRoutes from "./routes/auth.routes";
+import authRoutes from "./modules/auth/auth.routes";
 import fastifyJwt from '@fastify/jwt';
 import orderRoutes from "./modules/order/order.routes";
 

@@ -12,7 +12,7 @@ Content-Type: application/json
 
 {
   "name": "John",
-  "email": "cjohn@example.com",
+  "email": "djohn@example.com",
   "password": "123456"
 }
 
@@ -37,7 +37,7 @@ Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "name": "New Item 15E",
+  "name": "New Item 15EE",
   "price": 145
 }
 

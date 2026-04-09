@@ -2,8 +2,8 @@ import { FastifyInstance } from 'fastify';
 import {
   registerController,
   loginController,
-} from '../controllers/auth.controller';
-import { registerSchema, loginSchema } from '../middleware/auth.validation';
+} from './auth.controller';
+import { registerSchema, loginSchema } from './auth.validation';
 
 export default async function authRoutes(app: FastifyInstance) {
   app.post('/register', { schema: registerSchema }, registerController);
