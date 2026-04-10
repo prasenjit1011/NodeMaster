@@ -1,7 +1,7 @@
-# 🚀 Item CRUD REST API  
+## 🚀 1. Item CRUD REST API  
 Built with **TypeScript + Fastify + MariaDB + Prisma ORM**
 
-# 🚀 Node Master Repo
+## 🚀 2. Node Master Repo
 Built with **Node + Express + MySQL + Sequelize ORM**
 
 ---
