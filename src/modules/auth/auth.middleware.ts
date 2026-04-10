@@ -33,25 +33,24 @@ export async function authMiddleware(request: FastifyRequest, reply: FastifyRepl
     
     const decoded = jwt.verify(token, process.env.JWT_SECRET as string);
 
+    (request as any).user = decoded;
+
     // const safeRequest = {
     //   url: request.url,
     //   method: request.method,
     //   params: request.params,
     //   query: request.query,
-    //   body: request.body
+    //   body: request.body,
+    //   headers: request.headers,
     // };
 
-     
-    (request as any).user = decoded;
-
-    // return reply.status(200).send({
-    //   message: 'Authenticated Success 09',
-    //   body: request.user,
+    // console.log({
+    //   message: 'Middleware Authenticated Success 09',
+    //   safeRequest,
     //   decoded,
     //   token,
     //   authHeader
     // }); 
-
 
   } catch (err) {
     console.error('JWT ERROR:', err);

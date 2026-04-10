@@ -30,15 +30,9 @@ export class OrderController {
     reply: FastifyReply
   ) {
     try {
-      console.log('Create order request headers:', req.headers);
-
-
-      const user = (req as any).user;
-      
-
       // 🔥 This comes from token
+      const user = (req as any).user;
       const customerId = user.id;
-
 
       const order = await orderService.createOrder(customerId, req.body);
 
