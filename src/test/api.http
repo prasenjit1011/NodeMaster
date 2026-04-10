@@ -1,6 +1,6 @@
 ### Base URL
 @baseUrl = http://localhost:3000
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NTQsImVtYWlsIjoiYWpvaG5AZXhhbXBsZS5jb20iLCJpYXQiOjE3NzU3NDUwMDksImV4cCI6MTc3NTgzMTQwOX0.dikdytwepxz-XoRxNNeZLQyYC6ODOWdXivfVz1pG9Gg
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6NTQsImVtYWlsIjoiYWpvaG5AZXhhbXBsZS5jb20iLCJpYXQiOjE3NzU3ODg4ODEsImV4cCI6MTc3NTg3NTI4MX0.zLIQ8bfJ1mDj80wl5sgUV1YGYXtlaALzBXdwMl74Dr4
 ##################################################
 ### 🔹 Home
 GET {{baseUrl}}/
@@ -12,7 +12,7 @@ Content-Type: application/json
 
 {
   "name": "John",
-  "email": "djohn@example.com",
+  "email": "Fjohn@example.com",
   "password": "123456"
 }
 
@@ -31,13 +31,13 @@ Content-Type: application/json; charset=utf-8
 GET {{baseUrl}}/items
 
 ##################################################
-### 🔐 Create Item (Protected)
+### 🔐 Create Item (Without Auth - Not Protected)
 POST {{baseUrl}}/items
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
 {
-  "name": "New Item 15EE",
+  "name": "New Item 12DG",
   "price": 145
 }
 
@@ -58,7 +58,7 @@ GET {{baseUrl}}/items/1
 
 
 ##################################################
-### 🔐 Create Orders
+### 🔐 Create Orders (Protected)
 POST {{baseUrl}}/customers/orders
 Content-Type: application/json
 Authorization: Bearer {{token}}
@@ -66,6 +66,6 @@ Authorization: Bearer {{token}}
 {
   "items": [
     { "item_id": 2, "quantity": 3 },
-    { "item_id": 1, "quantity": 41 }
+    { "item_id": 1, "quantity": 51 }
   ]
 }
