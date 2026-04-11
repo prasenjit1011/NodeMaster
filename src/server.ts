@@ -1,4 +1,5 @@
 import { buildApp } from "./app";
+import { prisma } from "./config/db";
 import dotenv from "dotenv";
 import cluster from "cluster";
 import os from "os";
@@ -39,6 +40,9 @@ if (cluster.isPrimary) {
   // -----------------------------
   async function start() {
     try {
+      await prisma.$connect();
+      app.log.info('Database connected');
+
       await app.listen({ port: PORT, host: HOST });
       app.log.info(
         `Worker ${process.pid} running on http://localhost:${PORT}`
