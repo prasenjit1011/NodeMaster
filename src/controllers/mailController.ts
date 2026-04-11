@@ -1,8 +1,12 @@
-const sgMail    = require('@sendgrid/mail')
+import sgMail from '@sendgrid/mail';
+import type { Request, Response, NextFunction } from 'express';
 
-exports.sendMail = (req, res, next) => {
+export const sendMail = (req: Request, res: Response, _next: NextFunction) => {
 
-  const apikey      = process.env.SENDGRID_API_KEY;
+  const apikey = process.env.SENDGRID_API_KEY;
+  if (!apikey) {
+    return res.end(JSON.stringify({"status":0, "msg":"API key not set."}));
+  }
   let userName      = req.body?.userName;
   let mobileNumber  = req.body?.mobileNumber;
   let emailId       = req.body?.emailId;
