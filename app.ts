@@ -3,6 +3,7 @@ console.log('\n\n-: App Started :-');
 
 import express, { Request, Response, NextFunction } from 'express';
 import Item from './models/item';
+import dbconnect from './util/mariadb_sequelize';
 import cron from 'node-cron';
 
 const app = express();
@@ -38,6 +39,17 @@ app.use('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
-app.listen(3500, () => {
-  console.log('-: App Running ::-');
-});
+const startServer = async () => {
+  try {
+    await dbconnect.authenticate();
+    console.log('-: Database connected :-');
+    app.listen(3500, () => {
+      console.log('-: App Running ::-');
+    });
+  } catch (err) {
+    console.error('Failed to connect to database:');
+    process.exit(1);
+  }
+};
+
+startServer();
