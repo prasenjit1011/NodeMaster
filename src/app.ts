@@ -6,7 +6,8 @@ import authRoutes from "./modules/auth/auth.routes";
 import fastifyJwt from '@fastify/jwt';
 import orderRoutes from "./modules/order/order.routes";
 import countryRoutes from "./modules/geomaster/country/country.routes";
-
+import swagger from '@fastify/swagger';
+import swaggerUI from '@fastify/swagger-ui';
 
 // Keep-alive agent (for outbound HTTP calls if needed)
 export const agent = new http.Agent({
@@ -24,7 +25,22 @@ export const buildApp = () => {
     global: true,
   });
 
-  
+  // Swagger (OpenAPI)
+  app.register(swagger, {
+    openapi: {
+      info: {
+        title: "Item API",
+        description: "API documentation for Item service",
+        version: "1.0.0",
+      },
+      servers: [
+        {
+          url: "http://localhost:3000",
+        },
+      ],
+    },
+  });
+  app.register(swaggerUI, { routePrefix: "/docs"});
 
   app.register(fastifyJwt, {secret: process.env.JWT_SECRET || 'supersecret'});
   app.register(itemRoutes, { prefix: "/items" });
