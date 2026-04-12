@@ -80,7 +80,7 @@ POST {{baseUrl}}/countries
 Content-Type: application/json
 
 {
-  "countryname": "China",
+  "countryname": "UAE",
   "status": true
 }
 

@@ -1,5 +1,5 @@
 import { FastifyRequest, FastifyReply } from "fastify";
-import { prisma } from "../../config/db";
+import { prisma } from "../../../config/db";
 
 // Types
 type IdParams = {

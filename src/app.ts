@@ -5,7 +5,7 @@ import http from "http";
 import authRoutes from "./modules/auth/auth.routes";
 import fastifyJwt from '@fastify/jwt';
 import orderRoutes from "./modules/order/order.routes";
-import countryRoutes from "./modules/country/country.routes";
+import countryRoutes from "./modules/geomaster/country/country.routes";
 
 
 // Keep-alive agent (for outbound HTTP calls if needed)
