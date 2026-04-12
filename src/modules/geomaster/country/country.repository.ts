@@ -1,4 +1,4 @@
-import { prisma } from '../../config/db';
+import { prisma } from '../../../config/db';
 import { Country, CreateCountryDTO, UpdateCountryDTO } from "./country.model";
 
 export class CountryRepository {
