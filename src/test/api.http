@@ -69,3 +69,58 @@ Authorization: Bearer {{token}}
     { "item_id": 1, "quantity": 51 }
   ]
 }
+
+##################################################
+### 🔹 Get All Countries
+GET {{baseUrl}}/countries
+
+##################################################
+### 🔹 Create Country
+POST {{baseUrl}}/countries
+Content-Type: application/json
+
+{
+  "countryname": "China",
+  "status": true
+}
+
+##################################################
+### 🔹 Update Country
+PUT {{baseUrl}}/countries/2
+Content-Type: application/json
+
+{
+  "countryname": "Norway",
+  "status": true
+}
+
+##################################################
+### 🔹 Get Country Details
+GET {{baseUrl}}/countries/1
+
+##################################################
+### 🔹 Delete Country
+DELETE {{baseUrl}}/countries/1
+
+##################################################
+### 🔹 Test Uniqueness Validation - Create Duplicate (Should Fail)
+POST {{baseUrl}}/countries
+Content-Type: application/json
+
+{
+  "countryname": "United States",
+  "status": true
+}
+
+# Expected: 409 Conflict - "Country name already exists"
+
+##################################################
+### 🔹 Test Uniqueness Validation - Update to Duplicate (Should Fail)
+PUT {{baseUrl}}/countries/2
+Content-Type: application/json
+
+{
+  "countryname": "India"
+}
+
+# Expected: 409 Conflict - "Country name already exists"
