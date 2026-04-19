@@ -69,3 +69,40 @@ Authorization: Bearer {{token}}
     { "item_id": 1, "quantity": 51 }
   ]
 }
+
+
+############################################
+### CREATE EMPLOYEE
+POST {{baseUrl}}/employees
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "salary": 50000,
+  "email": "john@example.com",
+  "department": "IT",
+  "image": "https://example.com/image.jpg"
+}
+
+############################################
+### GET ALL EMPLOYEES (Pagination)
+GET {{baseUrl}}/employees?page=1&limit=10
+
+############################################
+### GET EMPLOYEE BY ID
+GET {{baseUrl}}/employees/100
+
+############################################
+### UPDATE EMPLOYEE
+PUT {{baseUrl}}/employees/1
+Content-Type: application/json
+
+{
+  "name": "John Updated",
+  "salary": 60000,
+  "department": "Engineering"
+}
+
+############################################
+### DELETE EMPLOYEE
+DELETE {{baseUrl}}/employees/1
