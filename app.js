@@ -5,14 +5,14 @@ console.log('\n\n-: Docker Nodejs App Started :-');
 const express       = require('express');
 const cors          = require('cors');
 const bodyParser    = require('body-parser');
-const mongoose      = require('mongoose');
+// const mongoose      = require('mongoose');
 const session       = require('express-session');
 const mongodbStore  = require('connect-mongodb-session')(session);
 const heapdump      = require('heapdump');
 
 //const cookieParser  = require('cookie-parser');
-const csrf          = require('csurf')
-const csrfProtect   = csrf();//{ cookie: true }
+// const csrf          = require('csurf')
+// const csrfProtect   = csrf();//{ cookie: true }
 
 const mongoConnect  = require('./util/database').mongoConnect;
 const MONGODB_URI   = "mongodb+srv://tester:tester1234@cluster0.hlicuim.mongodb.net/Mydb?retryWrites=true&w=majority";
@@ -65,9 +65,10 @@ const movieRoute    = require('./routes/movieRoute');
 app.use(movieRoute);
 
 
-app.use(csrfProtect);
+// app.use(csrfProtect);
 const shop = require('./routes/shop');
-app.use(csrfProtect, shop);
+// app.use(csrfProtect, shop);
+app.use(shop);
 
 const product = require('./routes/product');
 app.use(product);
@@ -105,7 +106,11 @@ app.use((err, req, res, next) => {
 });
 
 console.log('-: App Running :-');
-mongoConnect(()=>app.listen(3000));
 
-mongoose.connect(MONGODB_URI).then(result => app.listen(3001)).catch(err=>console.log(err));
+()=>app.listen(3000);
+
+
+// mongoConnect(()=>app.listen(3000));
+
+// mongoose.connect(MONGODB_URI).then(result => app.listen(3001)).catch(err=>console.log(err));
 

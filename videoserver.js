@@ -7,6 +7,56 @@ const app = express();
 const PORT = 3010;
 
 
+if(false){
+  const file = fs.createWriteStream("public/large.json");
+  let i = 0;
+  let size = 0;
+  const targetSize = 5 * 1024 * 1024; // 500MB
+  file.write("[\n");
+  while (size < targetSize) {
+    const obj = {
+      id: i,
+      name: `User_${i}`,
+      value: Math.random(),
+    };
+
+    let json = JSON.stringify(obj);
+    json = (i === 0 ? "" : ",\n") + json;
+
+    size += Buffer.byteLength(json);
+    file.write(json);
+
+    i++;
+  }
+  file.write("\n]");
+  file.end();
+  console.log("Approx size:", size / (1024 * 1024), "MB");
+}
+
+
+app.get('/getdata', (req, res) => {
+  const stream = fs.createReadStream('public/dummy_posts.json');
+
+  res.setHeader('Content-Type', 'application/json');
+  stream.pipe(res);
+
+  stream.on('error', (err) => {
+    res.status(500).send('Error reading file');
+  });
+});
+
+
+app.get('/profile', (req, res, next)=>{
+  next();
+  res.send('profile 01')
+  next();
+});
+
+app.get('/profile', (req, res)=>{
+  res.send('profile 02')
+});
+
+
 console.log(path.join(__dirname, '../video/v1.mp4'));
 
 // // Route to stream the video
