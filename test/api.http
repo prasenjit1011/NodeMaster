@@ -8,7 +8,7 @@ GET http://localhost:3000/
 ### =========================
 ### 1. UPLOAD TEXT (RAG DATA)
 ### =========================
-POST http://localhost:3000/upload
+POST http://localhost:3000/uploadmany
 Content-Type: application/json
 
 {

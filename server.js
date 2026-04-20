@@ -3,6 +3,7 @@ require("dotenv").config();
 const express = require("express");
 const axios = require("axios");
 const { v4: uuidv4 } = require("uuid");
+const { pipeline } = require("@xenova/transformers");
 
 const app = express();
 app.use(express.json());
@@ -14,10 +15,8 @@ const QDRANT_URL = "http://localhost:6333";
 const COLLECTION = "rag";
 
 /* -----------------------------
-   REAL EMBEDDINGS (OPENAI)
+   EMBEDDING MODEL (384 DIM)
 ------------------------------*/
-const { pipeline } = require("@xenova/transformers");
-
 let embedder;
 
 async function loadModel() {
@@ -33,22 +32,8 @@ async function getEmbedding(text) {
     normalize: true,
   });
 
-  return Array.from(output.data);
+  return Array.from(output.data); // 384 dims
 }
-// function getEmbedding(text) {
-//   const vector = Array(384).fill(0);
-
-//   const clean = text.toLowerCase().replace(/[^a-z0-9 ]/g, "");
-
-//   for (let i = 0; i < clean.length; i++) {
-//     vector[i % 384] += clean.charCodeAt(i);
-//   }
-
-//   const norm = Math.sqrt(vector.reduce((a, b) => a + b * b, 0)) || 1;
-
-//   return vector.map(v => v / norm);
-// }
-
 
 /* -----------------------------
    GROQ LLM
@@ -64,11 +49,11 @@ async function askGroq(prompt) {
           {
             role: "system",
             content:
-              "Answer ONLY using the given context. If context is insufficient, say 'Not enough information'.",
+              "Answer ONLY using given context. If not enough info, say 'Not enough information'.",
           },
           {
             role: "user",
-            content: String(prompt).slice(0, 6000),
+            content: prompt.slice(0, 6000),
           },
         ],
       },
@@ -83,12 +68,12 @@ async function askGroq(prompt) {
     return res.data.choices[0].message.content;
   } catch (err) {
     console.error("GROQ ERROR:", err.response?.data || err.message);
-    return `Error: ${err.message}`;
+    return "Error generating answer";
   }
 }
 
 /* -----------------------------
-   CREATE COLLECTION
+   CREATE COLLECTION (FIXED 384)
 ------------------------------*/
 async function createCollection() {
   try {
@@ -101,7 +86,7 @@ async function createCollection() {
 
   await axios.put(`${QDRANT_URL}/collections/${COLLECTION}`, {
     vectors: {
-      size: 1536, // OpenAI embedding size
+      size: 384,   // ✅ FIXED HERE
       distance: "Cosine",
     },
   });
@@ -159,7 +144,7 @@ function chunkText(text, size = 500) {
 }
 
 /* -----------------------------
-   UPLOAD API
+   UPLOAD (RAW TEXT)
 ------------------------------*/
 app.post("/upload", async (req, res) => {
   try {
@@ -189,7 +174,9 @@ app.post("/upload", async (req, res) => {
   }
 });
 
-
+/* -----------------------------
+   UPLOAD MANY (Q/A RAG)
+------------------------------*/
 app.post("/uploadmany", async (req, res) => {
   try {
     const { topic, documents } = req.body;
@@ -198,15 +185,9 @@ app.post("/uploadmany", async (req, res) => {
       return res.status(400).json({ error: "Documents required" });
     }
 
-    let chunks = [];
-
-    // convert Q/A into chunk text
     for (let doc of documents) {
       const chunk = `Q: ${doc.question}\nA: ${doc.answer}`;
-      chunks.push(chunk);
-    }
 
-    for (let chunk of chunks) {
       const emb = await getEmbedding(chunk);
 
       await insertVector(uuidv4(), emb, {
@@ -218,16 +199,16 @@ app.post("/uploadmany", async (req, res) => {
     res.json({
       message: "Uploaded successfully",
       topic,
-      chunks: chunks.length,
+      chunks: documents.length,
     });
-
   } catch (err) {
     console.error("UPLOAD ERROR:", err.message);
     res.status(500).json({ error: "Upload failed" });
   }
 });
+
 /* -----------------------------
-   ASK API (FIXED RAG)
+   ASK (RAG QUERY)
 ------------------------------*/
 app.post("/ask", async (req, res) => {
   try {
@@ -241,8 +222,6 @@ app.post("/ask", async (req, res) => {
 
     let results = await searchVector(queryEmb, 5);
 
-    console.log("RAW RESULTS:", results);
-
     if (!results.length) {
       return res.json({
         answer: "Not enough information.",
@@ -250,15 +229,13 @@ app.post("/ask", async (req, res) => {
       });
     }
 
-    // sort best match first
     results.sort((a, b) => b.score - a.score);
 
     // remove duplicates
     const seen = new Set();
     results = results.filter(r => {
       const text = r.payload?.text;
-      if (!text) return false;
-      if (seen.has(text)) return false;
+      if (!text || seen.has(text)) return false;
       seen.add(text);
       return true;
     });
@@ -285,7 +262,7 @@ ${question}
     });
 
   } catch (err) {
-    console.error("ASK ERROR:", err.response?.data || err.message);
+    console.error("ASK ERROR:", err.message);
     res.status(500).json({ error: "Query failed" });
   }
 });
@@ -293,10 +270,11 @@ ${question}
 /* -----------------------------
    START SERVER
 ------------------------------*/
-
 app.listen(3000, async () => {
   console.log("🚀 Server running at http://localhost:3000");
 
   await createCollection();
-  await loadModel(); // IMPORTANT
+  await loadModel();
+
+  console.log("✅ RAG system ready");
 });
