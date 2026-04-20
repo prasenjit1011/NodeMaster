@@ -1,0 +1,115 @@
+
+### =========================
+### HEALTH CHECK (optional)
+### =========================
+GET http://localhost:3000/
+
+
+### =========================
+### 1. UPLOAD TEXT (RAG DATA)
+### =========================
+POST http://localhost:3000/upload
+Content-Type: application/json
+
+{
+  "topic": "Node.js Interview Questions",
+  "documents": [
+    {
+      "id": 1,
+      "question": "What is Node.js?",
+      "answer": "Node.js is a JavaScript runtime environment built on Chrome's V8 engine that allows JavaScript to run on the server side."
+    },
+    {
+      "id": 2,
+      "question": "Is Node.js a framework?",
+      "answer": "No. Node.js is a runtime environment, not a framework. Frameworks built on Node.js include Express.js and NestJS."
+    },
+    {
+      "id": 3,
+      "question": "What is event-driven architecture in Node.js?",
+      "answer": "Node.js uses an event-driven architecture where actions are triggered by events and handled using callbacks, promises, or async/await."
+    },
+    {
+      "id": 4,
+      "question": "What is the Event Loop?",
+      "answer": "The Event Loop is a mechanism that allows Node.js to perform non-blocking I/O operations despite being single-threaded."
+    },
+    {
+      "id": 5,
+      "question": "Is Node.js single-threaded or multi-threaded?",
+      "answer": "Node.js is single-threaded for JavaScript execution but uses background threads via libuv for I/O operations."
+    },
+    {
+      "id": 6,
+      "question": "What is npm?",
+      "answer": "npm (Node Package Manager) is used to install packages, manage dependencies, and run scripts in Node.js projects."
+    },
+    {
+      "id": 7,
+      "question": "What is callback hell?",
+      "answer": "Callback hell is a situation where multiple nested callbacks make code difficult to read and maintain."
+    },
+    {
+      "id": 8,
+      "question": "How to avoid callback hell?",
+      "answer": "Callback hell can be avoided using Promises or async/await syntax."
+    },
+    {
+      "id": 9,
+      "question": "What is middleware in Node.js (Express)?",
+      "answer": "Middleware is a function that runs between request and response in an Express application."
+    },
+    {
+      "id": 10,
+      "question": "Difference between synchronous and asynchronous?",
+      "answer": "Synchronous code is blocking and executes one task at a time, while asynchronous code is non-blocking and allows multiple tasks to run concurrently."
+    },
+    {
+      "id": 11,
+      "question": "What is Express.js?",
+      "answer": "Express.js is a minimal Node.js web framework used to build APIs and web applications."
+    },
+    {
+      "id": 12,
+      "question": "What is REST API?",
+      "answer": "REST API is a communication standard between client and server using HTTP methods like GET, POST, PUT, and DELETE."
+    },
+    {
+      "id": 13,
+      "question": "Difference between require and import?",
+      "answer": "require is used in CommonJS modules, while import is used in ES Modules (modern JavaScript)."
+    },
+    {
+      "id": 14,
+      "question": "What is clustering in Node.js?",
+      "answer": "Clustering allows Node.js to use multiple CPU cores by creating child processes."
+    },
+    {
+      "id": 15,
+      "question": "What is a stream in Node.js?",
+      "answer": "Streams are used to process data in chunks instead of loading it all into memory at once."
+    }
+  ]
+}
+
+
+### =========================
+### 2. ASK QUESTION (RAG QUERY)
+### =========================
+POST http://localhost:3000/ask
+Content-Type: application/json
+
+{
+  "question": "What is Event Loop?"
+}
+
+
+### =========================
+### 3. ANOTHER TEST QUESTION
+### =========================
+POST http://localhost:3000/ask
+Content-Type: application/json
+
+{
+  "question": "How does RAG work?"
+}
