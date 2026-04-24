@@ -100,7 +100,7 @@ POST http://localhost:3000/ask
 Content-Type: application/json
 
 {
-  "question": "What is Event Loop?"
+  "question": "What is NodeJS?"
 }
 
 
