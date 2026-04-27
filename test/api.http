@@ -1,0 +1,45 @@
+### Base URL
+@baseUrl = http://localhost:3000
+
+### 1. Home
+GET {{baseUrl}}/
+Content-Type: application/json
+
+
+### 2. Create User
+POST {{baseUrl}}/users
+Content-Type: application/json
+
+{
+  "name": "Sanjay",
+  "age": 30
+}
+
+
+### 3. Get All Users
+GET {{baseUrl}}/users
+Content-Type: application/json
+
+
+### 4. Get User by ID
+# Replace with actual _id
+@REPLACE_USER_ID = 69eefec1e07af62f0913d0c1
+GET {{baseUrl}}/users/{{REPLACE_USER_ID}}
+Content-Type: application/json
+
+
+### 5. Update User
+# Replace with actual _id
+PUT {{baseUrl}}/users/{{REPLACE_USER_ID}}
+Content-Type: application/json
+
+{
+  "name": "Updated Name",
+  "age": 30
+}
+
+
+### 6. Delete User
+# Replace with actual _id
+DELETE {{baseUrl}}/users/{{REPLACE_USER_ID}}
+Content-Type: application/json
