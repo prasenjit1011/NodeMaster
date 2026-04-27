@@ -1,0 +1,38 @@
+### Base URL
+@baseUrl = http://localhost:3000
+
+GET {{baseUrl}}/
+Content-Type: application/json
+
+### 🔥 Create Order
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "user_id": "69ef682e7fb23e5b0cd385b1",
+  "items": [
+    {
+      "product_id": "69ef4d0d316971df069fcfc3",
+      "qty": 2,
+      "price": 500
+    },
+    {
+      "product_id": "69ef6b659b5259f05d704b76",
+      "qty": 1,
+      "price": 1200
+    }
+  ]
+}
+
+
+### 📦 Get All Orders (optional route if you add it)
+GET {{baseUrl}}/orders
+
+
+### 👤 Get Orders by User (optional)
+GET {{baseUrl}}/orders/user/64f1c2a9b8a1c9d123456789
+
+---
+
+### 🔍 Get Single Order (optional)
+GET {{baseUrl}}/orders/ORDER_ID_HERE

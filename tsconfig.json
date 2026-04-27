@@ -1,12 +1,28 @@
 {
   "compilerOptions": {
-    "target": "ES6",
+    "target": "ES2020",
     "module": "commonjs",
-    "moduleResolution": "node",   // ✅ FIXED
-    "esModuleInterop": true,
+    "moduleResolution": "node",
+
     "rootDir": "./src",
     "outDir": "./dist",
+
     "strict": true,
-    "skipLibCheck": true
-  }
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+
+    "forceConsistentCasingInFileNames": true,
+
+    // IMPORTANT for Node backend (prevents DOM conflicts like Request/Response issues)
+    "lib": ["ES2020"],
+
+    // Helps with cleaner imports in Node projects
+    "resolveJsonModule": true,
+
+    // Optional but useful in backend projects
+    "noImplicitAny": true
+  },
+
+  "include": ["src"],
+  "exclude": ["node_modules", "dist"]
 }

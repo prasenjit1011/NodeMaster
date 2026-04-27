@@ -1,35 +1,34 @@
 console.clear();
 console.log('\n\n-: App Started :-');
 
-const express = require('express');
-const mongoose = require('mongoose');
-require('dotenv').config();
+import express, { Request, Response } from "express";
+import { NextFunction } from "express-serve-static-core";
+import mongoose from "mongoose";
+import dotenv from "dotenv";
+
+import userRoutes from './modules/users/users.routes';
+import productRoutes from './modules/products/product.routes';
+import orderRoutes from './modules/orders/order.routes';
+dotenv.config();
 
 const app = express();
-app.use(express.json());
-
-// Import Routes
-const userRoutes = require('./modules/users/users.routes');
-import productRoutes from './modules/products/product.routes';
-app.use('/products', productRoutes);
-
-// MongoDB Connection
 const MONGO_URL = process.env.MONGO_URL || "mongodb://127.0.0.1:27017/mydb";
-
 mongoose.connect(MONGO_URL)
   .then(() => console.log("✅ MongoDB Connected"))
   .catch(err => console.log("❌ DB Error:", err));
 
-// Home Route
-app.get('/', (req, res) => {
-  res.send("🚀 Server running with MongoDB");
+app.use(express.json());
+app.use('/users', userRoutes);
+app.use('/products', productRoutes);
+app.use('/orders', orderRoutes);
+
+app.get('/', (req: Request, res: Response) => {
+  res.send("🚀 Server running with MongoDB...");
 });
 
-// Use Routes
-app.use('/users', userRoutes);
 
 // Central Error Handler
-app.use((err, req, res, next) => {
+app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
   console.error('Central Error Handler:', err.message);
   res.status(500).json({
     message: 'Internal Server Error',
