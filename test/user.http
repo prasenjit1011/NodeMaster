@@ -11,8 +11,10 @@ POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "name": "Sunil",
-  "age": 30
+  "name": "Rama",
+  "age": 30,
+  "email":"demo@admin.com",
+  "password":"123456"
 }
 
 
@@ -23,7 +25,7 @@ Content-Type: application/json
 
 ### 4. Get User by ID
 # Replace with actual _id
-@REPLACE_USER_ID = 69eefec1e07af62f0913d0c1
+@REPLACE_USER_ID = 69ef65daf0bbf9ad3e8d5839
 GET {{baseUrl}}/users/{{REPLACE_USER_ID}}
 Content-Type: application/json
 
