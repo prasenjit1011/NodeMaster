@@ -1,0 +1,46 @@
+@baseUrl = http://localhost:3000
+@productId = REPLACE_PRODUCT_ID
+
+### =========================
+### Create Product
+### =========================
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "Laptop",
+  "price": 55000,
+  "category": "Electronics",
+  "inStock": true
+}
+
+### =========================
+### Get All Products
+### =========================
+GET {{baseUrl}}/products
+Content-Type: application/json
+
+### =========================
+### Get Product by ID
+### =========================
+GET {{baseUrl}}/products/{{productId}}
+Content-Type: application/json
+
+### =========================
+### Update Product
+### =========================
+PUT {{baseUrl}}/products/{{productId}}
+Content-Type: application/json
+
+{
+  "name": "Updated Laptop",
+  "price": 60000,
+  "category": "Electronics",
+  "inStock": false
+}
+
+### =========================
+### Delete Product
+### =========================
+DELETE {{baseUrl}}/products/{{productId}}
+Content-Type: application/json

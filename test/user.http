@@ -11,7 +11,7 @@ POST {{baseUrl}}/users
 Content-Type: application/json
 
 {
-  "name": "Sanjay",
+  "name": "Sunil",
   "age": 30
 }
 

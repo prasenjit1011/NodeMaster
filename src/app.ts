@@ -10,6 +10,8 @@ app.use(express.json());
 
 // Import Routes
 const userRoutes = require('./modules/users/users.routes');
+import productRoutes from './modules/products/product.routes';
+app.use('/products', productRoutes);
 
 // MongoDB Connection
 const MONGO_URL = process.env.MONGO_URL || "mongodb://127.0.0.1:27017/mydb";

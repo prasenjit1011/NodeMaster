@@ -1,0 +1,33 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "commonjs",
+        "moduleResolution": "node10",
+        "moduleResolution": "node",
+        "esModuleInterop": true,
+        "rootDir": "./src",
+        "outDir": "./dist",
+        "strict": true,
+        "skipLibCheck": true,
+        "resolvePackageJsonExports": false,
+        "resolvePackageJsonImports": false,
+        "resolveJsonModule": false,
+        "resolvePackageJsonExports": true,
+        "resolvePackageJsonImports": true,
+        "resolveJsonModule": true,
+        "useDefineForClassFields": false
+    },
+    "files": [
+        "./src/app.ts",
+        "./src/modules/products/product.controller.ts",
+        "./src/modules/products/product.model.ts",
+        "./src/modules/products/product.routes.ts",
+        "./src/modules/users/user.controller.ts",
+        "./src/modules/users/user.model.ts",
+        "./src/modules/users/users.routes.ts"
+        "./src/modules/users/user.routes.ts"
+    ],
+    "exclude": [
+        "C:/myproject/github/NodeMaster/dist"
+    ]
+}
