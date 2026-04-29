@@ -1,31 +1,30 @@
-import mongoose, { Schema, Document, Types } from "mongoose";
+import express, { Request, Response } from "express";
+import mongoose, { Schema, Types, Document } from "mongoose";
+
+const app = express();
+app.use(express.json());
 
 // --------------------
 // INTERFACES
 // --------------------
 
-// Customer
 interface ICustomer extends Document {
   name: string;
   email: string;
   city: string;
 }
 
-// Product
 interface IProduct extends Document {
   name: string;
   price: number;
   stock: number;
 }
 
-// Order
 interface IOrder extends Document {
   customerId: Types.ObjectId;
-  orderDate: Date;
   status: string;
 }
 
-// Order Item
 interface IOrderItem extends Document {
   orderId: Types.ObjectId;
   productId: Types.ObjectId;
@@ -37,117 +36,155 @@ interface IOrderItem extends Document {
 // SCHEMAS
 // --------------------
 
-const customerSchema = new Schema<ICustomer>(
-  {
-    name: { type: String, required: true },
-    email: { type: String, required: true },
-    city: { type: String, required: true }
-  },
-  { timestamps: true }
+const Customer = mongoose.model<ICustomer>("Customer",
+  new Schema({
+    name: String,
+    email: String,
+    city: String
+  })
 );
 
-const productSchema = new Schema<IProduct>(
-  {
-    name: { type: String, required: true },
-    price: { type: Number, required: true },
-    stock: { type: Number, required: true }
-  },
-  { timestamps: true }
+const Product = mongoose.model<IProduct>("Product",
+  new Schema({
+    name: String,
+    price: Number,
+    stock: Number
+  })
 );
 
-const orderSchema = new Schema<IOrder>(
-  {
-    customerId: {
-      type: Schema.Types.ObjectId,
-      ref: "Customer",
-      required: true
-    },
-    orderDate: {
-      type: Date,
-      default: Date.now
-    },
-    status: { type: String, required: true }
-  },
-  { timestamps: true }
+const Order = mongoose.model<IOrder>("Order",
+  new Schema({
+    customerId: { type: Schema.Types.ObjectId, ref: "Customer" },
+    status: String
+  })
 );
 
-const orderItemSchema = new Schema<IOrderItem>(
-  {
-    orderId: {
-      type: Schema.Types.ObjectId,
-      ref: "Order",
-      required: true
-    },
-    productId: {
-      type: Schema.Types.ObjectId,
-      ref: "Product",
-      required: true
-    },
-    quantity: { type: Number, required: true },
-    price: { type: Number, required: true }
-  },
-  { timestamps: true }
+const OrderItem = mongoose.model<IOrderItem>("OrderItem",
+  new Schema({
+    orderId: { type: Schema.Types.ObjectId, ref: "Order" },
+    productId: { type: Schema.Types.ObjectId, ref: "Product" },
+    quantity: Number,
+    price: Number
+  })
 );
 
 // --------------------
-// MODELS
+// DB CONNECT
 // --------------------
 
-const Customer = mongoose.model<ICustomer>("Customer", customerSchema);
-const Product = mongoose.model<IProduct>("Product", productSchema);
-const Order = mongoose.model<IOrder>("Order", orderSchema);
-const OrderItem = mongoose.model<IOrderItem>("OrderItem", orderItemSchema);
+mongoose.connect("mongodb://127.0.0.1:27017/ecommerce")
+  .then(() => console.log("MongoDB Connected"))
+  .catch((err: unknown) => {
+    if (err instanceof Error) console.error(err.message);
+  });
 
 // --------------------
-// DB CONNECTION
+// ROUTES
 // --------------------
 
-async function connectDB(): Promise<void> {
+// Customers
+app.post("/customers", async (req: Request, res: Response) => {
+  const data = await Customer.create(req.body);
+  res.json(data);
+});
+
+app.get("/customers", async (_: Request, res: Response) => {
+  const data = await Customer.find();
+  res.json(data);
+});
+
+// Products
+app.post("/products", async (req: Request, res: Response) => {
+  const data = await Product.create(req.body);
+  res.json(data);
+});
+
+app.get("/products", async (_: Request, res: Response) => {
+  const data = await Product.find();
+  res.json(data);
+});
+
+// Orders
+app.post("/orders", async (req: Request, res: Response) => {
+  const data = await Order.create(req.body);
+  res.json(data);
+});
+
+app.get("/orders", async (_: Request, res: Response) => {
+  const data = await Order.find().populate("customerId");
+  res.json(data);
+});
+
+// Order Items
+app.post("/order-items", async (req: Request, res: Response) => {
+  const data = await OrderItem.create(req.body);
+  res.json(data);
+});
+
+app.get("/order-items", async (_: Request, res: Response) => {
+  const data = await OrderItem.find()
+    .populate("productId")
+    .populate("orderId");
+  res.json(data);
+});
+
+
+app.delete("/clear", async (_req: Request, res: Response) => {
   try {
-    await mongoose.connect("mongodb://127.0.0.1:27017/ecommerce");
-    console.log("MongoDB Connected");
+    await Promise.all([
+      Customer.deleteMany({}),
+      Product.deleteMany({}),
+      Order.deleteMany({}),
+      OrderItem.deleteMany({})
+    ]);
+
+    res.json({ message: "All collections cleared" });
   } catch (err: unknown) {
     if (err instanceof Error) {
-      console.error("DB Error:", err.message);
-    } else {
-      console.error("Unknown DB Error:", err);
+      res.status(500).json({ error: err.message });
     }
-    process.exit(1);
   }
-}
+});
 
-// --------------------
-// SEED DATA
-// --------------------
-
-async function seedData(): Promise<void> {
+app.post("/seed", async (_req: Request, res: Response) => {
   try {
-    await Customer.deleteMany({});
-    await Product.deleteMany({});
-    await Order.deleteMany({});
-    await OrderItem.deleteMany({});
+    // Clear old data (optional)
+    // await Promise.all([
+    //   Customer.deleteMany({}),
+    //   Product.deleteMany({}),
+    //   Order.deleteMany({}),
+    //   OrderItem.deleteMany({})
+    // ]);
 
-    // Customers
+    // --------------------
+    // CREATE CUSTOMERS
+    // --------------------
     const customers = await Customer.insertMany([
       { name: "Alice", email: "alice@mail.com", city: "Delhi" },
       { name: "Bob", email: "bob@mail.com", city: "Mumbai" }
     ]);
 
-    // Products
+    // --------------------
+    // CREATE PRODUCTS
+    // --------------------
     const products = await Product.insertMany([
       { name: "Laptop", price: 50000, stock: 10 },
       { name: "Phone", price: 20000, stock: 20 },
       { name: "Watch", price: 5000, stock: 15 }
     ]);
 
-    // Order
+    // --------------------
+    // CREATE ORDER
+    // --------------------
     const order = await Order.create({
       customerId: customers[0]._id,
       status: "completed"
     });
 
-    // Order Items
-    await OrderItem.insertMany([
+    // --------------------
+    // CREATE ORDER ITEMS
+    // --------------------
+    const orderItems = await OrderItem.insertMany([
       {
         orderId: order._id,
         productId: products[0]._id,
@@ -162,46 +199,26 @@ async function seedData(): Promise<void> {
       }
     ]);
 
-    console.log("Data Inserted");
-
-    // --------------------
-    // FETCH DATA
-    // --------------------
-
-    const orders = await Order.find()
-      .populate("customerId")
-      .lean();
-
-    console.log("\nOrders:");
-    console.log(JSON.stringify(orders, null, 2));
-
-    const items = await OrderItem.find()
-      .populate("productId")
-      .populate("orderId")
-      .lean();
-
-    console.log("\nOrder Items:");
-    console.log(JSON.stringify(items, null, 2));
+    res.json({
+      message: "Dummy data inserted",
+      customers,
+      products,
+      order,
+      orderItems
+    });
 
   } catch (err: unknown) {
     if (err instanceof Error) {
-      console.error("Seed Error:", err.message);
+      res.status(500).json({ error: err.message });
     } else {
-      console.error("Unknown Seed Error:", err);
+      res.status(500).json({ error: "Unknown error" });
     }
   }
-}
-
+});
 // --------------------
-// RUN APP
+// START SERVER
 // --------------------
 
-async function run(): Promise<void> {
-  await connectDB();
-  await seedData();
-  process.exit(0);
-}
-
-run();
-
-export { Customer, Product, Order, OrderItem };
+app.listen(3000, () => {
+  console.log("Server running at http://localhost:3000");
+});

@@ -76,4 +76,8 @@ GET {{baseUrl}}/orders/full
 ###
 
 ### 10. DELETE ALL DATA (OPTIONAL)
-DELETE {{baseUrl}}/reset
+DELETE {{baseUrl}}/clear
+
+### 11. Seed Data (OPTIONAL)
+POST {{baseUrl}}/seed
+Content-Type: application/json
