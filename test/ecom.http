@@ -1,0 +1,79 @@
+### Base URL
+@baseUrl = http://localhost:3000
+
+##################################################
+### 1. CREATE CUSTOMER
+POST {{baseUrl}}/customers
+Content-Type: application/json
+
+{
+  "name": "Alice",
+  "email": "alice@mail.com",
+  "city": "Delhi"
+}
+
+###
+
+### 2. GET ALL CUSTOMERS
+GET {{baseUrl}}/customers
+
+###
+
+### 3. CREATE PRODUCT
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "Laptop",
+  "price": 50000,
+  "stock": 10
+}
+
+###
+
+### 4. GET ALL PRODUCTS
+GET {{baseUrl}}/products
+
+###
+
+### 5. CREATE ORDER
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerId": "REPLACE_CUSTOMER_ID",
+  "status": "completed"
+}
+
+###
+
+### 6. GET ALL ORDERS (with populate)
+GET {{baseUrl}}/orders
+
+###
+
+### 7. CREATE ORDER ITEM
+POST {{baseUrl}}/order-items
+Content-Type: application/json
+
+{
+  "orderId": "REPLACE_ORDER_ID",
+  "productId": "REPLACE_PRODUCT_ID",
+  "quantity": 2,
+  "price": 20000
+}
+
+###
+
+### 8. GET ORDER ITEMS
+GET {{baseUrl}}/order-items
+
+###
+
+### 9. GET FULL ORDER DETAILS (JOIN)
+GET {{baseUrl}}/orders/full
+
+###
+
+### 10. DELETE ALL DATA (OPTIONAL)
+DELETE {{baseUrl}}/reset

@@ -1,3 +1,74 @@
+Here are the most important **MongoDB keywords** (useful for interviews and quick revision):
+mongod --dbpath C:\data\db
+### 🔹 Basic Concepts
+
+* **Database** – container of collections
+* **Collection** – group of documents (like table)
+* **Document** – JSON-like data (BSON format)
+* **Field** – key-value pair inside document
+* **_id** – unique identifier (primary key)
+
+### 🔹 CRUD Operations
+
+* **insertOne() / insertMany()** – add data
+* **find() / findOne()** – read data
+* **updateOne() / updateMany()** – modify data
+* **deleteOne() / deleteMany()** – remove data
+
+### 🔹 Query Operators
+
+* **$eq, $ne** – equal / not equal
+* **$gt, $lt, $gte, $lte** – comparison
+* **$in, $nin** – match in array
+* **$and, $or, $not** – logical operations
+* **$exists** – field existence
+
+### 🔹 Projection & Sorting
+
+* **projection** – select fields (`{name:1}`)
+* **sort()** – order results
+* **limit() / skip()** – pagination
+
+### 🔹 Indexing
+
+* **createIndex()** – improve query performance
+* **compound index** – multiple fields
+* **unique index** – no duplicates
+
+### 🔹 Aggregation Pipeline
+
+* **$match** – filter
+* **$group** – group data
+* **$project** – reshape fields
+* **$sort** – order
+* **$lookup** – join collections
+* **$unwind** – deconstruct array
+
+### 🔹 Other Important Terms
+
+* **Replication** – data backup (Replica Set)
+* **Sharding** – horizontal scaling
+* **Atlas** – cloud MongoDB service
+* **BSON** – binary JSON format
+* **Schema-less** – flexible structure
+
+If you want, I can give you **MongoDB keywords with real query examples (interview-ready)** or a **1-page cheat sheet PDF**.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 ---
 
@@ -213,9 +284,3 @@ For **1–2 years experience interviews**, focus on:
 * Indexing basics
 * Schema design
 
----
-
-If you want, I can give:
-👉 **MongoDB interview questions (with answers)**
-👉 **Real coding problems (like DSA using MongoDB)**
-👉 **Node.js + MongoDB examples (important for MERN)**

@@ -5,6 +5,7 @@
   "main": "app.js",
   "scripts": {
     "dev": "ts-node-dev --project tsconfig.json --respawn --transpile-only src/app.ts",
+    "mongoapp": "ts-node-dev --project tsconfig.json --respawn --transpile-only src/mongoapp.ts",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
