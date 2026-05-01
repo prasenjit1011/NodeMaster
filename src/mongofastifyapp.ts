@@ -85,10 +85,29 @@ mongoose
 // --------------------
 // ROUTES
 // --------------------
-
+const customerSchema = {
+  body: {
+    type: "object",
+    required: ["name", "email", "city"],
+    properties: {
+      name: { type: "string" },
+      email: { type: "string" },
+      city: { type: "string" }
+    }
+  }
+};
 // Customers
-app.post("/customers", async (req: FastifyRequest, reply: FastifyReply) => {
+app.post<{ Body: ICustomer }>("/customers_create",{ schema: customerSchema }, async (req, reply) => {
+    const data = await Customer.create(req.body);
+    return data;
+  }
+);
+app.post<{ Body: ICustomer }>("/customers_add", async (req, reply) => {
   const data = await Customer.create(req.body);
+  return reply.send(data);
+});
+app.post("/customers", async (req: FastifyRequest, reply: FastifyReply) => {
+  const data = await Customer.create(req.body as any);
   return reply.send(data);
 });
 
@@ -109,7 +128,7 @@ app.get("/products", async (_req: FastifyRequest, reply: FastifyReply) => {
 });
 
 // Orders
-app.post("/orders", async (req: FastifyRequest, reply: FastifyReply) => {
+app.post("/orders", async (req, reply) => {
   const data = await Order.create(req.body);
   return reply.send(data);
 });
