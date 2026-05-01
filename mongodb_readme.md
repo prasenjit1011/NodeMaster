@@ -1,5 +1,7 @@
 Here are the most important **MongoDB keywords** (useful for interviews and quick revision):
+cd C:\Program Files\FlyEnv-Data\app\mongodb-8.2.7\bin
 mongod --dbpath C:\data\db
+del /s /q C:\data\db\*
 ### 🔹 Basic Concepts
 
 * **Database** – container of collections

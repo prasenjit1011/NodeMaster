@@ -1,0 +1,83 @@
+@baseUrl = http://localhost:3000
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6MSwiaWF0IjoxNzc3NTk4OTI1fQ.AjVP2xT8inVaNmza0E7Ze5PcBZ8EiG62lubyoJvrGYw
+
+### 🔹 Register User
+POST {{baseUrl}}/register
+Content-Type: application/json
+
+{
+  "name": "Sam",
+  "email": "sam@test.com",
+  "password": "123456"
+}
+
+###
+
+### 🔹 Login (Get JWT + Cookie)
+POST {{baseUrl}}/login
+Content-Type: application/json
+
+{
+  "email": "sam@test.com",
+  "password": "123456"
+}
+
+###
+
+### 🔹 Get All Users (Auth Required)
+GET {{baseUrl}}/users
+Authorization: Bearer {{token}}
+
+###
+
+### 🔹 Get User By ID
+GET {{baseUrl}}/users/1
+Authorization: Bearer {{token}}
+
+###
+
+### 🔹 Update User
+PUT {{baseUrl}}/users/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "name": "Sam Updated"
+}
+
+###
+
+### 🔹 Delete User
+DELETE {{baseUrl}}/users/1
+Authorization: Bearer {{token}}
+
+###
+
+### 🔹 Upload File (Profile Image)
+POST {{baseUrl}}/upload
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary
+
+------WebKitFormBoundary
+Content-Disposition: form-data; name="file"; filename="test.txt"
+Content-Type: text/plain
+
+Hello from file upload
+------WebKitFormBoundary--
+
+###
+
+### 🔹 Streaming API
+GET {{baseUrl}}/stream
+
+###
+
+### 🔹 Add Job (Queue)
+POST {{baseUrl}}/job
+Content-Type: application/json
+
+{
+  "task": "Send email to user"
+}
+
+###
