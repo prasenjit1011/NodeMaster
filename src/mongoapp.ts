@@ -1,9 +1,16 @@
 import express, { Request, Response } from "express";
 import mongoose, { Schema, Types, Document } from "mongoose";
+import cors from "cors"; // ✅ REQUIRED
 // mongoose.set("versionKey", false);
 
 const app = express();
 app.use(express.json());
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+    methods: ["GET"],
+  })
+);
 
 // --------------------
 // INTERFACES
@@ -122,7 +129,7 @@ app.get("/productlist", async (req: Request, res: Response) => {
   try {
     console.log("==== 1111 ====");
 
-    await delay(500); // simulate delay
+    await delay(1); // simulate delay
 
     console.log("==== 2222 ====");
 
