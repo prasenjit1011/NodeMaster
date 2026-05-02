@@ -1,0 +1,61 @@
+### Base URL
+@baseUrl = http://localhost:3000
+
+### =====================================
+### Get Products - Default (page 1, limit 10)
+### =====================================
+GET {{baseUrl}}/productlist
+
+
+### =====================================
+### Get Products - Page 1
+### =====================================
+GET {{baseUrl}}/productlist?page=1&limit=1
+
+
+### =====================================
+### Get Products - Page 2
+### =====================================
+GET {{baseUrl}}/productlist?page=2&limit=10
+
+
+### =====================================
+### Get Products - Custom Limit
+### =====================================
+GET {{baseUrl}}/productlist?page=1&limit=20
+
+
+### =====================================
+### Get Products - Large Page
+### =====================================
+GET {{baseUrl}}/productlist?page=5&limit=20
+
+
+### =====================================
+### Invalid Page (edge case test)
+### =====================================
+GET {{baseUrl}}/productlist?page=0&limit=10
+
+
+### =====================================
+### Invalid Limit (edge case test)
+### =====================================
+GET {{baseUrl}}/productlist?page=1&limit=500
+
+
+### =====================================
+### With Sorting (if implemented)
+### =====================================
+GET {{baseUrl}}/productlist?page=1&limit=10&sort=price_desc
+
+
+### =====================================
+### With Filtering (if implemented)
+### =====================================
+GET {{baseUrl}}/productlist?page=1&limit=10&minPrice=10000
+
+
+### =====================================
+### Combined (Pagination + Filter + Sort)
+### =====================================
+GET {{baseUrl}}/productlist?page=2&limit=10&minPrice=20000&sort=price_asc

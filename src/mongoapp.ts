@@ -118,6 +118,40 @@ app.get("/products", async (_: Request, res: Response) => {
   res.json(data);
 });
 
+app.get("/productlist", async (req: Request, res: Response) => {
+  try {
+    console.log("==== 1111 ====");
+
+    await delay(500); // simulate delay
+
+    console.log("==== 2222 ====");
+
+    // query params
+    const page = Math.max(parseInt(req.query.page as string) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit as string) || 10, 100);
+
+    const skip = (page - 1) * limit;
+
+    // fetch data + total count
+    const [products, total] = await Promise.all([
+      Product.find().skip(skip).limit(limit),
+      Product.countDocuments()
+    ]);
+
+    res.json({
+      page,
+      limit,
+      total,
+      totalPages: Math.ceil(total / limit),
+      data: products
+    });
+
+  } catch (error) {
+    res.status(500).json({ message: "Server Error", error });
+  }
+});
+
+
 // Orders
 app.post("/orders", async (req: Request, res: Response) => {
   const data = await Order.create(req.body);
