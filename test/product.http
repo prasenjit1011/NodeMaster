@@ -1,5 +1,5 @@
 @baseUrl = http://localhost:3000
-@productId = REPLACE_PRODUCT_ID
+@productId = 69f81beda3f136ae278c8534
 
 ### =========================
 ### Create Product

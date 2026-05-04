@@ -8,7 +8,7 @@ app.use(express.json());
 app.use(
   cors({
     origin: "http://localhost:5173",
-    methods: ["GET"],
+    methods: ["GET", "POST", "PUT", "DELETE"],
   })
 );
 
@@ -111,6 +111,7 @@ app.get("/customers", async (_: Request, res: Response) => {
 
 // Products
 app.post("/products", async (req: Request, res: Response) => {
+  // const data = req.body;
   const data = await Product.create(req.body);
   res.json(data);
 });
@@ -118,7 +119,7 @@ app.post("/products", async (req: Request, res: Response) => {
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 app.get("/products", async (_: Request, res: Response) => {
   console.log('==== 1111 ====')
-  await delay(5000);
+  await delay(500);
   console.log('==== 2222 ====')
 
   const data = await Product.find();
@@ -129,7 +130,7 @@ app.get("/productlist", async (req: Request, res: Response) => {
   try {
     console.log("==== 1111 ====");
 
-    await delay(1); // simulate delay
+    await delay(500); // simulate delay
 
     console.log("==== 2222 ====");
 
