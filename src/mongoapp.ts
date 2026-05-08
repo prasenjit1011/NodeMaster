@@ -1,6 +1,9 @@
 import express, { Request, Response } from "express";
 import mongoose, { Schema, Types, Document } from "mongoose";
 import cors from "cors"; // ✅ REQUIRED
+import fs from "fs/promises";
+import path from "path";
+
 // mongoose.set("versionKey", false);
 
 const app = express();
@@ -98,6 +101,29 @@ mongoose.connect("mongodb://127.0.0.1:27017/ecommerce")
 // ROUTES
 // --------------------
 
+type User = {
+  id: number;
+  userId: number;
+  title: string;
+  completed: boolean;
+};
+
+app.get("/api/users", async (req, res) => {
+  try {
+    const filePath = path.join(__dirname, "public", "data.json");
+
+    const data = await fs.readFile(filePath, "utf-8");
+
+    const users: User[] = JSON.parse(data);
+
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: "File read error" });
+  }
+});
+
+
+
 // Customers
 app.post("/customers", async (req: Request, res: Response) => {
   const data = await Customer.create(req.body);
@@ -118,9 +144,9 @@ app.post("/products", async (req: Request, res: Response) => {
 
 const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 app.get("/products", async (_: Request, res: Response) => {
-  console.log('==== 1111 ====')
-  await delay(500);
-  console.log('==== 2222 ====')
+  console.log('==== 1111 ====', new Date().toISOString());
+  await delay(5000);
+  console.log('==== 2222 ====', new Date().toISOString());
 
   const data = await Product.find();
   res.json(data);
