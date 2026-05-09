@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<title>Advanced VS Code React Highlight</title>
+
+<style>
+  body {
+    margin: 0;
+    background: #0f172a;
+    font-family: Consolas, monospace;
+    color: #e5e7eb;
+    padding: 20px;
+  }
+
+  .editor {
+    background: #1e1e2e;
+    border-radius: 10px;
+    padding: 18px;
+    border: 1px solid #2d2d3a;
+    font-size: 14px;
+    line-height: 1.7;
+    overflow-x: auto;
+    white-space: pre;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+  }
+
+  /* ===== FULL COLOR SYSTEM ===== */
+
+  /* keywords (import, const, return, export) */
+  .keyword { color: #60a5fa; font-weight: 600; }
+
+  /* React hooks */
+  .hook { color: #c084fc; font-weight: 700; }
+
+  /* types */
+  .type { color: #34d399; }
+
+  /* strings */
+  .string { color: #fca5a5; }
+
+  /* functions */
+  .function { color: #fbbf24; }
+
+  /* comments */
+  .comment { color: #6b7280; font-style: italic; }
+
+  /* numbers */
+  .number { color: #a7f3d0; }
+
+  /* JSX tags */
+  .tag { color: #38bdf8; font-weight: 600; }
+
+  /* operators */
+  .operator { color: #e5e7eb; }
+
+  /* punctuation */
+  .pun { color: #94a3b8; }
+
+  /* variables */
+  .var { color: #fcd34d; }
+
+</style>
+</head>
+
+<body>
+
+<h2>⚡ Ultra VS Code React Highlight (All Colors)</h2>
+
+<div class="editor">
+
+<span class="keyword">import</span> ReactDOM <span class="keyword">from</span> <span class="string">"react-dom/client"</span>;
+<span class="keyword">import</span> React, {
+  <span class="hook">useEffect</span><span class="pun">,</span>
+  <span class="hook">useState</span><span class="pun">,</span>
+  <span class="hook">useMemo</span><span class="pun">,</span>
+  <span class="hook">useCallback</span><span class="pun">,</span>
+  <span class="hook">startTransition</span>
+} <span class="keyword">from</span> <span class="string">"react"</span>;
+
+<span class="keyword">type</span> Todo <span class="operator">=</span> {
+  userId<span class="operator">:</span> <span class="type">number</span><span class="pun">;</span>
+  id<span class="operator">:</span> <span class="type">number</span><span class="pun">;</span>
+  title<span class="operator">:</span> <span class="type">string</span><span class="pun">;</span>
+  completed<span class="operator">:</span> <span class="type">boolean</span><span class="pun">;</span>
+};
+
+<span class="comment">// API URL</span>
+<span class="keyword">const</span> url <span class="operator">=</span> <span class="string">"http://localhost:3000/api/users"</span><span class="pun">;</span>
+
+<span class="keyword">export default function</span> <span class="function">App</span>() {
+
+  <span class="keyword">const</span> [todos<span class="pun">,</span> setTodos] <span class="operator">=</span> <span class="hook">useState</span>&lt;<span class="type">Todo</span>[]&gt;([])<span class="pun">;</span>
+  <span class="keyword">const</span> [search<span class="pun">,</span> setSearch] <span class="operator">=</span> <span class="hook">useState</span>(<span class="string">""</span>)<span class="pun">;</span>
+  <span class="keyword">const</span> [input<span class="pun">,</span> setInput] <span class="operator">=</span> <span class="hook">useState</span>(<span class="string">""</span>)<span class="pun">;</span>
+
+  <span class="hook">useEffect</span>(() <span class="operator">=></span> {
+    fetch(url)
+      .then((res) <span class="operator">=></span> res.json())
+      .then((data<span class="operator">:</span> <span class="type">Todo</span>[]) <span class="operator">=></span> setTodos(data));
+  }<span class="pun">,</span> []);
+
+  <span class="keyword">const</span> filteredTodos <span class="operator">=</span> <span class="hook">useMemo</span>(() <span class="operator">=></span> {
+    <span class="keyword">return</span> todos.filter((todo) <span class="operator">=></span>
+      todo.title.toLowerCase().includes(search.toLowerCase())
+    );
+  }<span class="pun">,</span> [todos<span class="pun">,</span> search]);
+
+  <span class="comment">// Optimized handler</span>
+  <span class="keyword">const</span> handleChange <span class="operator">=</span> <span class="hook">useCallback</span>(
+    (e<span class="operator">:</span> React.ChangeEvent&lt;<span class="type">HTMLInputElement</span>&gt;) <span class="operator">=></span> {
+
+      <span class="keyword">const</span> value <span class="operator">=</span> e.target.value<span class="pun">;</span>
+
+      setInput(value)<span class="pun">;</span>
+
+      <span class="hook">startTransition</span>(() <span class="operator">=></span> {
+        setSearch(value)<span class="pun">;</span>
+      });
+
+    }<span class="pun">,</span>
+    []
+  );
+
+  <span class="keyword">return</span> (
+    &lt;<span class="tag">div</span> style={{ padding<span class="operator">:</span> <span class="number">20</span> }}&gt;
+
+      &lt;<span class="tag">h2</span>&gt;
+        Advanced React Search
+      &lt;/<span class="tag">h2</span>&gt;
+
+      &lt;<span class="tag">input</span>
+        value={input}
+        onChange={handleChange}
+        placeholder={<span class="string">"Search todos..."</span>}
+        style={{ padding<span class="operator">:</span> <span class="number">10</span>, width<span class="operator">:</span> <span class="number">300</span> }}
+      /&gt;
+
+      &lt;<span class="tag">p</span>&gt;
+        Results: {filteredTodos.length}
+      &lt;/<span class="tag">p</span>&gt;
+
+    &lt;/<span class="tag">div</span>&gt;
+  );
+}
+
+<span class="keyword">const</span> root <span class="operator">=</span> ReactDOM.createRoot(
+  document.getElementById(<span class="string">"root"</span>) <span class="keyword">as</span> HTMLElement
+);
+
+root.render(
+  &lt;<span class="tag">React.StrictMode</span>&gt;
+    &lt;<span class="tag">App</span> /&gt;
+  &lt;/<span class="tag">React.StrictMode</span>&gt;
+);
+</div>
+
+</body>
+</html>

@@ -28,7 +28,8 @@
     "express-session": "^1.17.3",
     "fastify": "^5.8.5",
     "mongodb": "^6.3.0",
-    "mongoose": "^9.6.0"
+    "mongoose": "^9.6.0",
+    "react-window": "^2.2.7"
   },
   "devDependencies": {
     "@types/bcrypt": "^6.0.0",
