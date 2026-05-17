@@ -6,7 +6,7 @@ resource "google_project_service" "compute" {
 }
 
 resource "google_compute_firewall" "allow_http" {
-  name    = "allow-http"
+  name    = "nodejs-allow-http"
   network = "default"
 
   allow {
