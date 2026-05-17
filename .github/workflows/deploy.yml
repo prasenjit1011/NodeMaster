@@ -9,36 +9,37 @@ on:
 
 jobs:
 
-# =========================
-# 1. BOOTSTRAP JOB
-# =========================
-bootstrap:
-  runs-on: ubuntu-latest
+  # =========================
+  # 1. BOOTSTRAP JOB
+  # =========================
+  bootstrap:
+    name: Bootstrap Backend
+    runs-on: ubuntu-latest
 
-  steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Authenticate to GCP
-      uses: google-github-actions/auth@v2
-      with:
-        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-    - name: Setup Terraform
-      uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-    - name: Terraform Init (Bootstrap)
-      run: terraform -chdir=bootstrap init
+      - name: Terraform Init (Bootstrap)
+        run: terraform -chdir=bootstrap init
 
-    - name: Terraform Apply (Bootstrap)
-      run: terraform -chdir=bootstrap apply -auto-approve
-      env:
-        TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+      - name: Terraform Apply (Bootstrap)
+        run: terraform -chdir=bootstrap apply -auto-approve
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_region: asia-south1
 
-
-# =========================
-# 2. DEPLOY INFRA
-# =========================
+  # =========================
+  # 2. DEPLOY INFRA
+  # =========================
   deploy:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
@@ -61,14 +62,19 @@ bootstrap:
 
       - name: Terraform Plan
         run: terraform -chdir=terraform plan
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_region: asia-south1
 
       - name: Terraform Apply
         run: terraform -chdir=terraform apply -auto-approve
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_region: asia-south1
 
-
-# =========================
-# 3. AUTO DESTROY AFTER 60 MIN
-# =========================
+  # =========================
+  # 3. AUTO DESTROY
+  # =========================
   destroy:
     name: Destroy Infrastructure After 60 Min
     runs-on: ubuntu-latest
@@ -96,3 +102,4 @@ bootstrap:
         run: terraform -chdir=terraform destroy -auto-approve
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_region: asia-south1
