@@ -1,34 +1,86 @@
-name: Deploy Terraform GCP (Node + TS)
+name: Terraform GCP Deploy
 
 on:
   push:
-    branches:
-      - typescript_main_teraform_gcp   # 👈 your branch
+    branches: ["typescript_main_teraform_gcp"]
+
   workflow_dispatch:
 
 jobs:
-  deploy:
+  bootstrap:
+    name: Bootstrap GCS Backend
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v4
-        with:
-          ref: typescript_main_teraform_gcp   # 👈 important
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Terraform Init
-        run: terraform -chdir=terraform init
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init (Bootstrap)
+        working-directory: ./bootstrap
+        run: terraform init
+
+      - name: Terraform Apply (Create State Bucket)
+        working-directory: ./bootstrap
+        run: terraform apply -auto-approve
+
+
+  deploy:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: bootstrap
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init (Remote Backend)
+        run: terraform init -migrate-state
 
       - name: Terraform Plan
-        run: terraform -chdir=terraform plan
+        run: terraform plan
 
       - name: Terraform Apply
-        run: terraform -chdir=terraform apply -auto-approve
+        run: terraform apply -auto-approve
+
+
+  destroy:
+    name: Auto Destroy (60 min later)
+    runs-on: ubuntu-latest
+    needs: deploy
+
+    steps:
+      - name: Wait 60 minutes
+        run: sleep 3600
+
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve

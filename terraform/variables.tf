@@ -1,10 +1,91 @@
-variable "project_id" {}
+# -----------------------------
+# GCP Project Configuration
+# -----------------------------
+
+variable "project_id" {
+  description = "Google Cloud Project ID"
+  type        = string
+}
+
 variable "region" {
-  default = "asia-south1"
+  description = "GCP region"
+  type        = string
+  default     = "asia-south1"
 }
+
 variable "zone" {
-  default = "asia-south1-a"
+  description = "GCP zone"
+  type        = string
+  default     = "asia-south1-a"
 }
+
+# -----------------------------
+# VM Configuration
+# -----------------------------
+
 variable "vm_name" {
-  default = "nodejs-vm"
+  description = "Name of Compute Engine VM"
+  type        = string
+  default     = "nodejs-vm"
+}
+
+variable "machine_type" {
+  description = "GCP VM machine type"
+  type        = string
+  default     = "e2-micro"
+}
+
+variable "image" {
+  description = "Boot disk image"
+  type        = string
+  default     = "debian-cloud/debian-12"
+}
+
+variable "boot_disk_size" {
+  description = "Boot disk size in GB"
+  type        = number
+  default     = 10
+}
+
+# -----------------------------
+# GitHub Repository (optional)
+# -----------------------------
+
+variable "github_repo" {
+  description = "GitHub repository URL (optional)"
+  type        = string
+  default     = ""
+}
+
+# -----------------------------
+# Network Configuration
+# -----------------------------
+
+variable "network_name" {
+  description = "VPC network name"
+  type        = string
+  default     = "default"
+}
+
+# -----------------------------
+# Firewall Configuration
+# -----------------------------
+
+variable "allowed_ports" {
+  description = "Firewall allowed ports"
+  type        = list(number)
+  default     = [22, 80, 443, 3000]
+}
+
+# -----------------------------
+# Labels (BEST PRACTICE)
+# -----------------------------
+
+variable "labels" {
+  description = "Resource labels"
+  type        = map(string)
+  default = {
+    env  = "dev"
+    app  = "nodejs"
+  }
 }
