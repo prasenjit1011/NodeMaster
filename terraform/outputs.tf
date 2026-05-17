@@ -9,3 +9,7 @@ output "instance_external_ip" {
 output "application_url" {
   value = "http://${google_compute_instance.nodejs_vm.network_interface[0].access_config[0].nat_ip}:3000"
 }
+
+output "vm_ip" {
+  value = google_compute_instance.nodejs_vm.network_interface[0].access_config[0].nat_ip
+}

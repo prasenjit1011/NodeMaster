@@ -1,30 +1,7 @@
-resource "google_project_service" "compute" {
-  project = var.project_id
-  service = "compute.googleapis.com"
-
-  disable_on_destroy = true
-}
-
-resource "google_compute_firewall" "allow_http" {
-  name    = "nodejs-allow-http"
-  network = "default"
-
-  allow {
-    protocol = "tcp"
-    ports    = ["3000"]
-  }
-
-  source_ranges = ["0.0.0.0/0"]
-
-  target_tags = ["http-server"]
-}
-
 resource "google_compute_instance" "nodejs_vm" {
   name         = var.vm_name
   machine_type = var.machine_type
   zone         = var.zone
-
-  tags = ["http-server"]
 
   boot_disk {
     initialize_params {
@@ -36,16 +13,25 @@ resource "google_compute_instance" "nodejs_vm" {
   network_interface {
     network = "default"
 
-    access_config {}
+    access_config {
+      // public IP
+    }
   }
 
   metadata_startup_script = file("${path.module}/startup.sh")
 
-  service_account {
-    scopes = ["cloud-platform"]
+  tags = ["nodejs-vm"]
+}
+
+resource "google_compute_firewall" "allow_http" {
+  name    = "${var.vm_name}-allow-http"
+  network = "default"
+
+  allow {
+    protocol = "tcp"
+    ports    = ["80", "3000"]
   }
 
-  depends_on = [
-    google_project_service.compute
-  ]
+  source_ranges = ["0.0.0.0/0"]
+  target_tags   = ["nodejs-vm"]
 }
