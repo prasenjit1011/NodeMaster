@@ -2,7 +2,8 @@ name: Terraform GCP Deploy
 
 on:
   push:
-    branches: ["typescript_main_teraform_gcp"]
+    branches:
+      - typescript_main_teraform_gcp
 
   workflow_dispatch:
 
@@ -18,18 +19,16 @@ jobs:
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init (Bootstrap)
-        working-directory: ./bootstrap
-        run: terraform init
+        run: terraform -chdir=bootstrap init
 
       - name: Terraform Apply (Create State Bucket)
-        working-directory: ./bootstrap
-        run: terraform apply -auto-approve
+        run: terraform -chdir=bootstrap apply -auto-approve
 
 
   deploy:
@@ -44,19 +43,19 @@ jobs:
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init (Remote Backend)
-        run: terraform init -migrate-state
+        run: terraform -chdir=terraform init -migrate-state
 
       - name: Terraform Plan
-        run: terraform plan
+        run: terraform -chdir=terraform plan
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: terraform -chdir=terraform apply -auto-approve
 
 
   destroy:
@@ -65,22 +64,22 @@ jobs:
     needs: deploy
 
     steps:
-      - name: Wait 60 minutes
-        run: sleep 3600
-
       - name: Checkout repo
         uses: actions/checkout@v4
+
+      - name: Wait 60 minutes
+        run: sleep 3600
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
-        run: terraform init
+        run: terraform -chdir=terraform init
 
       - name: Terraform Destroy
-        run: terraform destroy -auto-approve
+        run: terraform -chdir=terraform destroy -auto-approve
