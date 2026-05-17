@@ -84,10 +84,16 @@ variable "allowed_ports" {
 }
 
 # -----------------------------
-# Auto Delete
+# Auto Destroy Configuration
 # -----------------------------
 variable "enable_auto_delete" {
   description = "Enable VM auto deletion"
   type        = bool
   default     = false
+}
+
+variable "auto_destroy_hours" {
+  description = "Hours before infrastructure destroy"
+  type        = number
+  default     = 1
 }
