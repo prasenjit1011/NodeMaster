@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction } from "express";
+import itemRoutes from "./routes/item.routes";
 
 console.clear();
 console.log('\n\n-: App Started :-');
@@ -16,6 +17,12 @@ process.on('uncaughtException', (err: Error) => {
 // Express App
 // ================================
 const app = express();
+app.use(express.json());
+
+// ================================
+// Item Routes
+// ================================
+app.use('/items', itemRoutes);
 
 // ================================
 // About Route

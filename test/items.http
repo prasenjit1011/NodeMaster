@@ -1,0 +1,45 @@
+### Base URL
+@baseUrl = http://localhost:3000
+
+### ========================================
+### GET ALL ITEMS
+### ========================================
+GET {{baseUrl}}/items
+
+
+### ========================================
+### GET ITEM BY ID
+### ========================================
+GET {{baseUrl}}/items/1
+
+
+### ========================================
+### CREATE ITEM
+### ========================================
+POST {{baseUrl}}/items
+Content-Type: application/json
+
+{
+  "name": "Mobile",
+  "price": 50000,
+  "city": "Kolkata"
+}
+
+
+### ========================================
+### UPDATE ITEM
+### ========================================
+PUT {{baseUrl}}/items/1
+Content-Type: application/json
+
+{
+  "name": "Updated Laptop",
+  "price": 60000,
+  "city": "Delhi"
+}
+
+
+### ========================================
+### DELETE ITEM
+### ========================================
+DELETE {{baseUrl}}/items/1
