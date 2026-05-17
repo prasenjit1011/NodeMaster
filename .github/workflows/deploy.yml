@@ -13,17 +13,11 @@ jobs:
 # 1. BOOTSTRAP JOB
 # =========================
   bootstrap:
-    name: Create GCS Backend Bucket
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -31,20 +25,10 @@ jobs:
       - name: Terraform Init (Bootstrap)
         run: terraform -chdir=bootstrap init
 
-      - name: Import existing backend bucket into state
-        run: |
-          if ! terraform state list google_storage_bucket.tf_state >/dev/null 2>&1; then
-            terraform import google_storage_bucket.tf_state "projects/${{ secrets.GCP_PROJECT_ID }}/buckets/${{ env.TF_VAR_BUCKET_NAME }}"
-          fi
-        env:
-          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
-          TF_VAR_BUCKET_NAME: nodejs-tf-state-unique-12345
-
       - name: Terraform Apply (Bootstrap)
         run: terraform -chdir=bootstrap apply -auto-approve
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
-          TF_VAR_BUCKET_NAME: nodejs-tf-state-unique-12345
 
 
 # =========================
@@ -67,27 +51,14 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init (with backend)
+      - name: Terraform Init
         run: terraform -chdir=terraform init -migrate-state
-
-      - name: Import existing firewall into state
-        run: |
-          if ! terraform state list google_compute_firewall.allow_http >/dev/null 2>&1; then
-            terraform import google_compute_firewall.allow_http "projects/${{ secrets.GCP_PROJECT_ID }}/global/firewalls/${{ env.TF_VAR_FIREWALL_NAME }}"
-          fi
-        env:
-          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
-          TF_VAR_FIREWALL_NAME: nodejs-allow-http
 
       - name: Terraform Plan
         run: terraform -chdir=terraform plan
-        env:
-          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Terraform Apply
         run: terraform -chdir=terraform apply -auto-approve
-        env:
-          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
 
 
 # =========================
