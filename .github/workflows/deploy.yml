@@ -1,6 +1,9 @@
-name: Deploy + Auto Destroy
+name: Deploy Terraform GCP (Node + TS)
 
 on:
+  push:
+    branches:
+      - typescript_main_teraform_gcp   # 👈 your branch
   workflow_dispatch:
 
 jobs:
@@ -10,6 +13,8 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: typescript_main_teraform_gcp   # 👈 important
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -22,13 +27,8 @@ jobs:
       - name: Terraform Init
         run: terraform -chdir=terraform init
 
+      - name: Terraform Plan
+        run: terraform -chdir=terraform plan
+
       - name: Terraform Apply
         run: terraform -chdir=terraform apply -auto-approve
-
-      # ⏳ WAIT 60 MINUTES
-      - name: Wait 60 minutes
-        run: sleep 3600
-
-      # 💥 DESTROY EVERYTHING
-      - name: Terraform Destroy
-        run: terraform -chdir=terraform destroy -auto-approve
