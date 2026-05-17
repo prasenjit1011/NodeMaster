@@ -1,6 +1,7 @@
 # -----------------------------
 # GCP Project Configuration
 # -----------------------------
+
 variable "project_id" {
   description = "Google Cloud Project ID"
   type        = string
@@ -21,6 +22,7 @@ variable "zone" {
 # -----------------------------
 # VM Configuration
 # -----------------------------
+
 variable "vm_name" {
   description = "Name of Compute Engine VM"
   type        = string
@@ -46,24 +48,21 @@ variable "boot_disk_size" {
 }
 
 # -----------------------------
-# GitHub Repository
+# GitHub Repository (optional)
 # -----------------------------
+
 variable "github_repo" {
-  description = "GitHub repository URL"
+  description = "GitHub repository URL (optional)"
   type        = string
+  default     = ""
 }
 
 # -----------------------------
 # Network Configuration
 # -----------------------------
+
 variable "network_name" {
   description = "VPC network name"
-  type        = string
-  default     = "default"
-}
-
-variable "subnetwork_name" {
-  description = "Subnetwork name"
   type        = string
   default     = "default"
 }
@@ -71,29 +70,22 @@ variable "subnetwork_name" {
 # -----------------------------
 # Firewall Configuration
 # -----------------------------
+
 variable "allowed_ports" {
-  description = "List of allowed firewall ports"
-  type        = list(string)
-
-  default = [
-    "22",
-    "80",
-    "443",
-    "3000"
-  ]
+  description = "Firewall allowed ports"
+  type        = list(number)
+  default     = [22, 80, 443, 3000]
 }
 
 # -----------------------------
-# Auto Destroy Configuration
+# Labels (BEST PRACTICE)
 # -----------------------------
-variable "enable_auto_delete" {
-  description = "Enable VM auto deletion"
-  type        = bool
-  default     = false
-}
 
-variable "auto_destroy_hours" {
-  description = "Hours before infrastructure destroy"
-  type        = number
-  default     = 1
+variable "labels" {
+  description = "Resource labels"
+  type        = map(string)
+  default = {
+    env  = "dev"
+    app  = "nodejs"
+  }
 }

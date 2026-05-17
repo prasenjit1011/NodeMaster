@@ -1,50 +1,21 @@
 #!/bin/bash
 
-# ----------------------------------------
-# Update Server
-# ----------------------------------------
-apt update -y
-apt install -y curl git
+echo "Starting VM setup..."
 
-# ----------------------------------------
-# Install Node.js (LTS)
-# ----------------------------------------
-curl -fsSL https://deb.nodesource.com/setup_20.x | bash -
-apt install -y nodejs
+# Example app setup (Node.js)
+sudo apt update -y
+sudo apt install -y nodejs npm
 
-# ----------------------------------------
-# Create Demo App
-# ----------------------------------------
-mkdir -p /home/demoapp
-cd /home/demoapp
+# Go to app directory (if you copy code later)
+cd /home
 
-cat > app.js <<'EOF'
-const http = require('http');
+echo "VM will auto shutdown in 60 minutes..."
 
-const server = http.createServer((req, res) => {
-  if (req.url === '/') {
-    res.end(JSON.stringify({ msg: 'Hello World' }));
-  } else if (req.url === '/about') {
-    res.end(JSON.stringify({ msg: 'About Me' }));
-  } else {
-    res.statusCode = 404;
-    res.end(JSON.stringify({ msg: 'Not Found' }));
-  }
-});
+# Schedule shutdown in 60 minutes
+echo "sudo shutdown -h now" | at now + 60 minutes
 
-server.listen(3000, '0.0.0.0', () => {
-  console.log('Server running on port 3000');
-});
-EOF
+# Optional: cleanup temp files before shutdown
+echo "Cleaning temporary files..."
+rm -rf /tmp/*
 
-# ----------------------------------------
-# Run Node App
-# ----------------------------------------
-nohup node app.js > app.log 2>&1 &
-
-# ----------------------------------------
-# AUTO SHUTDOWN AFTER 1 HOUR
-# ----------------------------------------
-shutdown -h +60
-
-echo "Server will auto shutdown in 60 minutes"
+echo "Startup complete."
