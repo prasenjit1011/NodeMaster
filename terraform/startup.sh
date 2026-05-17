@@ -57,7 +57,8 @@ pm2 delete nodeapp || true
 
 # Start app
 # Change app.js if your entry file is different
-pm2 start app.js --name nodeapp
+# pm2 start app.js --name nodeapp
+pm2 start npm --name nodeapp -- run dev
 
 # Save PM2 process list
 pm2 save
