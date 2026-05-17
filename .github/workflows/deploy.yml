@@ -8,33 +8,9 @@ on:
   workflow_dispatch:
 
 jobs:
-  bootstrap:
-    name: Bootstrap GCS Backend
-    runs-on: ubuntu-latest
-
-    steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
-      - name: Authenticate to GCP
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-
-      - name: Terraform Init (Bootstrap)
-        run: terraform -chdir=bootstrap init
-
-      - name: Terraform Apply (Create State Bucket)
-        run: terraform -chdir=bootstrap apply -auto-approve
-
-
   deploy:
     name: Deploy Infrastructure
     runs-on: ubuntu-latest
-    needs: bootstrap
 
     steps:
       - name: Checkout repo
@@ -48,8 +24,8 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init (Remote Backend)
-        run: terraform -chdir=terraform init -migrate-state
+      - name: Terraform Init
+        run: terraform -chdir=terraform init
 
       - name: Terraform Plan
         run: terraform -chdir=terraform plan
