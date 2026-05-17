@@ -12,23 +12,28 @@ jobs:
 # =========================
 # 1. BOOTSTRAP JOB
 # =========================
-  bootstrap:
-    runs-on: ubuntu-latest
+bootstrap:
+  runs-on: ubuntu-latest
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
 
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
+    - name: Authenticate to GCP
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
-      - name: Terraform Init (Bootstrap)
-        run: terraform -chdir=bootstrap init
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Apply (Bootstrap)
-        run: terraform -chdir=bootstrap apply -auto-approve
-        env:
-          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+    - name: Terraform Init (Bootstrap)
+      run: terraform -chdir=bootstrap init
+
+    - name: Terraform Apply (Bootstrap)
+      run: terraform -chdir=bootstrap apply -auto-approve
+      env:
+        TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
 
 
 # =========================
