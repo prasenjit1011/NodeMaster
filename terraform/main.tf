@@ -28,7 +28,7 @@ resource "google_compute_instance" "nodejs_vm" {
 }
 
 resource "google_compute_firewall" "allow_http" {
-  name    = "nodejs-allow-http"
+  name    = "nodejs-allow-http-${random_id.vm_suffix.hex}"
   network = var.network_name
 
   allow {

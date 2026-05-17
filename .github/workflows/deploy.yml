@@ -62,9 +62,13 @@ jobs:
 
       - name: Terraform Plan
         run: terraform -chdir=terraform plan
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
 
       - name: Terraform Apply
         run: terraform -chdir=terraform apply -auto-approve
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
 
 
 # =========================
@@ -95,3 +99,5 @@ jobs:
 
       - name: Terraform Destroy
         run: terraform -chdir=terraform destroy -auto-approve
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
