@@ -1,21 +1,18 @@
 #!/bin/bash
 
-echo "Starting VM setup..."
+apt update -y
+apt install -y nodejs npm git
 
-# Example app setup (Node.js)
-sudo apt update -y
-sudo apt install -y nodejs npm
-
-# Go to app directory (if you copy code later)
 cd /home
 
-echo "VM will auto shutdown in 60 minutes..."
+# clone your repo (replace URL)
+git clone https://github.com/YOUR_USERNAME/nodejs-app.git app
+cd app
 
-# Schedule shutdown in 60 minutes
-echo "sudo shutdown -h now" | at now + 60 minutes
+npm install
+nohup npm start &
 
-# Optional: cleanup temp files before shutdown
-echo "Cleaning temporary files..."
-rm -rf /tmp/*
+# 🔥 AUTO SHUTDOWN AFTER 60 MINUTES
+sleep 3600
 
-echo "Startup complete."
+shutdown -h now
