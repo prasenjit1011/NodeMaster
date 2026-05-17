@@ -53,7 +53,7 @@ override.tf.json
 .terraform.lock.hcl
 
 # Terraform variable files (may contain secrets)
-*.tfvars
+# *.tfvars
 *.tfvars.json
 
 # =========================================================
