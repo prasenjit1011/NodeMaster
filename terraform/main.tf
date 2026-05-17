@@ -1,13 +1,4 @@
 # -----------------------------------
-# Provider
-# -----------------------------------
-provider "google" {
-  project = var.project_id
-  region  = var.region
-  zone    = var.zone
-}
-
-# -----------------------------------
 # Enable Required APIs
 # -----------------------------------
 resource "google_project_service" "compute" {
@@ -37,11 +28,11 @@ resource "google_compute_firewall" "allow_http" {
 }
 
 # -----------------------------------
-# Startup Script
+# Compute Engine VM
 # -----------------------------------
 resource "google_compute_instance" "nodejs_vm" {
   name         = "nodejs-demo-vm"
-  machine_type = "e2-micro" # Cheapest shared-core VM
+  machine_type = "e2-micro"
   zone         = var.zone
 
   tags = ["http-server"]
@@ -86,7 +77,7 @@ resource "google_compute_instance" "nodejs_vm" {
 }
 
 # -----------------------------------
-# Cloud Scheduler (AUTO DELETE VM)
+# Enable Additional APIs
 # -----------------------------------
 resource "google_project_service" "scheduler_api" {
   service = "cloudscheduler.googleapis.com"
