@@ -1,6 +1,6 @@
 terraform {
   backend "gcs" {
-    bucket = "YOUR_TF_STATE_BUCKET"
-    prefix = "terraform/state"
+    bucket = "nodejs-tf-state-unique-12345"
+    prefix = "state"
   }
 }

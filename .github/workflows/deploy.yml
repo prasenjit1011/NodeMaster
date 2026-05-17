@@ -1,4 +1,4 @@
-name: Terraform GCP Deploy
+name: Terraform GCP Full Deploy
 
 on:
   push:
@@ -8,24 +8,55 @@ on:
   workflow_dispatch:
 
 jobs:
-  deploy:
-    name: Deploy Infrastructure
+
+# =========================
+# 1. BOOTSTRAP JOB
+# =========================
+  bootstrap:
+    name: Create GCS Backend Bucket
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v4
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
-        run: terraform -chdir=terraform init
+      - name: Init Bootstrap
+        run: terraform -chdir=bootstrap init
+
+      - name: Apply Bootstrap (Create Bucket)
+        run: terraform -chdir=bootstrap apply -auto-approve
+
+
+# =========================
+# 2. DEPLOY INFRA
+# =========================
+  deploy:
+    name: Deploy Infrastructure
+    runs-on: ubuntu-latest
+    needs: bootstrap
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init (with backend)
+        run: terraform -chdir=terraform init -migrate-state
 
       - name: Terraform Plan
         run: terraform -chdir=terraform plan
@@ -34,22 +65,25 @@ jobs:
         run: terraform -chdir=terraform apply -auto-approve
 
 
+# =========================
+# 3. AUTO DESTROY AFTER 60 MIN
+# =========================
   destroy:
-    name: Auto Destroy (60 min later)
+    name: Destroy Infrastructure After 60 Min
     runs-on: ubuntu-latest
     needs: deploy
 
     steps:
-      - name: Checkout repo
-        uses: actions/checkout@v4
-
       - name: Wait 60 minutes
         run: sleep 3600
+
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
