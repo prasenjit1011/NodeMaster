@@ -20,10 +20,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check GCP secret availability
+        if: ${{ secrets.GCP_CREDENTIALS == '' }}
+        run: |
+          echo 'GCP_CREDENTIALS is missing or unavailable. Ensure the secret is set in repository secrets and not blocked for fork/Dependabot runs.'
+          exit 1
+
       - name: Authenticate to GCP
+        if: ${{ secrets.GCP_CREDENTIALS != '' }}
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -47,10 +54,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check GCP secret availability
+        if: ${{ secrets.GCP_CREDENTIALS == '' }}
+        run: |
+          echo 'GCP_CREDENTIALS is missing or unavailable. Ensure the secret is set in repository secrets and not blocked for fork/Dependabot runs.'
+          exit 1
+
       - name: Authenticate to GCP
+        if: ${{ secrets.GCP_CREDENTIALS != '' }}
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
@@ -80,10 +94,17 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Check GCP secret availability
+        if: ${{ secrets.GCP_CREDENTIALS == '' }}
+        run: |
+          echo 'GCP_CREDENTIALS is missing or unavailable. Ensure the secret is set in repository secrets and not blocked for fork/Dependabot runs.'
+          exit 1
+
       - name: Authenticate to GCP
+        if: ${{ secrets.GCP_CREDENTIALS != '' }}
         uses: google-github-actions/auth@v2
         with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
