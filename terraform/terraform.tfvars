@@ -1,6 +1,6 @@
 project_id    = "terraform-nodejs"
-region        = "asia-south1"
-zone          = "asia-south1-a"
+region        = "us-central1"
+zone          = "us-central1-a"
 
 vm_name       = "nodejs-vm-2"
 machine_type  = "e2-micro"

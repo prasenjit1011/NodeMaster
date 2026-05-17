@@ -11,3 +11,5 @@ nodemon app.js <br />
 # Ejs Template Engine 
 
 <%= %> <br />
+
+sudo netstat -tulpn | grep 3000

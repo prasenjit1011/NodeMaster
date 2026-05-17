@@ -1,6 +1,6 @@
 variable "project_id" {}
 variable "region" {
-  default = "asia-south1"
+  default = "us-central1"
 }
 
 variable "bucket_name" {

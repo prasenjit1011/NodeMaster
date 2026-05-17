@@ -35,7 +35,7 @@ jobs:
         run: terraform -chdir=bootstrap apply -auto-approve
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
-          TF_VAR_region: asia-south1
+          TF_VAR_region: us-central1
 
   # =========================
   # 2. DEPLOY INFRA
@@ -64,13 +64,13 @@ jobs:
         run: terraform -chdir=terraform plan
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
-          TF_VAR_region: asia-south1
+          TF_VAR_region: us-central1
 
       - name: Terraform Apply
         run: terraform -chdir=terraform apply -auto-approve
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
-          TF_VAR_region: asia-south1
+          TF_VAR_region: us-central1
 
   # =========================
   # 3. AUTO DESTROY
@@ -102,4 +102,4 @@ jobs:
         run: terraform -chdir=terraform destroy -auto-approve
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
-          TF_VAR_region: asia-south1
+          TF_VAR_region: us-central1
