@@ -31,10 +31,20 @@ jobs:
       - name: Terraform Init (Bootstrap)
         run: terraform -chdir=bootstrap init
 
+      - name: Import existing backend bucket into state
+        run: |
+          if ! terraform state list google_storage_bucket.tf_state >/dev/null 2>&1; then
+            terraform import google_storage_bucket.tf_state "projects/${{ secrets.GCP_PROJECT_ID }}/buckets/${{ env.TF_VAR_BUCKET_NAME }}"
+          fi
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_BUCKET_NAME: nodejs-tf-state-unique-12345
+
       - name: Terraform Apply (Bootstrap)
         run: terraform -chdir=bootstrap apply -auto-approve
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_BUCKET_NAME: nodejs-tf-state-unique-12345
 
 
 # =========================
@@ -59,6 +69,15 @@ jobs:
 
       - name: Terraform Init (with backend)
         run: terraform -chdir=terraform init -migrate-state
+
+      - name: Import existing firewall into state
+        run: |
+          if ! terraform state list google_compute_firewall.allow_http >/dev/null 2>&1; then
+            terraform import google_compute_firewall.allow_http "projects/${{ secrets.GCP_PROJECT_ID }}/global/firewalls/${{ env.TF_VAR_FIREWALL_NAME }}"
+          fi
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_FIREWALL_NAME: nodejs-allow-http
 
       - name: Terraform Plan
         run: terraform -chdir=terraform plan

@@ -71,6 +71,12 @@ variable "network_name" {
 # Firewall Configuration
 # -----------------------------
 
+variable "firewall_name" {
+  description = "Firewall resource name"
+  type        = string
+  default     = "nodejs-allow-http"
+}
+
 variable "allowed_ports" {
   description = "Firewall allowed ports"
   type        = list(number)
