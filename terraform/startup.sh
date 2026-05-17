@@ -16,7 +16,7 @@ node -v
 npm -v
 
 # Create app directory
-APP_DIR="/home/nodeapp"
+APP_DIR="/home/$USER/nodeapp"
 
 sudo mkdir -p $APP_DIR
 sudo chown -R $USER:$USER $APP_DIR
@@ -70,6 +70,8 @@ echo "=================================="
 # Change app.js if your entry file is different
 # pm2 start app.js --name nodeapp
 pm2 start npm --name nodeapp -- run dev
+# pm2 start npm --name nodeapp -- start
+# pm2 start dist/main.js --name nodeapp
 
 # Save PM2 process list
 pm2 save
