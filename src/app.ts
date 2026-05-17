@@ -44,7 +44,7 @@ app.use('/', async (req: Request, res: Response, next: NextFunction) => {
         console.log('-: Welcome :-');
         // Test Promise Rejection
         // await Promise.reject(new Error('Promise Rejection Error'));
-        res.status(200).send('-: Welcome :-');
+        res.status(200).send('-: Welcome GCP TeraForm :-');
     }
     catch (err) {
         next(err);

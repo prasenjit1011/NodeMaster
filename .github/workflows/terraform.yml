@@ -3,7 +3,7 @@ name: Terraform GCP Deploy
 on:
   push:
     branches:
-      - main
+      - typescript_main_teraform_gcp
 
 jobs:
   terraform:
