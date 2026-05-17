@@ -28,6 +28,8 @@ echo "Cloning project..."
 # Replace with your GitHub repository 
 git clone https://github.com/prasenjit1011/NodeMaster.git .
 
+git checkout typescript_main_teraform_gcp
+
 echo "Installing dependencies..."
 npm install
 
