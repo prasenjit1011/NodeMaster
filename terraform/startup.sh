@@ -85,7 +85,7 @@ sudo systemctl enable atd
 sudo systemctl start atd
 
 # Schedule shutdown
-echo "sudo shutdown -h now" | at now + 60 minutes
+echo "sudo shutdown -h now" | at now + 10 minutes
 
 echo "Cleaning temporary files..."
 sudo rm -rf /tmp/*
