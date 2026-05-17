@@ -1,96 +1,144 @@
-# Dependencies
+*.json
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+
+# =========================================================
+# Node.js / TypeScript
+# =========================================================
 node_modules/
+dist/
+build/
+coverage/
+.nyc_output/
+
+# Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# Build output
-dist/
-build/
-
-# Environment variables
-.env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Logs
-*.log
-logs/
-
-# Runtime data
-pids
+# Runtime files
+pids/
 *.pid
 *.seed
 *.pid.lock
 
-# Coverage directory used by tools like istanbul
-coverage/
-.nyc_output/
+# =========================================================
+# Environment Variables
+# =========================================================
+.env
+.env.*
+!.env.example
 
-# Dependency directories
-jspm_packages/
+# =========================================================
+# TypeScript
+# =========================================================
+*.tsbuildinfo
 
-# Optional npm cache directory
-.npm
+# =========================================================
+# Terraform
+# =========================================================
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+crash.log
+crash.*.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+.terraform.lock.hcl
 
-# Optional REPL history
-.node_repl_history
+# Terraform variable files (may contain secrets)
+*.tfvars
+*.tfvars.json
 
-# Output of 'npm pack'
-*.tgz
+# =========================================================
+# Google Cloud / AWS / Cloud Keys
+# =========================================================
+*.pem
+*.key
+*.p12
+*.json
 
-# Yarn Integrity file
+# Keep sample credential files
+!sample-credentials.json
+
+# =========================================================
+# Next.js / React / Frontend
+# =========================================================
+.next/
+out/
+.parcel-cache/
+.cache/
+.nuxt/
+.vuepress/dist/
+.svelte-kit/
+
+# =========================================================
+# Package Managers
+# =========================================================
+.npm/
+.pnpm-store/
+.yarn/
+.yarn-cache/
 .yarn-integrity
 
-# dotenv environment variables file
-.env.test
+# =========================================================
+# Testing
+# =========================================================
+jest-results/
+playwright-report/
+test-results/
 
-# parcel-bundler cache (https://parceljs.org/)
-.cache
-.parcel-cache
+# =========================================================
+# Serverless
+# =========================================================
+.serverless/
+.aws-sam/
 
-# next.js build output
-.next
+# =========================================================
+# Database / Local Storage
+# =========================================================
+*.sqlite
+*.sqlite3
 
-# nuxt.js build output
-.nuxt
-
-# vuepress build output
-.vuepress/dist
-
-# Serverless directories
-.serverless
-
-# FuseBox cache
-.fusebox/
-
-# DynamoDB Local files
-.dynamodb/
-
-# TernJS port file
-.tern-port
-
-# Stores VSCode versions used for testing VSCode extensions
-.vscode-test
-
-# OS generated files
-.DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
-Thumbs.db
-
-# IDE files
+# =========================================================
+# IDE / Editor
+# =========================================================
 .vscode/
+.vscode-test/
 .idea/
 *.swp
 *.swo
 *~
 
-# Temporary files
+# =========================================================
+# OS Files
+# =========================================================
+.DS_Store
+.DS_Store?
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# =========================================================
+# Temporary Files
+# =========================================================
+tmp/
+temp/
 *.tmp
 *.temp
+
+# =========================================================
+# Misc
+# =========================================================
+.fusebox/
+.dynamodb/
+.tern-port
+.node_repl_history
+jspm_packages/
+*.tgz

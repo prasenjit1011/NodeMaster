@@ -1,0 +1,77 @@
+name: Terraform GCP Deploy
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  terraform:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      # -----------------------------------
+      # Checkout Repository
+      # -----------------------------------
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # -----------------------------------
+      # Authenticate Google Cloud
+      # -----------------------------------
+      - name: Authenticate GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: '${{ secrets.GCP_CREDENTIALS }}'
+
+      # -----------------------------------
+      # Setup Terraform
+      # -----------------------------------
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      # -----------------------------------
+      # Terraform Init
+      # -----------------------------------
+      - name: Terraform Init
+        run: terraform init
+
+      # -----------------------------------
+      # Terraform Validate
+      # -----------------------------------
+      - name: Terraform Validate
+        run: terraform validate
+
+      # -----------------------------------
+      # Terraform Plan
+      # -----------------------------------
+      - name: Terraform Plan
+        run: terraform plan
+
+      # -----------------------------------
+      # Terraform Apply
+      # -----------------------------------
+      - name: Terraform Apply
+        run: terraform apply -auto-approve
+
+      # -----------------------------------
+      # Show App URL
+      # -----------------------------------
+      - name: Terraform Output
+        run: terraform output
+
+      # -----------------------------------
+      # WAIT 60 MINUTES
+      # -----------------------------------
+      - name: Wait 60 Minutes
+        run: sleep 3600
+
+      # -----------------------------------
+      # AUTO DESTROY EVERYTHING
+      # -----------------------------------
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
