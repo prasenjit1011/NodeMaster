@@ -2,7 +2,7 @@ project_id    = "terraform-nodejs"
 region        = "asia-south1"
 zone          = "asia-south1-a"
 
-vm_name       = "nodejs-vm"
+vm_name       = "nodejs-vm-2"
 machine_type  = "e2-micro"
 
 image          = "debian-cloud/debian-12"
