@@ -55,23 +55,10 @@ sudo npm install -g pm2
 # Stop old process if exists
 pm2 delete nodeapp || true
 
-
-# Kill any process using port 3000
-sudo fuser -k 3000/tcp || true
-
-sleep 3
-
-echo "=================================="
-echo "Starting Node.js application..."
-echo "=================================="
-
-
 # Start app
 # Change app.js if your entry file is different
 # pm2 start app.js --name nodeapp
 pm2 start npm --name nodeapp -- run dev
-# pm2 start npm --name nodeapp -- start
-# pm2 start dist/main.js --name nodeapp
 
 # Save PM2 process list
 pm2 save
