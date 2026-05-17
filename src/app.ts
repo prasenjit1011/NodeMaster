@@ -27,7 +27,7 @@ app.use('/about', (req: Request, res: Response, next: NextFunction) => {
 
         // Test Sync Error
         // throw new Error('About Page Error');
-        res.status(200).send('-: Welcome to About Me Page 918:- '+new Date().toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}))
+        res.status(200).send('-: Welcome to About Me Page :- '+new Date().toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}))
 
     }
     catch (err) {
@@ -44,7 +44,7 @@ app.use('/', async (req: Request, res: Response, next: NextFunction) => {
         console.log('-: Welcome GCP :-');
         // Test Promise Rejection
         // await Promise.reject(new Error('Promise Rejection Error'));
-        res.status(200).send('-: Welcome GCP TeraForm 918:-'+new Date().toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}));
+        res.status(200).send('-: Welcome GCP TeraForm :-'+new Date().toLocaleString('en-IN', {timeZone: 'Asia/Kolkata'}));
     }
     catch (err) {
         next(err);
