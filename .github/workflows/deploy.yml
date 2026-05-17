@@ -31,8 +31,10 @@ jobs:
       - name: Terraform Init (Bootstrap)
         run: terraform -chdir=bootstrap init
 
-      - name: Terraform Apply (Bootstrap Bucket)
+      - name: Terraform Apply (Bootstrap)
         run: terraform -chdir=bootstrap apply -auto-approve
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
 
 
 # =========================
