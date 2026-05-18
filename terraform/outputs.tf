@@ -22,3 +22,13 @@ output "instance_external_ip" {
   description = "External IP of the VM"
   value       = google_compute_instance.nodejs_vm.network_interface[0].access_config[0].nat_ip
 }
+
+output "load_balancer_ip" {
+  description = "External IP address of the GCP HTTP load balancer"
+  value       = google_compute_global_address.lb_ip.address
+}
+
+output "load_balancer_url" {
+  description = "External URL for the HTTP load balancer"
+  value       = "http://${google_compute_global_address.lb_ip.address}"
+}

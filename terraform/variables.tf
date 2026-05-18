@@ -83,6 +83,12 @@ variable "allowed_ports" {
   default     = [22, 80, 443, 3000]
 }
 
+variable "lb_port" {
+  description = "Load balancer listening port"
+  type        = number
+  default     = 80
+}
+
 # -----------------------------
 # Labels (BEST PRACTICE)
 # -----------------------------
