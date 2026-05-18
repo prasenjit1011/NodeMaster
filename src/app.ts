@@ -35,7 +35,7 @@ app.use("/products", productRoutes);
 app.use('/about', (req: Request, res: Response, next: NextFunction) => {
     try {
 
-        console.log('-: Welcome to About Me Page :-');
+        console.log('-: Welcome to About GCP Page :-');
 
         // Test Sync Error
         // throw new Error('About Page Error');
