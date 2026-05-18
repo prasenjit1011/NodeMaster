@@ -13,3 +13,4 @@ nodemon app.js <br />
 <%= %> <br />
 
 sudo netstat -tulpn | grep 3000
+mongodb+srv://myuser:<db_password>@cluster0.hlicuim.mongodb.net/?appName=Cluster0

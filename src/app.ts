@@ -1,4 +1,6 @@
 import express, { Request, Response, NextFunction } from "express";
+import { connectDB } from "./config/db";
+import productRoutes from "./routes/product.routes";
 import itemRoutes from "./routes/item.routes";
 
 console.clear();
@@ -20,9 +22,10 @@ const app = express();
 app.use(express.json());
 
 // ================================
-// Item Routes
+// Item and Product Routes
 // ================================
 app.use('/items', itemRoutes);
+app.use("/products", productRoutes);
 
 // ================================
 // About Route
@@ -85,10 +88,22 @@ app.use((err: any, req: Request, res: Response, next: NextFunction) => {
 // ================================
 // Start Server
 // ================================
-const server = app.listen(3000, '0.0.0.0', () => {
-    console.log('-: App Running :-');
-    console.log(`Server running on port 3000`);
-});
+const startServer = async () => {
+    await connectDB(); // 🔥 MongoDB connects first
+
+    const server = app.listen(3000, "0.0.0.0", () => {
+        console.log("-: App Running :-");
+        console.log("Server running on port 3000");
+    });
+
+    // Unhandled Promise Rejection
+    process.on("unhandledRejection", (reason: any) => {
+        console.error("Unhandled Promise Rejection:", reason);
+        server.close(() => process.exit(1));
+    });
+};
+
+startServer();
 
 
 // ================================
