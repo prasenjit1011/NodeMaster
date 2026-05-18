@@ -23,6 +23,9 @@ sudo chown -R $USER:$USER $APP_DIR
 
 cd $APP_DIR
 
+echo "Setting environment variables..."
+export MONGO_URI="${MONGO_URI}"
+
 echo "Cloning project..."
 
 # Replace with your GitHub repository 
