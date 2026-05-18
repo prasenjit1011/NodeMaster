@@ -24,7 +24,11 @@ sudo chown -R $USER:$USER $APP_DIR
 cd $APP_DIR
 
 echo "Setting environment variables..."
-export MONGO_URI="${MONGO_URI}"
+if [ -z "${mongo_uri}" ]; then
+  echo "ERROR: terraform variable mongo_uri is empty or not provided." >&2
+  exit 1
+fi
+export MONGO_URI="${mongo_uri}"
 
 echo "Cloning project..."
 
