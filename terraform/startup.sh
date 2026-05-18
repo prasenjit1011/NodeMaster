@@ -2,121 +2,121 @@
 
 set -e
 
-echo "Starting VM setup..."
+echo "============================"
+echo "Starting VM setup"
+echo "============================"
 
-# =========================
-# Update system
-# =========================
+# -------------------------
+# Install dependencies
+# -------------------------
 sudo apt update -y
 
-# =========================
-# Install Node.js + Git
-# =========================
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs git
 
-node -v
-npm -v
-
-# =========================
-# App directory setup
-# =========================
+# -------------------------
+# App directory
+# -------------------------
 APP_DIR="/home/$USER/nodeapp"
-
-sudo mkdir -p $APP_DIR
-sudo chown -R $USER:$USER $APP_DIR
-
+mkdir -p $APP_DIR
 cd $APP_DIR
 
-# =========================
-# Fetch Mongo URI from GCP metadata
-# =========================
-echo "Fetching MONGO_URI from metadata..."
+# -------------------------
+# Fetch MongoDB URI
+# -------------------------
+echo "[STEP] Fetching MONGO_URI from GCP metadata..."
 
 mongo_uri="$(curl -fsS \
   -H 'Metadata-Flavor: Google' \
   http://metadata.google.internal/computeMetadata/v1/instance/attributes/MONGO_URI || true)"
 
+# -------------------------
+# HARD FAIL if missing
+# -------------------------
 if [ -z "$mongo_uri" ]; then
-  echo "ERROR: MONGO_URI not found in metadata"
+  echo "❌ MONGO_URI NOT FOUND - STOPPING DEPLOYMENT"
+  echo "❌ Deployment failed due to missing MongoDB URI" > /home/$USER/startup_error.log
   exit 1
 fi
 
-echo "MONGO_URI fetched successfully"
+echo "✅ MONGO_URI FOUND (hidden for security)"
 
-# =========================
-# Persist environment globally (IMPORTANT)
-# =========================
+# -------------------------
+# Persist env globally
+# -------------------------
 echo "export MONGO_URI='$mongo_uri'" | sudo tee -a /etc/environment
 export MONGO_URI="$mongo_uri"
 
-# Debug log
-env | sort > /home/$USER/env.log
+# Log success (THIS is your “GitHub/VM log”)
+echo "✅ MongoDB URI successfully injected at $(date)" >> /home/$USER/startup.log
 
-# =========================
+# -------------------------
 # Clone repo
-# =========================
-echo "Cloning project..."
-
+# -------------------------
 git clone https://github.com/prasenjit1011/NodeMaster.git .
-
 git checkout typescript_main_teraform_gcp
 
-# =========================
+# -------------------------
 # Install dependencies
-# =========================
-echo "Installing dependencies..."
+# -------------------------
 npm install
 
-# =========================
-# Build (if exists)
-# =========================
 if npm run | grep -q "build"; then
-  echo "Running build..."
   npm run build
 fi
 
-# =========================
-# Install PM2
-# =========================
+# -------------------------
+# PM2 setup
+# -------------------------
 sudo npm install -g pm2
 
 pm2 delete nodeapp || true
 
-# =========================
-# Start application (STABLE WAY)
-# =========================
-echo "Starting Node.js application..."
+# -------------------------
+# Start app (IMPORTANT FIX)
+# -------------------------
+echo "Starting application with PM2..."
 
 pm2 start dist/app.js \
   --name nodeapp \
-  --update-env
+  --update-env \
+  --env production
 
 pm2 save
 
-# Startup on reboot
 pm2 startup systemd -u $USER --hp /home/$USER
 
-echo "Application started successfully"
-
-# =========================
-# Check running status
-# =========================
+# -------------------------
+# Debug checks
+# -------------------------
 sleep 5
-sudo ss -tulnp | grep node || true
 
-# =========================
-# Auto shutdown setup
-# =========================
-echo "VM will auto shutdown in 60 minutes..."
+echo "Checking environment inside VM:"
+printenv | grep MONGO || true
 
+echo "Checking running processes:"
+pm2 list || true
+
+echo "Checking ports:"
+sudo ss -tulnp || true
+
+# -------------------------
+# Logs info
+# -------------------------
+echo "===================================="
+echo "Logs available at:"
+echo "1. PM2 logs → pm2 logs nodeapp"
+echo "2. File log → /home/$USER/startup.log"
+echo "3. Error log → /home/$USER/startup_error.log"
+echo "===================================="
+
+# -------------------------
+# Auto shutdown
+# -------------------------
 sudo apt install -y at
 sudo systemctl enable atd
 sudo systemctl start atd
 
 echo "sudo shutdown -h now" | at now + 60 minutes
-
-# Cleanup
-sudo rm -rf /tmp/*
 
 echo "Startup complete."
