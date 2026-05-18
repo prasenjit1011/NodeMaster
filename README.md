@@ -14,3 +14,10 @@ nodemon app.js <br />
 
 sudo netstat -tulpn | grep 3000
 mongodb+srv://myuser:<db_password>@cluster0.hlicuim.mongodb.net/?appName=Cluster0
+
+
+cd /home/nodeapp/
+printenv | grep MONGO
+cat /etc/environment | grep MONGO_URI
+sudo netstat -tulpn | grep 3000
+npm run dev

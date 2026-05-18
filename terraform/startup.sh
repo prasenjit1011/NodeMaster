@@ -44,7 +44,7 @@ echo "✅ MONGO_URI FOUND (hidden for security)"
 # -------------------------
 # Persist env globally
 # -------------------------
-echo "export MONGO_URI='$mongo_uri'" | sudo tee -a /etc/environment
+echo "MONGO_URI='$mongo_uri'" | sudo tee -a /etc/environment
 export MONGO_URI="$mongo_uri"
 
 # Log success (THIS is your “GitHub/VM log”)
@@ -55,6 +55,11 @@ echo "✅ MongoDB URI successfully injected at $(date)" >> /home/$USER/startup.l
 # -------------------------
 git clone https://github.com/prasenjit1011/NodeMaster.git .
 git checkout typescript_main_teraform_gcp
+
+# -------------------------
+# Create .env file for app runtime
+# -------------------------
+echo "MONGO_URI=\"${mongo_uri}\"" > .env
 
 # -------------------------
 # Install dependencies
@@ -85,12 +90,29 @@ sudo npm install -g pm2
 pm2 delete nodeapp || true
 
 # -------------------------
-# Start app using npm run dev
+# Create PM2 ecosystem config with MONGO_URI
 # -------------------------
-echo "Starting application with PM2 using npm run dev..."
+echo "Creating PM2 ecosystem config..."
+cat > ecosystem.config.js <<EOF
+module.exports = {
+  apps: [
+    {
+      name: "nodeapp",
+      script: "npm",
+      args: "run dev",
+      env: {
+        MONGO_URI: "${mongo_uri}"
+      }
+    }
+  ]
+};
+EOF
 
-pm2 start "npm run dev" \
-  --name nodeapp
+# -------------------------
+# Start app using PM2 ecosystem config
+# -------------------------
+echo "Starting application with PM2 using ecosystem.config.js..."
+pm2 start ecosystem.config.js --only nodeapp
 
 pm2 save
 
