@@ -6,7 +6,7 @@ import { connectDB } from "./config/db";
 import productRoutes from "./routes/product.routes";
 import itemRoutes from "./routes/item.routes";
 
-console.clear();
+// console.clear();
 console.log("\n\n-: App Started :-");
 // ================================
 // Uncaught Exception

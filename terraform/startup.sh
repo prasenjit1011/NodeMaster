@@ -24,11 +24,16 @@ sudo chown -R $USER:$USER $APP_DIR
 cd $APP_DIR
 
 echo "Setting environment variables..."
+mongo_uri="$(curl -fsS -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/MONGO_URI || true)"
+
+echo "MONGO_URI from metadata: ${mongo_uri:+PRESENT}${mongo_uri:+' (hidden)'}"
 if [ -z "${mongo_uri}" ]; then
-  echo "ERROR: terraform variable mongo_uri is empty or not provided." >&2
+  echo "ERROR: MONGO_URI not found in instance metadata." >&2
   exit 1
 fi
 export MONGO_URI="${mongo_uri}"
+echo "Saving environment dump to /home/$USER/env.log"
+env | sort > /home/$USER/env.log
 
 echo "Cloning project..."
 
@@ -65,7 +70,7 @@ pm2 delete nodeapp || true
 # Start app
 # Change app.js if your entry file is different
 # pm2 start app.js --name nodeapp
-pm2 start npm --name nodeapp -- run dev
+env MONGO_URI="${mongo_uri}" pm2 start npm --name nodeapp -- run dev
 
 # Save PM2 process list
 pm2 save

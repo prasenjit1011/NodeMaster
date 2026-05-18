@@ -20,9 +20,11 @@ resource "google_compute_instance" "nodejs_vm" {
     access_config {}
   }
 
-  metadata_startup_script = templatefile("${path.module}/startup.sh", {
-    mongo_uri = var.mongo_uri
-  })
+  metadata = {
+    MONGO_URI = var.mongo_uri
+  }
+
+  metadata_startup_script = file("${path.module}/startup.sh")
 
   tags = ["nodejs"]
 
