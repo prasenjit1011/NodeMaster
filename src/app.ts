@@ -1,11 +1,13 @@
+import dotenv from "dotenv";
+dotenv.config(); // MUST be first
+
 import express, { Request, Response, NextFunction } from "express";
 import { connectDB } from "./config/db";
 import productRoutes from "./routes/product.routes";
 import itemRoutes from "./routes/item.routes";
 
 console.clear();
-console.log('\n\n-: App Started :-');
-
+console.log("\n\n-: App Started :-");
 // ================================
 // Uncaught Exception
 // ================================

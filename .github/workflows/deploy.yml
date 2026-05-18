@@ -36,7 +36,7 @@ jobs:
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_region: us-central1
-          TF_VAR_mongo_uri: ${{ secrets.MONGOURI_DEMODB }}
+          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
 
   # =========================
   # 2. DEPLOY INFRA
@@ -66,14 +66,14 @@ jobs:
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_region: us-central1
-          TF_VAR_mongo_uri: ${{ secrets.MONGOURI_DEMODB }}
+          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
 
       - name: Terraform Apply
         run: terraform -chdir=terraform apply -auto-approve
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_region: us-central1
-          TF_VAR_mongo_uri: ${{ secrets.MONGOURI_DEMODB }}
+          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
 
   # =========================
   # 3. AUTO DESTROY
@@ -106,4 +106,4 @@ jobs:
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_region: us-central1
-          TF_VAR_mongo_uri: ${{ secrets.MONGOURI_DEMODB }}
+          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
