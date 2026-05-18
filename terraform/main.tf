@@ -91,10 +91,11 @@ resource "google_compute_url_map" "nodejs_url_map" {
 resource "google_compute_target_http_proxy" "nodejs_proxy" {
   name    = "${var.project_id}-http-proxy"
   url_map = google_compute_url_map.nodejs_url_map.self_link
+}
+
 resource "google_compute_global_address" "lb_ip" {
   name = "${var.project_id}-lb-ip"
 }
-
 resource "google_compute_global_forwarding_rule" "http" {
   name                  = "${var.project_id}-http-forwarding-rule"
   target                = google_compute_target_http_proxy.nodejs_proxy.self_link
