@@ -18,6 +18,7 @@ sudo apt install -y nodejs git
 # App directory
 # -------------------------
 APP_DIR="/home/$USER/nodeapp"
+
 mkdir -p $APP_DIR
 cd $APP_DIR
 
@@ -44,55 +45,59 @@ echo "✅ MONGO_URI FOUND (hidden for security)"
 # -------------------------
 # Persist env globally
 # -------------------------
+sudo sed -i '/^MONGO_URI=/d' /etc/environment || true
 echo "MONGO_URI='$mongo_uri'" | sudo tee -a /etc/environment
+
 export MONGO_URI="$mongo_uri"
 
-# Log success (THIS is your “GitHub/VM log”)
 echo "✅ MongoDB URI successfully injected at $(date)" >> /home/$USER/startup.log
+
+# -------------------------
+# Install PM2
+# -------------------------
+sudo npm install -g pm2
 
 # -------------------------
 # Clone repo
 # -------------------------
-git clone https://github.com/prasenjit1011/NodeMaster.git .
+if [ ! -d ".git" ]; then
+  git clone https://github.com/prasenjit1011/NodeMaster.git .
+else
+  git fetch origin
+fi
+
 git checkout typescript_main_teraform_gcp
+git pull origin typescript_main_teraform_gcp
 
 # -------------------------
-# Create .env file for app runtime
+# Create .env
 # -------------------------
-echo "MONGO_URI=\"${mongo_uri}\"" > .env
+cat > .env <<EOF
+MONGO_URI="${mongo_uri}"
+EOF
 
 # -------------------------
 # Install dependencies
 # -------------------------
 npm install
 
+# -------------------------
+# Build if available
+# -------------------------
 if npm run | grep -q "build"; then
   npm run build
 fi
 
 # -------------------------
-# PM2 setup
+# Stop existing PM2 app
 # -------------------------
-sudo npm install -g pm2
-
 pm2 delete nodeapp || true
 
 # -------------------------
-# Start app (IMPORTANT FIX)
-# -------------------------
-echo "Starting application with PM2..."
-
-# -------------------------
-# PM2 setup
-# -------------------------
-sudo npm install -g pm2
-
-pm2 delete nodeapp || true
-
-# -------------------------
-# Create PM2 ecosystem config with MONGO_URI
+# Create PM2 ecosystem file
 # -------------------------
 echo "Creating PM2 ecosystem config..."
+
 cat > ecosystem.config.js <<EOF
 module.exports = {
   apps: [
@@ -100,7 +105,12 @@ module.exports = {
       name: "nodeapp",
       script: "npm",
       args: "run dev",
+      cwd: "$APP_DIR",
+      autorestart: true,
+      watch: false,
+      max_memory_restart: "500M",
       env: {
+        NODE_ENV: "production",
         MONGO_URI: "${mongo_uri}"
       }
     }
@@ -109,28 +119,53 @@ module.exports = {
 EOF
 
 # -------------------------
-# Start app using PM2 ecosystem config
+# Start app
 # -------------------------
-echo "Starting application with PM2 using ecosystem.config.js..."
+echo "Starting application with PM2..."
+
 pm2 start ecosystem.config.js --only nodeapp
+
+# -------------------------
+# Enable PM2 auto start after VM reboot
+# -------------------------
+echo "Enabling PM2 startup service..."
 
 pm2 save
 
-pm2 startup systemd -u $USER --hp /home/$USER
+STARTUP_CMD=$(pm2 startup systemd -u $USER --hp /home/$USER | grep sudo)
+
+eval $STARTUP_CMD
+
+pm2 save
 
 # -------------------------
 # Debug checks
 # -------------------------
 sleep 5
 
-echo "Checking environment inside VM:"
-printenv | grep MONGO || true
+echo "===================================="
+echo "PM2 STATUS"
+echo "===================================="
 
-echo "Checking running processes:"
 pm2 list || true
 
-echo "Checking ports:"
+echo "===================================="
+echo "PORT STATUS"
+echo "===================================="
+
 sudo ss -tulnp || true
+
+echo "===================================="
+echo "ENV CHECK"
+echo "===================================="
+
+printenv | grep MONGO || true
+
+echo "===================================="
+echo "SYSTEMD STATUS"
+echo "===================================="
+
+systemctl status pm2-$USER --no-pager || true
 
 # -------------------------
 # Logs info
@@ -138,17 +173,24 @@ sudo ss -tulnp || true
 echo "===================================="
 echo "Logs available at:"
 echo "1. PM2 logs → pm2 logs nodeapp"
-echo "2. File log → /home/$USER/startup.log"
+echo "2. Startup log → /home/$USER/startup.log"
 echo "3. Error log → /home/$USER/startup_error.log"
 echo "===================================="
 
 # -------------------------
-# Auto shutdown
+# Install auto shutdown scheduler
 # -------------------------
 sudo apt install -y at
+
 sudo systemctl enable atd
 sudo systemctl start atd
 
+# -------------------------
+# Auto shutdown after 60 mins
+# -------------------------
 echo "sudo shutdown -h now" | at now + 60 minutes
 
+echo "===================================="
 echo "Startup complete."
+echo "Application will auto restart after VM reboot."
+echo "===================================="
