@@ -1,8 +1,14 @@
+# -------------------------
+# VPC Network
+# -------------------------
 resource "google_compute_network" "vpc" {
   name                    = "${var.project_id}-vpc"
   auto_create_subnetworks = true
 }
 
+# -------------------------
+# Firewall Rule
+# -------------------------
 resource "google_compute_firewall" "allow_http" {
   name    = "${var.project_id}-allow-http"
   network = google_compute_network.vpc.self_link
@@ -17,18 +23,16 @@ resource "google_compute_firewall" "allow_http" {
 }
 
 # -------------------------
-# Instance Template
+# Instance Template (FIXED)
 # -------------------------
 resource "google_compute_instance_template" "nodejs_template" {
   name         = "${var.vm_name}-template"
   machine_type = var.machine_type
 
   disk {
-    boot = true
-    initialize_params {
-      image = var.image
-      size  = var.boot_disk_size
-    }
+    boot         = true
+    auto_delete  = true
+    source_image = var.image
   }
 
   network_interface {
