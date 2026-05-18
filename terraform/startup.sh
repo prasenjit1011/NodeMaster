@@ -4,18 +4,23 @@ set -e
 
 echo "Starting VM setup..."
 
-# Update packages
+# =========================
+# Update system
+# =========================
 sudo apt update -y
 
-# Install Node.js 20 LTS
+# =========================
+# Install Node.js + Git
+# =========================
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs git
 
-# Verify installation
 node -v
 npm -v
 
-# Create app directory
+# =========================
+# App directory setup
+# =========================
 APP_DIR="/home/$USER/nodeapp"
 
 sudo mkdir -p $APP_DIR
@@ -23,84 +28,95 @@ sudo chown -R $USER:$USER $APP_DIR
 
 cd $APP_DIR
 
-echo "Setting environment variables..."
-mongo_uri="$(curl -fsS -H 'Metadata-Flavor: Google' http://metadata.google.internal/computeMetadata/v1/instance/attributes/MONGO_URI || true)"
+# =========================
+# Fetch Mongo URI from GCP metadata
+# =========================
+echo "Fetching MONGO_URI from metadata..."
 
-echo "MONGO_URI from metadata: ${mongo_uri:+PRESENT}${mongo_uri:+' (hidden)'}"
-if [ -z "${mongo_uri}" ]; then
-  echo "ERROR: MONGO_URI not found in instance metadata." >&2
+mongo_uri="$(curl -fsS \
+  -H 'Metadata-Flavor: Google' \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/MONGO_URI || true)"
+
+if [ -z "$mongo_uri" ]; then
+  echo "ERROR: MONGO_URI not found in metadata"
   exit 1
 fi
-export MONGO_URI="${mongo_uri}"
-echo "Saving environment dump to /home/$USER/env.log"
+
+echo "MONGO_URI fetched successfully"
+
+# =========================
+# Persist environment globally (IMPORTANT)
+# =========================
+echo "export MONGO_URI='$mongo_uri'" | sudo tee -a /etc/environment
+export MONGO_URI="$mongo_uri"
+
+# Debug log
 env | sort > /home/$USER/env.log
 
+# =========================
+# Clone repo
+# =========================
 echo "Cloning project..."
 
-# Replace with your GitHub repository 
 git clone https://github.com/prasenjit1011/NodeMaster.git .
 
 git checkout typescript_main_teraform_gcp
 
+# =========================
+# Install dependencies
+# =========================
 echo "Installing dependencies..."
 npm install
 
-echo "Checking application..."
-
-# Verify package.json exists
-if [ ! -f package.json ]; then
-  echo "package.json not found!"
-  exit 1
-fi
-
-# Optional build step
+# =========================
+# Build (if exists)
+# =========================
 if npm run | grep -q "build"; then
   echo "Running build..."
   npm run build
 fi
 
-echo "Starting Node.js application..."
-
-# Install PM2 process manager
+# =========================
+# Install PM2
+# =========================
 sudo npm install -g pm2
 
-# Stop old process if exists
 pm2 delete nodeapp || true
 
-# Start app
-# Change app.js if your entry file is different
-# pm2 start app.js --name nodeapp
-export MONGO_URI="${mongo_uri}"
-pm2 start npx --name nodeapp -- ts-node-dev src/app.ts --update-env
+# =========================
+# Start application (STABLE WAY)
+# =========================
+echo "Starting Node.js application..."
 
-# Save PM2 process list
+pm2 start dist/app.js \
+  --name nodeapp \
+  --update-env
+
 pm2 save
 
-# Setup PM2 startup on reboot
+# Startup on reboot
 pm2 startup systemd -u $USER --hp /home/$USER
 
-echo "Application started."
+echo "Application started successfully"
 
-# Check if app is listening
+# =========================
+# Check running status
+# =========================
 sleep 5
-
-echo "Running port check..."
-
 sudo ss -tulnp | grep node || true
 
+# =========================
+# Auto shutdown setup
+# =========================
 echo "VM will auto shutdown in 60 minutes..."
 
-# Install at if not installed
 sudo apt install -y at
-
-# Enable atd service
 sudo systemctl enable atd
 sudo systemctl start atd
 
-# Schedule shutdown
-echo "sudo shutdown -h now" | at now + 5 minutes
+echo "sudo shutdown -h now" | at now + 60 minutes
 
-echo "Cleaning temporary files..."
+# Cleanup
 sudo rm -rf /tmp/*
 
 echo "Startup complete."
