@@ -3,7 +3,7 @@ name: Terraform GCP Full Deploy
 on:
   push:
     branches:
-      - main
+      - typescript_main_teraform_gcp
 
   workflow_dispatch:
 
