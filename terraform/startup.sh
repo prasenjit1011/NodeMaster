@@ -24,7 +24,7 @@ sudo chown -R $USER:$USER $APP_DIR
 cd $APP_DIR
 
 echo "Setting environment variables..."
-export MONGO_URI="${MONGO_URI}"
+export MONGOURI_DEMODB="${MONGOURI_DEMODB}"
 
 echo "Cloning project..."
 

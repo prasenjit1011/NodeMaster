@@ -2,10 +2,10 @@ import mongoose from "mongoose";
 
 export const connectDB = async () => {
     try {
-        const mongoURI = process.env.MONGO_URI;
+        const mongoURI = process.env.MONGOURI_DEMODB;
 
         if (!mongoURI) {
-            throw new Error("MONGO_URI is not defined in environment variables");
+            throw new Error("MONGOURI_DEMODB is not defined in environment variables");
         }
 
         await mongoose.connect(mongoURI);
