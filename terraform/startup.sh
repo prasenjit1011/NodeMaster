@@ -70,7 +70,8 @@ pm2 delete nodeapp || true
 # Start app
 # Change app.js if your entry file is different
 # pm2 start app.js --name nodeapp
-env MONGO_URI="${mongo_uri}" pm2 start npm --name nodeapp -- run dev
+export MONGO_URI="${mongo_uri}"
+pm2 start npx --name nodeapp -- ts-node-dev src/app.ts --update-env
 
 # Save PM2 process list
 pm2 save
