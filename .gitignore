@@ -63,6 +63,7 @@ override.tf.json
 *.key
 *.p12
 *.json
+!items.json
 
 # Keep sample credential files
 !sample-credentials.json

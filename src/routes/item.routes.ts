@@ -4,8 +4,8 @@ import path from "path";
 
 const router = express.Router();
 
-const itemsFilePath = path.join(__dirname, "../../data/items.json");
-// const itemsFilePath = path.join(process.cwd(), "data", "items.json");
+// const itemsFilePath = path.join(__dirname, "items.json");
+const itemsFilePath = path.join(process.cwd(), "data", "items.json");
 
 // ================================
 // Helper Functions

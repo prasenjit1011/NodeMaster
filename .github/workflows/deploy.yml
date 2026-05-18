@@ -81,8 +81,8 @@ jobs:
     needs: deploy
 
     steps:
-      - name: Wait 10 minutes
-        run: sleep 600
+      - name: Wait 5 minutes
+        run: sleep 300
 
       - name: Checkout code
         uses: actions/checkout@v4
