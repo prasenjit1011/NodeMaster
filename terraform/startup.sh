@@ -1,391 +1,138 @@
 #!/bin/bash
 
-set -Eeuo pipefail
+set -e
 
-# =========================================================
-# Production Startup Script for GCP VM
-# Auto deploy Node.js app using Terraform metadata
-# =========================================================
+echo "============================"
+echo "Starting VM setup"
+echo "============================"
 
-exec > >(tee -a /var/log/startup-script.log) 2>&1
+# -------------------------
+# Install dependencies
+# -------------------------
+sudo apt update -y
 
-echo "=================================================="
-echo "🚀 GCP VM STARTUP SCRIPT"
-echo "Started at: $(date)"
-echo "=================================================="
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs git
 
-# =========================================================
-# Variables
-# =========================================================
+# -------------------------
+# App directory
+# -------------------------
+APP_DIR="/home/$USER/nodeapp"
+mkdir -p $APP_DIR
+cd $APP_DIR
 
-APP_NAME="nodeapp"
-APP_USER="$(getent passwd 1000 | cut -d: -f1 || echo ubuntu)"
-APP_HOME="/home/${APP_USER}"
-APP_DIR="${APP_HOME}/${APP_NAME}"
+# -------------------------
+# Fetch MongoDB URI
+# -------------------------
+echo "[STEP] Fetching MONGO_URI from GCP metadata..."
 
-REPO_URL="https://github.com/prasenjit1011/NodeMaster.git"
-BRANCH="typescript_main_teraform_gcp"
+mongo_uri="$(curl -fsS \
+  -H 'Metadata-Flavor: Google' \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/MONGO_URI || true)"
 
-NODE_VERSION="20"
-
-# =========================================================
-# Helper Functions
-# =========================================================
-
-log() {
-  echo "[INFO] $1"
-}
-
-error_exit() {
-  echo "[ERROR] $1"
+# -------------------------
+# HARD FAIL if missing
+# -------------------------
+if [ -z "$mongo_uri" ]; then
+  echo "❌ MONGO_URI NOT FOUND - STOPPING DEPLOYMENT"
+  echo "❌ Deployment failed due to missing MongoDB URI" > /home/$USER/startup_error.log
   exit 1
-}
-
-# =========================================================
-# Wait for internet
-# =========================================================
-
-log "Waiting for internet connectivity..."
-
-for i in {1..30}; do
-  if ping -c 1 google.com >/dev/null 2>&1; then
-    log "Internet connection established"
-    break
-  fi
-
-  sleep 5
-done
-
-# =========================================================
-# System Update
-# =========================================================
-
-log "Updating packages..."
-
-export DEBIAN_FRONTEND=noninteractive
-
-apt-get update -y
-apt-get upgrade -y
-
-# =========================================================
-# Install Required Packages
-# =========================================================
-
-log "Installing required packages..."
-
-apt-get install -y \
-  curl \
-  git \
-  unzip \
-  build-essential \
-  software-properties-common \
-  apt-transport-https \
-  ca-certificates \
-  gnupg \
-  lsb-release \
-  jq \
-  nginx \
-  ufw \
-  at
-
-# =========================================================
-# Install Node.js 20
-# =========================================================
-
-log "Installing Node.js ${NODE_VERSION}..."
-
-curl -fsSL https://deb.nodesource.com/setup_${NODE_VERSION}.x | bash -
-
-apt-get install -y nodejs
-
-node -v
-npm -v
-
-# =========================================================
-# Install PM2
-# =========================================================
-
-log "Installing PM2..."
-
-npm install -g pm2
-
-pm2 install pm2-logrotate
-
-pm2 set pm2-logrotate:max_size 10M
-pm2 set pm2-logrotate:retain 5
-pm2 set pm2-logrotate:compress true
-
-# =========================================================
-# Create Application Directory
-# =========================================================
-
-log "Preparing application directory..."
-
-mkdir -p "${APP_DIR}"
-
-chown -R "${APP_USER}:${APP_USER}" "${APP_HOME}"
-
-# =========================================================
-# Fetch Metadata Variables
-# =========================================================
-
-log "Fetching metadata variables..."
-
-METADATA_URL="http://metadata.google.internal/computeMetadata/v1/instance/attributes"
-HEADER="Metadata-Flavor: Google"
-
-fetch_metadata() {
-  curl -fsS -H "${HEADER}" "${METADATA_URL}/$1" || true
-}
-
-MONGO_URI="$(fetch_metadata MONGO_URI)"
-PORT="$(fetch_metadata PORT)"
-NODE_ENV="$(fetch_metadata NODE_ENV)"
-
-# Defaults
-PORT="${PORT:-3000}"
-NODE_ENV="${NODE_ENV:-production}"
-
-# =========================================================
-# Validate Required Variables
-# =========================================================
-
-if [[ -z "${MONGO_URI}" ]]; then
-  error_exit "MONGO_URI metadata not found"
 fi
 
-log "Environment variables loaded successfully"
+echo "✅ MONGO_URI FOUND (hidden for security)"
 
-# =========================================================
-# Create .env File
-# =========================================================
+# -------------------------
+# Persist env globally
+# -------------------------
+echo "export MONGO_URI='$mongo_uri'" | sudo tee -a /etc/environment
+export MONGO_URI="$mongo_uri"
 
-log "Creating environment file..."
+# Log success (THIS is your “GitHub/VM log”)
+echo "✅ MongoDB URI successfully injected at $(date)" >> /home/$USER/startup.log
 
-cat > "${APP_DIR}/.env" <<EOF
-NODE_ENV=${NODE_ENV}
-PORT=${PORT}
-MONGO_URI=${MONGO_URI}
-EOF
+# -------------------------
+# Clone repo
+# -------------------------
+git clone https://github.com/prasenjit1011/NodeMaster.git .
+git checkout typescript_main_teraform_gcp
 
-chown "${APP_USER}:${APP_USER}" "${APP_DIR}/.env"
-chmod 600 "${APP_DIR}/.env"
+# -------------------------
+# Install dependencies
+# -------------------------
+npm install
 
-# =========================================================
-# Clone Repository
-# =========================================================
-
-log "Cloning repository..."
-
-if [[ -d "${APP_DIR}/.git" ]]; then
-  log "Repository exists. Pulling latest changes..."
-
-  sudo -u "${APP_USER}" git -C "${APP_DIR}" fetch origin
-  sudo -u "${APP_USER}" git -C "${APP_DIR}" reset --hard origin/${BRANCH}
-else
-  rm -rf "${APP_DIR:?}"/*
-
-  sudo -u "${APP_USER}" git clone \
-    --branch "${BRANCH}" \
-    "${REPO_URL}" \
-    "${APP_DIR}"
+if npm run | grep -q "build"; then
+  npm run build
 fi
 
-cd "${APP_DIR}"
+# -------------------------
+# PM2 setup
+# -------------------------
+sudo npm install -g pm2
 
-# =========================================================
-# Install Dependencies
-# =========================================================
+pm2 delete nodeapp || true
 
-log "Installing npm dependencies..."
+# -------------------------
+# Start app (IMPORTANT FIX)
+# -------------------------
+echo "Starting application with PM2..."
 
-sudo -u "${APP_USER}" npm ci
+# pm2 start dist/app.js \
+#   --name nodeapp \
+#   --update-env \
+#   --env production
 
-# =========================================================
-# Build Application
-# =========================================================
 
-if sudo -u "${APP_USER}" npm run | grep -q "build"; then
-  log "Building application..."
+# -------------------------
+# PM2 setup
+# -------------------------
+sudo npm install -g pm2
 
-  sudo -u "${APP_USER}" npm run build
-fi
+pm2 delete nodeapp || true
 
-# =========================================================
-# Detect Entry File
-# =========================================================
+# -------------------------
+# Start app using npm run dev
+# -------------------------
+echo "Starting application with PM2 using npm run dev..."
 
-log "Detecting application entry point..."
+pm2 start "npm run dev" \
+  --name nodeapp
 
-ENTRY_FILE=""
+pm2 save
 
-if [[ -f "dist/app.js" ]]; then
-  ENTRY_FILE="dist/app.js"
-elif [[ -f "dist/index.js" ]]; then
-  ENTRY_FILE="dist/index.js"
-elif [[ -f "app.js" ]]; then
-  ENTRY_FILE="app.js"
-elif [[ -f "server.js" ]]; then
-  ENTRY_FILE="server.js"
-else
-  error_exit "No application entry file found"
-fi
+pm2 startup systemd -u $USER --hp /home/$USER
 
-log "Using entry file: ${ENTRY_FILE}"
+# -------------------------
+# Debug checks
+# -------------------------
+sleep 5
 
-# =========================================================
-# PM2 Ecosystem Config
-# =========================================================
+echo "Checking environment inside VM:"
+printenv | grep MONGO || true
 
-log "Creating PM2 ecosystem config..."
+echo "Checking running processes:"
+pm2 list || true
 
-cat > "${APP_DIR}/ecosystem.config.js" <<EOF
-module.exports = {
-  apps: [
-    {
-      name: "${APP_NAME}",
-      script: "${ENTRY_FILE}",
-      instances: "max",
-      exec_mode: "cluster",
-      autorestart: true,
-      watch: false,
-      max_memory_restart: "500M",
-      env: {
-        NODE_ENV: "${NODE_ENV}",
-        PORT: "${PORT}",
-        MONGO_URI: "${MONGO_URI}"
-      },
-      error_file: "/var/log/${APP_NAME}-error.log",
-      out_file: "/var/log/${APP_NAME}-out.log",
-      log_file: "/var/log/${APP_NAME}-combined.log",
-      time: true
-    }
-  ]
-}
-EOF
+echo "Checking ports:"
+sudo ss -tulnp || true
 
-chown "${APP_USER}:${APP_USER}" "${APP_DIR}/ecosystem.config.js"
+# -------------------------
+# Logs info
+# -------------------------
+echo "===================================="
+echo "Logs available at:"
+echo "1. PM2 logs → pm2 logs nodeapp"
+echo "2. File log → /home/$USER/startup.log"
+echo "3. Error log → /home/$USER/startup_error.log"
+echo "===================================="
 
-# =========================================================
-# Start Application
-# =========================================================
+# -------------------------
+# Auto shutdown
+# -------------------------
+sudo apt install -y at
+sudo systemctl enable atd
+sudo systemctl start atd
 
-log "Starting application with PM2..."
+echo "sudo shutdown -h now" | at now + 60 minutes
 
-sudo -u "${APP_USER}" pm2 delete "${APP_NAME}" || true
-
-sudo -u "${APP_USER}" pm2 start ecosystem.config.js
-
-sudo -u "${APP_USER}" pm2 save
-
-# =========================================================
-# Enable PM2 Auto Startup
-# =========================================================
-
-log "Configuring PM2 auto startup..."
-
-env PATH=$PATH:/usr/bin pm2 startup systemd -u "${APP_USER}" --hp "${APP_HOME}"
-
-systemctl enable pm2-${APP_USER}
-
-# =========================================================
-# Configure NGINX Reverse Proxy
-# =========================================================
-
-log "Configuring NGINX..."
-
-cat > /etc/nginx/sites-available/${APP_NAME} <<EOF
-server {
-    listen 80;
-    server_name _;
-
-    location / {
-        proxy_pass http://localhost:${PORT};
-
-        proxy_http_version 1.1;
-
-        proxy_set_header Upgrade \$http_upgrade;
-        proxy_set_header Connection 'upgrade';
-
-        proxy_set_header Host \$host;
-        proxy_set_header X-Real-IP \$remote_addr;
-        proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto \$scheme;
-
-        proxy_cache_bypass \$http_upgrade;
-    }
-}
-EOF
-
-ln -sf \
-  /etc/nginx/sites-available/${APP_NAME} \
-  /etc/nginx/sites-enabled/${APP_NAME}
-
-rm -f /etc/nginx/sites-enabled/default
-
-nginx -t
-
-systemctl restart nginx
-systemctl enable nginx
-
-# =========================================================
-# Firewall
-# =========================================================
-
-log "Configuring firewall..."
-
-ufw allow OpenSSH || true
-ufw allow 80/tcp || true
-ufw allow 443/tcp || true
-
-echo "y" | ufw enable || true
-
-# =========================================================
-# Health Check
-# =========================================================
-
-log "Waiting for app startup..."
-
-sleep 15
-
-if curl -fsS http://localhost:${PORT} >/dev/null 2>&1; then
-  log "✅ Application is running successfully"
-else
-  log "⚠️ Health check failed"
-fi
-
-# =========================================================
-# Auto Shutdown After 60 Minutes
-# =========================================================
-
-log "Configuring auto shutdown..."
-
-systemctl enable atd
-systemctl start atd
-
-echo "shutdown -h now" | at now + 60 minutes
-
-# =========================================================
-# Final Status
-# =========================================================
-
-echo "=================================================="
-echo "✅ DEPLOYMENT COMPLETED"
-echo "=================================================="
-
-echo "Application Directory : ${APP_DIR}"
-echo "Application Port      : ${PORT}"
-echo "Environment           : ${NODE_ENV}"
-
-echo ""
-echo "Useful Commands:"
-echo "--------------------------------------------------"
-echo "pm2 status"
-echo "pm2 logs ${APP_NAME}"
-echo "pm2 restart ${APP_NAME}"
-echo "systemctl status nginx"
-echo "tail -f /var/log/startup-script.log"
-echo "--------------------------------------------------"
-
-echo "Finished at: $(date)"
-echo "=================================================="
+echo "Startup complete."
