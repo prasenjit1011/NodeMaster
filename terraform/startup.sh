@@ -47,19 +47,23 @@ echo "✅ MONGO_URI FOUND (hidden for security)"
 echo "export MONGO_URI='$mongo_uri'" | sudo tee -a /etc/environment
 export MONGO_URI="$mongo_uri"
 
+# Log success (THIS is your “GitHub/VM log”)
 echo "✅ MongoDB URI successfully injected at $(date)" >> /home/$USER/startup.log
 
 # -------------------------
 # Clone repo
 # -------------------------
 git clone https://github.com/prasenjit1011/NodeMaster.git .
-
 git checkout typescript_main_teraform_gcp
 
 # -------------------------
 # Install dependencies
 # -------------------------
 npm install
+
+if npm run | grep -q "build"; then
+  npm run build
+fi
 
 # -------------------------
 # PM2 setup
@@ -69,16 +73,27 @@ sudo npm install -g pm2
 pm2 delete nodeapp || true
 
 # -------------------------
-# Start app with HOT RELOAD
+# Start app (IMPORTANT FIX)
 # -------------------------
-echo "Starting application with PM2 hot reload..."
+echo "Starting application with PM2..."
 
-pm2 start npm \
-  --name nodeapp \
-  -- run dev \
-  --watch
+# -------------------------
+# PM2 setup
+# -------------------------
+sudo npm install -g pm2
+
+pm2 delete nodeapp || true
+
+# -------------------------
+# Start app using npm run dev
+# -------------------------
+echo "Starting application with PM2 using npm run dev..."
+
+pm2 start "npm run dev" \
+  --name nodeapp
 
 pm2 save
+
 pm2 startup systemd -u $USER --hp /home/$USER
 
 # -------------------------
@@ -93,7 +108,7 @@ echo "Checking running processes:"
 pm2 list || true
 
 echo "Checking ports:"
-sudo ss -tulnp | grep 3000 || true
+sudo ss -tulnp || true
 
 # -------------------------
 # Logs info
