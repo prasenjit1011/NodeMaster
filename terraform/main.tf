@@ -62,11 +62,16 @@ resource "google_compute_instance_group_manager" "nodejs_mig" {
   }
 
   target_size = 2
+  named_port {
+    name = "http"
+    port = 3000
+  }
 }
 
 # -------------------------
 # Health Check
 # -------------------------
+# var.lb_port
 resource "google_compute_health_check" "http" {
   name                = "${var.project_id}-health-check"
   check_interval_sec  = 10
@@ -76,7 +81,7 @@ resource "google_compute_health_check" "http" {
 
   http_health_check {
     request_path = "/"
-    port         = var.lb_port
+    port         = 3000
   }
 }
 

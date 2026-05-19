@@ -174,21 +174,34 @@ jobs:
           LB_URL: ${{ env.LB_URL }}
 
       # =========================
-      # RUN NODE SERVER
+      # PRINT LOAD BALANCER INFO
       # =========================
-      - name: Run Node Server
-        env:
-          LB_IP: ${{ env.LB_IP }}
-          LB_URL: ${{ env.LB_URL }}
+      - name: Show Load Balancer
         run: |
           echo "================================="
-          echo " RUN NODE SERVER "
+          echo " LOAD BALANCER "
           echo "================================="
 
-          echo "LB_IP=$LB_IP"
-          echo "LB_URL=$LB_URL"
+          echo "LB_IP=${{ env.LB_IP }}"
+          echo "LB_URL=${{ env.LB_URL }}"
 
-          node dist/app.js
+
+      # # =========================
+      # # RUN NODE SERVER
+      # # =========================
+      # - name: Run Node Server
+      #   env:
+      #     LB_IP: ${{ env.LB_IP }}
+      #     LB_URL: ${{ env.LB_URL }}
+      #   run: |
+      #     echo "================================="
+      #     echo " RUN NODE SERVER "
+      #     echo "================================="
+
+      #     echo "LB_IP=$LB_IP"
+      #     echo "LB_URL=$LB_URL"
+
+      #     node dist/app.js
 
   # =========================
   # 3. AUTO DESTROY
