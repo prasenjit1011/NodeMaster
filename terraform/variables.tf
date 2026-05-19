@@ -66,7 +66,7 @@ variable "github_branch" {
 variable "instance_count" {
   description = "Number of VMs to deploy in the managed instance group"
   type        = number
-  default     = 1
+  default     = 2
 }
 
 # -----------------------------

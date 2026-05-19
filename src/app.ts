@@ -3,6 +3,7 @@ dotenv.config(); // MUST be first
 
 import express, { Request, Response, NextFunction } from "express";
 import os from "os";
+import path from "path";
 import axios from "axios";
 import { connectDB } from "./config/db";
 import productRoutes from "./routes/product.routes";
@@ -25,6 +26,9 @@ process.on("uncaughtException", (err: Error) => {
 // ================================
 const app = express();
 app.use(express.json());
+// app.ts
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "./views"));
 
 // ================================
 // Routes
@@ -88,7 +92,8 @@ app.use("/server", async (req: Request, res: Response, next: NextFunction) => {
             projectId: process.env.GCP_PROJECT_ID || "unknown",
         };
 
-        res.status(200).json({
+        // controller / route
+        res.status(200).render("index", {
             message: "-: Welcome To GCP Terraform 001 :-",
             timestamp: new Date().toLocaleString("en-IN", {
                 timeZone: "Asia/Kolkata",
@@ -107,6 +112,7 @@ app.use("/server", async (req: Request, res: Response, next: NextFunction) => {
 
             gcpContext: gcpContext,
         });
+
     } catch (err) {
         next(err);
     }
