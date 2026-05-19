@@ -21,3 +21,8 @@ printenv | grep MONGO
 cat /etc/environment | grep MONGO_URI
 sudo netstat -tulpn | grep 3000
 npm run dev
+
+
+npm install
+npm run build
+npm start

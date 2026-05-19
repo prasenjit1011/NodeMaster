@@ -28,40 +28,24 @@ APP_DIR="/home/$USER/nodeapp"
 mkdir -p $APP_DIR
 cd $APP_DIR
 
+sudo chown -R $USER:$USER $APP_DIR
+
 # -------------------------
 # Fetch MongoDB URI
 # -------------------------
-echo "[STEP] Fetching MONGO_URI from GCP metadata..."
+echo "[STEP] Fetching metadata..."
 
-mongo_uri="$(curl -fsS \
-  -H 'Metadata-Flavor: Google' \
-  http://metadata.google.internal/computeMetadata/v1/instance/attributes/MONGO_URI || true)"
+mongo_uri=$(curl -fsS \
+  -H "Metadata-Flavor: Google" \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/MONGO_URI || true)
 
-# -------------------------
-# HARD FAIL if missing
-# -------------------------
-if [ -z "$mongo_uri" ]; then
-  echo "❌ MONGO_URI NOT FOUND - STOPPING DEPLOYMENT"
-  echo "❌ Deployment failed due to missing MongoDB URI" > /home/$USER/startup_error.log
-  exit 1
-fi
+LB_IP=$(curl -fsS \
+  -H "Metadata-Flavor: Google" \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/LB_IP || true)
 
-echo "✅ MONGO_URI FOUND (hidden for security)"
-
-# -------------------------
-# Persist env globally
-# -------------------------
-sudo sed -i '/^MONGO_URI=/d' /etc/environment || true
-echo "MONGO_URI='$mongo_uri'" | sudo tee -a /etc/environment
-
-export MONGO_URI="$mongo_uri"
-
-echo "✅ MongoDB URI successfully injected at $(date)" >> /home/$USER/startup.log
-
-# =================================================
-# FETCH LOAD BALANCER + GCP METADATA
-# =================================================
-echo "[STEP] Fetching Load Balancer metadata..."
+LB_URL=$(curl -fsS \
+  -H "Metadata-Flavor: Google" \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/LB_URL || true)
 
 NODE_ENV=$(curl -fsS \
   -H "Metadata-Flavor: Google" \
@@ -79,19 +63,40 @@ INSTANCE_NAME=$(curl -fsS \
   -H "Metadata-Flavor: Google" \
   http://metadata.google.internal/computeMetadata/v1/instance/name || true)
 
-# =================================================
-# EXPORT VARIABLES
-# =================================================
-export LB_IP
-export LB_URL
-export NODE_ENV
-export REGION
-export PROJECT_ID
-export INSTANCE_NAME
+# -------------------------
+# HARD FAIL if missing
+# -------------------------
+if [ -z "$mongo_uri" ]; then
+  echo "❌ MONGO_URI NOT FOUND - STOPPING DEPLOYMENT"
+  echo "❌ Deployment failed due to missing MongoDB URI" > /home/$USER/startup_error.log
+  exit 1
+fi
 
-# =================================================
-# SAVE VARIABLES GLOBALLY
-# =================================================
+echo "✅ Metadata fetched successfully"
+
+# -------------------------
+# Export env variables
+# -------------------------
+export MONGO_URI="$mongo_uri"
+export LB_IP="$LB_IP"
+export LB_URL="$LB_URL"
+export NODE_ENV="$NODE_ENV"
+export REGION="$REGION"
+export PROJECT_ID="$PROJECT_ID"
+export INSTANCE_NAME="$INSTANCE_NAME"
+
+# -------------------------
+# Persist globally
+# -------------------------
+sudo sed -i '/^MONGO_URI=/d' /etc/environment || true
+sudo sed -i '/^LB_IP=/d' /etc/environment || true
+sudo sed -i '/^LB_URL=/d' /etc/environment || true
+sudo sed -i '/^NODE_ENV=/d' /etc/environment || true
+sudo sed -i '/^REGION=/d' /etc/environment || true
+sudo sed -i '/^PROJECT_ID=/d' /etc/environment || true
+sudo sed -i '/^INSTANCE_NAME=/d' /etc/environment || true
+
+echo "MONGO_URI='$mongo_uri'" | sudo tee -a /etc/environment
 echo "LB_IP='$LB_IP'" | sudo tee -a /etc/environment
 echo "LB_URL='$LB_URL'" | sudo tee -a /etc/environment
 echo "NODE_ENV='$NODE_ENV'" | sudo tee -a /etc/environment
@@ -99,7 +104,7 @@ echo "REGION='$REGION'" | sudo tee -a /etc/environment
 echo "PROJECT_ID='$PROJECT_ID'" | sudo tee -a /etc/environment
 echo "INSTANCE_NAME='$INSTANCE_NAME'" | sudo tee -a /etc/environment
 
-echo "✅ LB + GCP metadata exported"
+echo "✅ Environment variables saved"
 
 # -------------------------
 # Install PM2
@@ -109,6 +114,10 @@ sudo npm install -g pm2 typescript
 # -------------------------
 # Clone repo
 # -------------------------
+echo "============================"
+echo "Cloning repository..."
+echo "============================"
+
 if [ ! -d ".git" ]; then
   git clone https://github.com/prasenjit1011/NodeMaster.git .
 else
@@ -117,6 +126,8 @@ fi
 
 git checkout typescript_main_teraform_gcp
 git pull origin typescript_main_teraform_gcp
+
+sudo chown -R $USER:$USER $APP_DIR
 
 # -------------------------
 # Create .env
@@ -132,24 +143,44 @@ INSTANCE_NAME="${INSTANCE_NAME}"
 PORT="3000"
 EOF
 
+echo "============================"
+echo ".env file created"
+echo "============================"
+
+cat .env
+
 # -------------------------
 # Install dependencies
 # -------------------------
-npm install
+echo "============================"
+echo "Installing dependencies..."
+echo "============================"
+
+npm install --verbose > /home/$USER/npm_install.log 2>&1
+
+echo "============================"
+echo "NPM INSTALL LOGS"
+echo "============================"
+
+tail -50 /home/$USER/npm_install.log || true
 
 # -------------------------
-# Build if available
+# Build project
 # -------------------------
+echo "============================"
+echo "Building project..."
+echo "============================"
+
 if npm run | grep -q "build"; then
   npm run build
 fi
 
 # -------------------------
-# Verify dist build
+# Verify build
 # -------------------------
-echo "===================================="
+echo "============================"
 echo "DIST CHECK"
-echo "===================================="
+echo "============================"
 
 ls -la
 ls -la dist || true
@@ -162,7 +193,9 @@ pm2 delete nodeapp || true
 # -------------------------
 # Create PM2 ecosystem file
 # -------------------------
+echo "============================"
 echo "Creating PM2 ecosystem config..."
+echo "============================"
 
 cat > ecosystem.config.js <<EOF
 module.exports = {
@@ -172,9 +205,12 @@ module.exports = {
       script: "npm",
       args: "run dev",
       cwd: "$APP_DIR",
+      instances: 1,
+      exec_mode: "fork",
       autorestart: true,
       watch: false,
       max_memory_restart: "500M",
+
       env: {
         PORT: "3000",
         NODE_ENV: "production",
@@ -193,14 +229,18 @@ EOF
 # -------------------------
 # Start app
 # -------------------------
-echo "Starting application with PM2..."
+echo "============================"
+echo "Starting application..."
+echo "============================"
 
 pm2 start ecosystem.config.js --only nodeapp
 
 # -------------------------
-# Enable PM2 auto start after VM reboot
+# Enable PM2 startup
 # -------------------------
-echo "Enabling PM2 startup service..."
+echo "============================"
+echo "Configuring PM2 startup..."
+echo "============================"
 
 pm2 save
 
@@ -213,60 +253,60 @@ pm2 save
 # -------------------------
 # Debug checks
 # -------------------------
-sleep 5
+sleep 10
 
-echo "===================================="
+echo "============================"
 echo "PM2 STATUS"
-echo "===================================="
+echo "============================"
 
 pm2 list || true
 
-echo "===================================="
+echo "============================"
 echo "PM2 LOGS"
-echo "===================================="
+echo "============================"
 
-pm2 logs nodeapp --lines 20 --nostream || true
+timeout 10s pm2 logs nodeapp --lines 30 --nostream || true
 
-echo "===================================="
+echo "============================"
 echo "PORT STATUS"
-echo "===================================="
+echo "============================"
 
 sudo ss -tulnp | grep 3000 || true
 
-echo "===================================="
+echo "============================"
 echo "LOCAL CURL TEST"
-echo "===================================="
+echo "============================"
 
 curl http://localhost:3000 || true
 
-echo "===================================="
+echo "============================"
 echo "ENV CHECK"
-echo "===================================="
+echo "============================"
 
 printenv | grep MONGO || true
 printenv | grep LB_ || true
+printenv | grep REGION || true
 
-echo "===================================="
+echo "============================"
 echo "SYSTEMD STATUS"
-echo "===================================="
+echo "============================"
 
 systemctl status pm2-$USER --no-pager || true
 
 # -------------------------
 # Logs info
 # -------------------------
-echo "===================================="
+echo "============================"
 echo "Logs available at:"
 echo "1. PM2 logs → pm2 logs nodeapp"
 echo "2. Startup log → /home/$USER/startup.log"
 echo "3. Error log → /home/$USER/startup_error.log"
-echo "===================================="
+echo "4. NPM log → /home/$USER/npm_install.log"
+echo "============================"
 
 # -------------------------
-# Install auto shutdown scheduler
+# Enable atd
 # -------------------------
-sudo apt install -y at
-
 sudo systemctl enable atd
 sudo systemctl start atd
 
@@ -275,7 +315,7 @@ sudo systemctl start atd
 # -------------------------
 echo "sudo shutdown -h now" | at now + 5 minutes
 
-echo "===================================="
+echo "============================"
 echo "Startup complete."
 echo "Application will auto restart after VM reboot."
-echo "===================================="
+echo "============================"
