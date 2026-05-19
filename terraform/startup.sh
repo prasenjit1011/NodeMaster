@@ -188,7 +188,7 @@ sudo systemctl start atd
 # -------------------------
 # Auto shutdown after 60 mins
 # -------------------------
-echo "sudo shutdown -h now" | at now + 60 minutes
+echo "sudo shutdown -h now" | at now + 5 minutes
 
 echo "===================================="
 echo "Startup complete."

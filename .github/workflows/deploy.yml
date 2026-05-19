@@ -76,16 +76,19 @@ jobs:
           TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
 
   # =========================
-  # 3. AUTO DESTROY
+  # 3. AUTO DESTROY (5 MIN)
   # =========================
   destroy:
-    name: Destroy Infrastructure After 60 Min
+    name: Auto-Destroy Resources After 5 Minutes
     runs-on: ubuntu-latest
     needs: deploy
 
     steps:
-      - name: Wait 5 minutes
-        run: sleep 300
+      - name: Wait 5 minutes before destruction
+        run: |
+          echo "⏱️  Waiting 5 minutes before destroying resources to avoid charges..."
+          echo "Destruction will occur at: $(date -u -d '+300 seconds' +'%Y-%m-%d %H:%M:%S UTC')"
+          sleep 300
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -98,12 +101,27 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init
-        run: terraform -chdir=terraform init
+      - name: Terraform Init (Terraform folder)
+        run: terraform -chdir=terraform init -migrate-state
 
-      - name: Terraform Destroy
-        run: terraform -chdir=terraform destroy -auto-approve
+      - name: Terraform Destroy (Main Infrastructure)
+        run: terraform -chdir=terraform destroy -auto-approve -lock=false
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_region: us-central1
           TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
+
+      - name: Terraform Init (Bootstrap folder)
+        run: terraform -chdir=bootstrap init -migrate-state
+
+      - name: Terraform Destroy (Bootstrap Resources)
+        run: terraform -chdir=bootstrap destroy -auto-approve -lock=false
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_region: us-central1
+
+      - name: Destruction Complete
+        run: |
+          echo "✅ ALL RESOURCES DESTROYED SUCCESSFULLY"
+          echo "Completed at: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "💰 Charges have stopped accruing"

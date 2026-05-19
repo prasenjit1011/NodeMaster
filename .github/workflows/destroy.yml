@@ -1,0 +1,101 @@
+name: Destroy GCP Resources - 5 Min Auto Cleanup
+
+on:
+  workflow_dispatch:
+    inputs:
+      wait_minutes:
+        description: 'Minutes to wait before destroying (default 5)'
+        required: false
+        default: '5'
+  
+  schedule:
+    # Schedule to run at specific times if needed
+    - cron: '0 */6 * * *'
+
+env:
+  TERRAFORM_VERSION: '1.5.0'
+
+jobs:
+  destroy:
+    name: Destroy Infrastructure After Delay
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Calculate wait time
+        id: calc_wait
+        run: |
+          WAIT_MINUTES=${{ github.event.inputs.wait_minutes || '5' }}
+          WAIT_SECONDS=$((WAIT_MINUTES * 60))
+          echo "wait_time=$WAIT_SECONDS" >> $GITHUB_OUTPUT
+          echo "wait_minutes=$WAIT_MINUTES" >> $GITHUB_OUTPUT
+
+      - name: Display countdown
+        run: |
+          TOTAL_SECONDS=${{ steps.calc_wait.outputs.wait_time }}
+          echo "⏱️  Waiting ${{ steps.calc_wait.outputs.wait_minutes }} minute(s) before destroying resources..."
+          echo "Destruction will start at: $(date -u -d "+$TOTAL_SECONDS seconds" +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "================================"
+          
+          # Countdown display
+          for i in $(seq $TOTAL_SECONDS -30 1); do
+            if [ $((i % 300)) -eq 0 ]; then
+              MINS=$((i / 60))
+              echo "⏳ $MINS minute(s) remaining..."
+            fi
+          done || true
+
+      - name: Wait for specified duration
+        run: sleep ${{ steps.calc_wait.outputs.wait_time }}
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+
+      - name: Terraform Init (Terraform folder)
+        working-directory: ./terraform
+        run: terraform init -migrate-state
+
+      - name: Terraform Destroy (Main Infrastructure)
+        working-directory: ./terraform
+        run: |
+          echo "🔴 DESTROYING INFRASTRUCTURE..."
+          terraform destroy -auto-approve -lock=false
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_region: us-central1
+          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
+
+      - name: Terraform Init (Bootstrap folder)
+        working-directory: ./bootstrap
+        run: terraform init -migrate-state
+
+      - name: Terraform Destroy (Bootstrap Resources)
+        working-directory: ./bootstrap
+        run: |
+          echo "🔴 DESTROYING BOOTSTRAP RESOURCES..."
+          terraform destroy -auto-approve -lock=false
+        env:
+          TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+          TF_VAR_region: us-central1
+
+      - name: Cleanup Complete
+        run: |
+          echo "✅ ALL RESOURCES DESTROYED"
+          echo "================================"
+          echo "Destruction completed at: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "Charges should now stop accruing."
+
+      - name: Send Notification (Optional)
+        if: always()
+        run: |
+          echo "📧 Resource destruction workflow completed"
+          echo "Status: ${{ job.status }}"
