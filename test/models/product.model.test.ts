@@ -1,5 +1,8 @@
 import mongoose from "mongoose";
+import { MongoMemoryServer } from "mongodb-memory-server";
 import { Product } from "../../src/models/product.model";
+
+let mongoServer: MongoMemoryServer;
 
 describe("Product Model", () => {
 
@@ -7,7 +10,11 @@ describe("Product Model", () => {
     // CONNECT DB
     // ================================
     beforeAll(async () => {
-        await mongoose.connect("mongodb://127.0.0.1:27017/test_db");
+        mongoServer = await MongoMemoryServer.create();
+        const uri = mongoServer.getUri();
+        await mongoose.connect(uri, {
+            dbName: "test_db",
+        });
     });
 
     // ================================
@@ -16,6 +23,7 @@ describe("Product Model", () => {
     afterAll(async () => {
         await mongoose.connection.db?.dropDatabase();
         await mongoose.disconnect();
+        await mongoServer.stop();
     });
 
     // ================================
