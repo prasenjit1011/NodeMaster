@@ -188,7 +188,7 @@ jobs:
           echo "LB_IP=$LB_IP"
           echo "LB_URL=$LB_URL"
 
-          node dist/server.js
+          node dist/app.js
 
   # =========================
   # 3. AUTO DESTROY
