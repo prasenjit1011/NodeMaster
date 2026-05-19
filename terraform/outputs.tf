@@ -1,9 +1,9 @@
 # -------------------------
-# Load Balancer IP (Correct Source)
+# Load Balancer IP
 # -------------------------
 output "load_balancer_ip" {
   description = "External IP of the HTTP Load Balancer"
-  value       = google_compute_global_forwarding_rule.default.ip_address
+  value       = google_compute_global_forwarding_rule.http.ip_address
 }
 
 # -------------------------
@@ -11,7 +11,7 @@ output "load_balancer_ip" {
 # -------------------------
 output "load_balancer_url" {
   description = "Public URL of the application"
-  value       = "http://${google_compute_global_forwarding_rule.default.ip_address}"
+  value       = "http://${google_compute_global_forwarding_rule.http.ip_address}"
 }
 
 # -------------------------
@@ -31,11 +31,11 @@ output "instance_template" {
 }
 
 # -------------------------
-# Backend Service (Useful for debugging LB)
+# Backend Service
 # -------------------------
 output "backend_service" {
   description = "Backend service name used by Load Balancer"
-  value       = google_compute_backend_service.default.name
+  value       = google_compute_backend_service.nodejs_backend.name
 }
 
 # -------------------------
@@ -43,5 +43,5 @@ output "backend_service" {
 # -------------------------
 output "health_check" {
   description = "Health check used by Load Balancer"
-  value       = google_compute_health_check.default.name
+  value       = google_compute_health_check.http.name
 }

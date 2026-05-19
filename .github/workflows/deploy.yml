@@ -20,17 +20,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # =========================
+      # GCP AUTH
+      # =========================
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
+      # =========================
+      # TERRAFORM
+      # =========================
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      # =========================
+      # TERRAFORM INIT
+      # =========================
       - name: Terraform Init (Bootstrap)
         run: terraform -chdir=bootstrap init
 
+      # =========================
+      # TERRAFORM APPLY
+      # =========================
       - name: Terraform Apply (Bootstrap)
         run: terraform -chdir=bootstrap apply -auto-approve
         env:
@@ -50,17 +62,35 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # =========================
+      # GCP AUTH
+      # =========================
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
+      # =========================
+      # TERRAFORM
+      # =========================
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      # =========================
+      # TERRAFORM INIT
+      # =========================
       - name: Terraform Init
         run: terraform -chdir=terraform init -migrate-state
 
+      # =========================
+      # TERRAFORM VALIDATE
+      # =========================
+      - name: Terraform Validate
+        run: terraform -chdir=terraform validate
+
+      # =========================
+      # TERRAFORM PLAN
+      # =========================
       - name: Terraform Plan
         run: terraform -chdir=terraform plan
         env:
@@ -68,6 +98,9 @@ jobs:
           TF_VAR_region: us-central1
           TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
 
+      # =========================
+      # TERRAFORM APPLY
+      # =========================
       - name: Terraform Apply
         run: terraform -chdir=terraform apply -auto-approve
         env:
@@ -76,25 +109,69 @@ jobs:
           TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
 
       # =========================
-      # PRINT OUTPUTS (DEBUG)
+      # PRINT TERRAFORM OUTPUTS
       # =========================
-      - name: Show Load Balancer Outputs
+      - name: Print Terraform Outputs
         run: |
+          echo "================================="
+          echo " TERRAFORM OUTPUTS "
+          echo "================================="
+
           terraform -chdir=terraform output
-          echo "--------------------"
-          terraform -chdir=terraform output load_balancer_ip
-          terraform -chdir=terraform output load_balancer_url
+
+          echo ""
+          echo "================================="
+          echo " LOAD BALANCER INFO "
+          echo "================================="
+
+          echo "Load Balancer IP:"
+          terraform -chdir=terraform output -raw load_balancer_ip
+
+          echo ""
+
+          echo "Load Balancer URL:"
+          terraform -chdir=terraform output -raw load_balancer_url
 
       # =========================
-      # CAPTURE LB IP FOR NODE APP
+      # EXPORT OUTPUTS
       # =========================
-      - name: Capture Load Balancer IP
+      - name: Export Load Balancer Variables
         run: |
           LB_IP=$(terraform -chdir=terraform output -raw load_balancer_ip)
           LB_URL=$(terraform -chdir=terraform output -raw load_balancer_url)
 
           echo "LB_IP=$LB_IP" >> $GITHUB_ENV
           echo "LB_URL=$LB_URL" >> $GITHUB_ENV
+
+          echo ""
+          echo "================================="
+          echo " EXPORTED VARIABLES "
+          echo "================================="
+          echo "LB_IP=$LB_IP"
+          echo "LB_URL=$LB_URL"
+
+      # =========================
+      # WAIT FOR LB HEALTH CHECK
+      # =========================
+      - name: Wait For Load Balancer
+        run: |
+          echo "Waiting 60 seconds for Load Balancer health checks..."
+          sleep 60
+
+      # =========================
+      # TEST LOAD BALANCER
+      # =========================
+      - name: Test Load Balancer
+        run: |
+          echo "================================="
+          echo " TESTING LOAD BALANCER "
+          echo "================================="
+
+          echo "URL: $LB_URL"
+
+          curl -I $LB_URL || true
+        env:
+          LB_URL: ${{ env.LB_URL }}
 
       # =========================
       # RUN NODE SERVER
@@ -103,10 +180,18 @@ jobs:
         env:
           LB_IP: ${{ env.LB_IP }}
           LB_URL: ${{ env.LB_URL }}
-        run: node dist/server.js
+        run: |
+          echo "================================="
+          echo " RUN NODE SERVER "
+          echo "================================="
+
+          echo "LB_IP=$LB_IP"
+          echo "LB_URL=$LB_URL"
+
+          node dist/server.js
 
   # =========================
-  # 3. AUTO DESTROY (5 MIN)
+  # 3. AUTO DESTROY
   # =========================
   destroy:
     name: Auto-Destroy Resources After 5 Minutes
@@ -114,44 +199,80 @@ jobs:
     needs: deploy
 
     steps:
-      - name: Wait 5 minutes before destruction
+
+      # =========================
+      # WAIT
+      # =========================
+      - name: Wait 5 Minutes Before Destruction
         run: |
-          echo "⏱️  Waiting 5 minutes before destroying resources to avoid charges..."
-          echo "Destruction will occur at: $(date -u -d '+300 seconds' +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "================================="
+          echo " WAITING BEFORE DESTROY "
+          echo "================================="
+
+          echo "Resources will be destroyed in 5 minutes..."
+          echo "Destroy Time: $(date -u -d '+300 seconds' +'%Y-%m-%d %H:%M:%S UTC')"
+
           sleep 300
 
+      # =========================
+      # CHECKOUT
+      # =========================
       - name: Checkout code
         uses: actions/checkout@v4
 
+      # =========================
+      # GCP AUTH
+      # =========================
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
 
+      # =========================
+      # TERRAFORM
+      # =========================
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Terraform Init (Terraform folder)
+      # =========================
+      # INIT TERRAFORM
+      # =========================
+      - name: Terraform Init (Terraform Folder)
         run: terraform -chdir=terraform init -migrate-state
 
-      - name: Terraform Destroy (Main Infrastructure)
+      # =========================
+      # DESTROY MAIN INFRA
+      # =========================
+      - name: Terraform Destroy (Infrastructure)
         run: terraform -chdir=terraform destroy -auto-approve -lock=false
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_region: us-central1
           TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
 
-      - name: Terraform Init (Bootstrap folder)
+      # =========================
+      # INIT BOOTSTRAP
+      # =========================
+      - name: Terraform Init (Bootstrap Folder)
         run: terraform -chdir=bootstrap init -migrate-state
 
-      - name: Terraform Destroy (Bootstrap Resources)
+      # =========================
+      # DESTROY BOOTSTRAP
+      # =========================
+      - name: Terraform Destroy (Bootstrap)
         run: terraform -chdir=bootstrap destroy -auto-approve -lock=false
         env:
           TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
           TF_VAR_region: us-central1
 
+      # =========================
+      # COMPLETE
+      # =========================
       - name: Destruction Complete
         run: |
-          echo "✅ ALL RESOURCES DESTROYED SUCCESSFULLY"
-          echo "Completed at: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-          echo "💰 Charges have stopped accruing"
+          echo "================================="
+          echo " ALL RESOURCES DESTROYED "
+          echo "================================="
+
+          echo "Completed At: $(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+          echo "Charges stopped successfully."
