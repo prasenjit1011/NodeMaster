@@ -12,7 +12,13 @@ echo "============================"
 sudo apt update -y
 
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
-sudo apt install -y nodejs git
+
+sudo apt install -y \
+  nodejs \
+  git \
+  curl \
+  build-essential \
+  at
 
 # -------------------------
 # App directory
@@ -52,10 +58,61 @@ export MONGO_URI="$mongo_uri"
 
 echo "✅ MongoDB URI successfully injected at $(date)" >> /home/$USER/startup.log
 
+# =================================================
+# FETCH LOAD BALANCER + GCP METADATA
+# =================================================
+echo "[STEP] Fetching Load Balancer metadata..."
+
+LB_IP=$(curl -fsS \
+  -H "Metadata-Flavor: Google" \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/LB_IP || true)
+
+LB_URL=$(curl -fsS \
+  -H "Metadata-Flavor: Google" \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/LB_URL || true)
+
+NODE_ENV=$(curl -fsS \
+  -H "Metadata-Flavor: Google" \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/NODE_ENV || true)
+
+REGION=$(curl -fsS \
+  -H "Metadata-Flavor: Google" \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/REGION || true)
+
+PROJECT_ID=$(curl -fsS \
+  -H "Metadata-Flavor: Google" \
+  http://metadata.google.internal/computeMetadata/v1/instance/attributes/PROJECT_ID || true)
+
+INSTANCE_NAME=$(curl -fsS \
+  -H "Metadata-Flavor: Google" \
+  http://metadata.google.internal/computeMetadata/v1/instance/name || true)
+
+# =================================================
+# EXPORT VARIABLES
+# =================================================
+export LB_IP
+export LB_URL
+export NODE_ENV
+export REGION
+export PROJECT_ID
+export INSTANCE_NAME
+
+# =================================================
+# SAVE VARIABLES GLOBALLY
+# =================================================
+echo "LB_IP='$LB_IP'" | sudo tee -a /etc/environment
+echo "LB_URL='$LB_URL'" | sudo tee -a /etc/environment
+echo "NODE_ENV='$NODE_ENV'" | sudo tee -a /etc/environment
+echo "REGION='$REGION'" | sudo tee -a /etc/environment
+echo "PROJECT_ID='$PROJECT_ID'" | sudo tee -a /etc/environment
+echo "INSTANCE_NAME='$INSTANCE_NAME'" | sudo tee -a /etc/environment
+
+echo "✅ LB + GCP metadata exported"
+
 # -------------------------
 # Install PM2
 # -------------------------
-sudo npm install -g pm2
+sudo npm install -g pm2 typescript
 
 # -------------------------
 # Clone repo
@@ -74,6 +131,13 @@ git pull origin typescript_main_teraform_gcp
 # -------------------------
 cat > .env <<EOF
 MONGO_URI="${mongo_uri}"
+LB_IP="${LB_IP}"
+LB_URL="${LB_URL}"
+NODE_ENV="${NODE_ENV}"
+REGION="${REGION}"
+PROJECT_ID="${PROJECT_ID}"
+INSTANCE_NAME="${INSTANCE_NAME}"
+PORT="3000"
 EOF
 
 # -------------------------
@@ -87,6 +151,16 @@ npm install
 if npm run | grep -q "build"; then
   npm run build
 fi
+
+# -------------------------
+# Verify dist build
+# -------------------------
+echo "===================================="
+echo "DIST CHECK"
+echo "===================================="
+
+ls -la
+ls -la dist || true
 
 # -------------------------
 # Stop existing PM2 app
@@ -103,15 +177,20 @@ module.exports = {
   apps: [
     {
       name: "nodeapp",
-      script: "npm",
-      args: "run dev",
+      script: "dist/app.js",
       cwd: "$APP_DIR",
       autorestart: true,
       watch: false,
       max_memory_restart: "500M",
       env: {
+        PORT: "3000",
         NODE_ENV: "production",
-        MONGO_URI: "${mongo_uri}"
+        MONGO_URI: "${mongo_uri}",
+        LB_IP: "${LB_IP}",
+        LB_URL: "${LB_URL}",
+        REGION: "${REGION}",
+        PROJECT_ID: "${PROJECT_ID}",
+        INSTANCE_NAME: "${INSTANCE_NAME}"
       }
     }
   ]
@@ -150,16 +229,29 @@ echo "===================================="
 pm2 list || true
 
 echo "===================================="
+echo "PM2 LOGS"
+echo "===================================="
+
+pm2 logs nodeapp --lines 20 --nostream || true
+
+echo "===================================="
 echo "PORT STATUS"
 echo "===================================="
 
-sudo ss -tulnp || true
+sudo ss -tulnp | grep 3000 || true
+
+echo "===================================="
+echo "LOCAL CURL TEST"
+echo "===================================="
+
+curl http://localhost:3000 || true
 
 echo "===================================="
 echo "ENV CHECK"
 echo "===================================="
 
 printenv | grep MONGO || true
+printenv | grep LB_ || true
 
 echo "===================================="
 echo "SYSTEMD STATUS"
@@ -186,7 +278,7 @@ sudo systemctl enable atd
 sudo systemctl start atd
 
 # -------------------------
-# Auto shutdown after 60 mins
+# Auto shutdown after 5 mins
 # -------------------------
 echo "sudo shutdown -h now" | at now + 5 minutes
 
