@@ -104,6 +104,12 @@ echo "✅ Environment variables saved"
 # -------------------------
 sudo npm install -g pm2 typescript
 
+PM2_BIN="$(command -v pm2 || true)"
+if [ -z "$PM2_BIN" ]; then
+  echo "❌ pm2 could not be found after install"
+  exit 1
+fi
+
 # -------------------------
 # Clone repo
 # -------------------------
@@ -171,12 +177,10 @@ tail -50 /home/$APP_USER/npm_install.log || true
 # Build project
 # -------------------------
 echo "============================"
-echo "Checking build script..."
+echo "Building project..."
 echo "============================"
 
-if npm run | grep -q "build"; then
-  sudo -u "$APP_USER" npm run build
-fi
+sudo -u "$APP_USER" npm run build
 
 # -------------------------
 # Stop existing PM2 app
@@ -195,14 +199,14 @@ module.exports = {
   apps: [
     {
       name: "nodeapp",
-      script: "npm",
-      args: "run dev",
+      script: "dist/server.js",
       cwd: "$APP_DIR",
       instances: 1,
       exec_mode: "fork",
       autorestart: true,
       watch: false,
       max_memory_restart: "500M",
+      interpreter: "/usr/bin/node",
 
       env: {
         PORT: "3000",
@@ -226,7 +230,7 @@ echo "============================"
 echo "Starting application..."
 echo "============================"
 
-sudo -u $APP_USER pm2 start ecosystem.config.js --only nodeapp
+sudo -u $APP_USER "$PM2_BIN" start ecosystem.config.js --only nodeapp
 
 # -------------------------
 # Enable PM2 startup
@@ -236,10 +240,10 @@ echo "Configuring PM2 startup..."
 echo "============================"
 
 # Generate and execute PM2 systemd startup command
-sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u $APP_USER --hp /home/$APP_USER
+sudo env PATH=$PATH:/usr/bin "$PM2_BIN" startup systemd -u $APP_USER --hp /home/$APP_USER
 
 # Save PM2 process list
-sudo -u $APP_USER pm2 save
+sudo -u $APP_USER "$PM2_BIN" save
 
 # -------------------------
 # Debug checks
@@ -250,13 +254,13 @@ echo "============================"
 echo "PM2 STATUS"
 echo "============================"
 
-sudo -u $APP_USER pm2 list || true
+sudo -u $APP_USER "$PM2_BIN" list || true
 
 echo "============================"
 echo "PM2 LOGS"
 echo "============================"
 
-timeout 10s sudo -u $APP_USER pm2 logs nodeapp --lines 30 --nostream || true
+timeout 10s sudo -u $APP_USER "$PM2_BIN" logs nodeapp --lines 30 --nostream || true
 
 echo "============================"
 echo "PORT STATUS"
