@@ -169,7 +169,8 @@ module.exports = {
   apps: [
     {
       name: "nodeapp",
-      script: "dist/app.js",
+      script: "npm",
+      args: "run dev",
       cwd: "$APP_DIR",
       autorestart: true,
       watch: false,
