@@ -39,14 +39,6 @@ mongo_uri=$(curl -fsS \
   -H "Metadata-Flavor: Google" \
   http://metadata.google.internal/computeMetadata/v1/instance/attributes/MONGO_URI || true)
 
-LB_IP=$(curl -fsS \
-  -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/attributes/LB_IP || true)
-
-LB_URL=$(curl -fsS \
-  -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/attributes/LB_URL || true)
-
 NODE_ENV=$(curl -fsS \
   -H "Metadata-Flavor: Google" \
   http://metadata.google.internal/computeMetadata/v1/instance/attributes/NODE_ENV || true)
@@ -78,8 +70,6 @@ echo "✅ Metadata fetched successfully"
 # Export env variables
 # -------------------------
 export MONGO_URI="$mongo_uri"
-export LB_IP="$LB_IP"
-export LB_URL="$LB_URL"
 export NODE_ENV="$NODE_ENV"
 export REGION="$REGION"
 export PROJECT_ID="$PROJECT_ID"
@@ -89,16 +79,12 @@ export INSTANCE_NAME="$INSTANCE_NAME"
 # Persist globally
 # -------------------------
 sudo sed -i '/^MONGO_URI=/d' /etc/environment || true
-sudo sed -i '/^LB_IP=/d' /etc/environment || true
-sudo sed -i '/^LB_URL=/d' /etc/environment || true
 sudo sed -i '/^NODE_ENV=/d' /etc/environment || true
 sudo sed -i '/^REGION=/d' /etc/environment || true
 sudo sed -i '/^PROJECT_ID=/d' /etc/environment || true
 sudo sed -i '/^INSTANCE_NAME=/d' /etc/environment || true
 
 echo "MONGO_URI='$mongo_uri'" | sudo tee -a /etc/environment
-echo "LB_IP='$LB_IP'" | sudo tee -a /etc/environment
-echo "LB_URL='$LB_URL'" | sudo tee -a /etc/environment
 echo "NODE_ENV='$NODE_ENV'" | sudo tee -a /etc/environment
 echo "REGION='$REGION'" | sudo tee -a /etc/environment
 echo "PROJECT_ID='$PROJECT_ID'" | sudo tee -a /etc/environment
@@ -134,8 +120,6 @@ sudo chown -R $USER:$USER $APP_DIR
 # -------------------------
 cat > .env <<EOF
 MONGO_URI="${mongo_uri}"
-LB_IP="${LB_IP}"
-LB_URL="${LB_URL}"
 NODE_ENV="${NODE_ENV}"
 REGION="${REGION}"
 PROJECT_ID="${PROJECT_ID}"
@@ -215,8 +199,6 @@ module.exports = {
         PORT: "3000",
         NODE_ENV: "production",
         MONGO_URI: "${mongo_uri}",
-        LB_IP: "${LB_IP}",
-        LB_URL: "${LB_URL}",
         REGION: "${REGION}",
         PROJECT_ID: "${PROJECT_ID}",
         INSTANCE_NAME: "${INSTANCE_NAME}"
@@ -284,7 +266,6 @@ echo "ENV CHECK"
 echo "============================"
 
 printenv | grep MONGO || true
-printenv | grep LB_ || true
 printenv | grep REGION || true
 
 echo "============================"
