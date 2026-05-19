@@ -63,14 +63,6 @@ echo "✅ MongoDB URI successfully injected at $(date)" >> /home/$USER/startup.l
 # =================================================
 echo "[STEP] Fetching Load Balancer metadata..."
 
-LB_IP=$(curl -fsS \
-  -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/attributes/LB_IP || true)
-
-LB_URL=$(curl -fsS \
-  -H "Metadata-Flavor: Google" \
-  http://metadata.google.internal/computeMetadata/v1/instance/attributes/LB_URL || true)
-
 NODE_ENV=$(curl -fsS \
   -H "Metadata-Flavor: Google" \
   http://metadata.google.internal/computeMetadata/v1/instance/attributes/NODE_ENV || true)

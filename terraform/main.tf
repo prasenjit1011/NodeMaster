@@ -42,8 +42,6 @@ resource "google_compute_instance_template" "nodejs_template" {
 
   metadata = {
     MONGO_URI   = var.mongo_uri
-    LB_IP       = google_compute_global_forwarding_rule.http.ip_address
-    LB_URL      = "http://${google_compute_global_forwarding_rule.http.ip_address}"
     NODE_ENV    = "production"
     REGION      = var.region
     PROJECT_ID  = var.project_id
