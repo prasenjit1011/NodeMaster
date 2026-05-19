@@ -10,9 +10,9 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
 
-    // 🔥 IMPORTANT FIX (TS 6+ compatibility)
+    "types": ["jest"],
     "ignoreDeprecations": "6.0"
   },
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "test/**/*"],
   "exclude": ["node_modules"]
 }
