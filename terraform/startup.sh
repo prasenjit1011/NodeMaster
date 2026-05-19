@@ -7,6 +7,12 @@ echo "Starting VM setup"
 echo "============================"
 
 # -------------------------
+# FIXED USER + APP DIRECTORY
+# -------------------------
+APP_USER="prasenjit10112"
+APP_DIR="/home/nodeapp"
+
+# -------------------------
 # Install dependencies
 # -------------------------
 sudo apt update -y
@@ -21,17 +27,16 @@ sudo apt install -y \
   at
 
 # -------------------------
-# App directory
+# Create app directory
 # -------------------------
-APP_DIR="/home/$USER/nodeapp"
+sudo mkdir -p $APP_DIR
 
-mkdir -p $APP_DIR
+sudo chown -R $APP_USER:$APP_USER $APP_DIR
+
 cd $APP_DIR
 
-sudo chown -R $USER:$USER $APP_DIR
-
 # -------------------------
-# Fetch MongoDB URI
+# Fetch metadata
 # -------------------------
 echo "[STEP] Fetching metadata..."
 
@@ -60,7 +65,7 @@ INSTANCE_NAME=$(curl -fsS \
 # -------------------------
 if [ -z "$mongo_uri" ]; then
   echo "❌ MONGO_URI NOT FOUND - STOPPING DEPLOYMENT"
-  echo "❌ Deployment failed due to missing MongoDB URI" > /home/$USER/startup_error.log
+  echo "❌ Deployment failed due to missing MongoDB URI" > /home/$APP_USER/startup_error.log
   exit 1
 fi
 
@@ -105,15 +110,15 @@ echo "Cloning repository..."
 echo "============================"
 
 if [ ! -d ".git" ]; then
-  git clone https://github.com/prasenjit1011/NodeMaster.git .
+  sudo -u $APP_USER git clone https://github.com/prasenjit1011/NodeMaster.git .
 else
-  git fetch origin
+  sudo -u $APP_USER git fetch origin
 fi
 
-git checkout typescript_main_teraform_gcp
-git pull origin typescript_main_teraform_gcp
+sudo -u $APP_USER git checkout typescript_main_teraform_gcp
+sudo -u $APP_USER git pull origin typescript_main_teraform_gcp
 
-sudo chown -R $USER:$USER $APP_DIR
+sudo chown -R $APP_USER:$APP_USER $APP_DIR
 
 # -------------------------
 # Create .env
@@ -126,6 +131,8 @@ PROJECT_ID="${PROJECT_ID}"
 INSTANCE_NAME="${INSTANCE_NAME}"
 PORT="3000"
 EOF
+
+sudo chown $APP_USER:$APP_USER .env
 
 echo "============================"
 echo ".env file created"
@@ -140,13 +147,13 @@ echo "============================"
 echo "Installing dependencies..."
 echo "============================"
 
-npm install --verbose > /home/$USER/npm_install.log 2>&1
+sudo -u $APP_USER npm install --verbose > /home/$APP_USER/npm_install.log 2>&1
 
 echo "============================"
 echo "NPM INSTALL LOGS"
 echo "============================"
 
-tail -50 /home/$USER/npm_install.log || true
+tail -50 /home/$APP_USER/npm_install.log || true
 
 # -------------------------
 # Build project
@@ -156,7 +163,7 @@ echo "Building project..."
 echo "============================"
 
 if npm run | grep -q "build"; then
-  npm run build
+  sudo -u $APP_USER npm run build
 fi
 
 # -------------------------
@@ -172,7 +179,7 @@ ls -la dist || true
 # -------------------------
 # Stop existing PM2 app
 # -------------------------
-pm2 delete nodeapp || true
+sudo -u $APP_USER pm2 delete nodeapp || true
 
 # -------------------------
 # Create PM2 ecosystem file
@@ -187,7 +194,7 @@ module.exports = {
     {
       name: "nodeapp",
       script: "npm",
-      args: "run dev",
+      args: "start",
       cwd: "$APP_DIR",
       instances: 1,
       exec_mode: "fork",
@@ -208,6 +215,8 @@ module.exports = {
 };
 EOF
 
+sudo chown $APP_USER:$APP_USER ecosystem.config.js
+
 # -------------------------
 # Start app
 # -------------------------
@@ -215,7 +224,7 @@ echo "============================"
 echo "Starting application..."
 echo "============================"
 
-pm2 start ecosystem.config.js --only nodeapp
+sudo -u $APP_USER pm2 start ecosystem.config.js --only nodeapp
 
 # -------------------------
 # Enable PM2 startup
@@ -224,30 +233,30 @@ echo "============================"
 echo "Configuring PM2 startup..."
 echo "============================"
 
-pm2 save
+sudo -u $APP_USER pm2 save
 
-STARTUP_CMD=$(pm2 startup systemd -u $USER --hp /home/$USER | grep sudo)
+STARTUP_CMD=$(sudo -u $APP_USER pm2 startup systemd -u $APP_USER --hp /home/$APP_USER | grep sudo)
 
 eval $STARTUP_CMD
 
-pm2 save
+sudo -u $APP_USER pm2 save
 
 # -------------------------
 # Debug checks
 # -------------------------
-sleep 10
+sleep 15
 
 echo "============================"
 echo "PM2 STATUS"
 echo "============================"
 
-pm2 list || true
+sudo -u $APP_USER pm2 list || true
 
 echo "============================"
 echo "PM2 LOGS"
 echo "============================"
 
-timeout 10s pm2 logs nodeapp --lines 30 --nostream || true
+timeout 10s sudo -u $APP_USER pm2 logs nodeapp --lines 30 --nostream || true
 
 echo "============================"
 echo "PORT STATUS"
@@ -272,7 +281,7 @@ echo "============================"
 echo "SYSTEMD STATUS"
 echo "============================"
 
-systemctl status pm2-$USER --no-pager || true
+systemctl status pm2-$APP_USER --no-pager || true
 
 # -------------------------
 # Logs info
@@ -280,9 +289,9 @@ systemctl status pm2-$USER --no-pager || true
 echo "============================"
 echo "Logs available at:"
 echo "1. PM2 logs → pm2 logs nodeapp"
-echo "2. Startup log → /home/$USER/startup.log"
-echo "3. Error log → /home/$USER/startup_error.log"
-echo "4. NPM log → /home/$USER/npm_install.log"
+echo "2. Startup log → /home/$APP_USER/startup.log"
+echo "3. Error log → /home/$APP_USER/startup_error.log"
+echo "4. NPM log → /home/$APP_USER/npm_install.log"
 echo "============================"
 
 # -------------------------
@@ -294,7 +303,7 @@ sudo systemctl start atd
 # -------------------------
 # Auto shutdown after 5 mins
 # -------------------------
-echo "sudo shutdown -h now" | at now + 5 minutes
+echo "sudo shutdown -h now" | at now + 1 minutes
 
 echo "============================"
 echo "Startup complete."
