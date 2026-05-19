@@ -75,6 +75,36 @@ jobs:
           TF_VAR_region: us-central1
           TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
 
+      # =========================
+      # PRINT OUTPUTS (DEBUG)
+      # =========================
+      - name: Show Load Balancer Outputs
+        run: |
+          terraform -chdir=terraform output
+          echo "--------------------"
+          terraform -chdir=terraform output load_balancer_ip
+          terraform -chdir=terraform output load_balancer_url
+
+      # =========================
+      # CAPTURE LB IP FOR NODE APP
+      # =========================
+      - name: Capture Load Balancer IP
+        run: |
+          LB_IP=$(terraform -chdir=terraform output -raw load_balancer_ip)
+          LB_URL=$(terraform -chdir=terraform output -raw load_balancer_url)
+
+          echo "LB_IP=$LB_IP" >> $GITHUB_ENV
+          echo "LB_URL=$LB_URL" >> $GITHUB_ENV
+
+      # =========================
+      # RUN NODE SERVER
+      # =========================
+      - name: Run Node Server
+        env:
+          LB_IP: ${{ env.LB_IP }}
+          LB_URL: ${{ env.LB_URL }}
+        run: node dist/server.js
+
   # =========================
   # 3. AUTO DESTROY (5 MIN)
   # =========================
