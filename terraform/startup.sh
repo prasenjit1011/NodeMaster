@@ -10,7 +10,7 @@ echo "============================"
 # FIXED USER + APP DIRECTORY
 # -------------------------
 APP_USER="prasenjit10112"
-APP_DIR="/home/nodeapp"
+APP_DIR="/home/$APP_USER/nodeapp"
 
 # -------------------------
 # Install dependencies
@@ -233,12 +233,10 @@ echo "============================"
 echo "Configuring PM2 startup..."
 echo "============================"
 
-sudo -u $APP_USER pm2 save
+# Generate and execute PM2 systemd startup command
+sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u $APP_USER --hp /home/$APP_USER
 
-STARTUP_CMD=$(sudo -u $APP_USER pm2 startup systemd -u $APP_USER --hp /home/$APP_USER | grep sudo)
-
-eval $STARTUP_CMD
-
+# Save PM2 process list
 sudo -u $APP_USER pm2 save
 
 # -------------------------
@@ -303,7 +301,7 @@ sudo systemctl start atd
 # -------------------------
 # Auto shutdown after 5 mins
 # -------------------------
-echo "sudo shutdown -h now" | at now + 1 minutes
+echo "sudo shutdown -h now" | at now + 5 minutes
 
 echo "============================"
 echo "Startup complete."

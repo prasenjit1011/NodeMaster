@@ -64,7 +64,7 @@ resource "google_compute_instance_group_manager" "nodejs_mig" {
     instance_template = google_compute_instance_template.nodejs_template.self_link
   }
 
-  target_size = 1
+  target_size = 2
   named_port {
     name = "http"
     port = 3000
