@@ -41,10 +41,12 @@ resource "google_compute_instance_template" "nodejs_template" {
   }
 
   metadata = {
-    MONGO_URI   = var.mongo_uri
-    NODE_ENV    = "production"
-    REGION      = var.region
-    PROJECT_ID  = var.project_id
+    MONGO_URI    = var.mongo_uri
+    NODE_ENV     = "production"
+    REGION       = var.region
+    PROJECT_ID   = var.project_id
+    GITHUB_REPO  = var.github_repo
+    GITHUB_BRANCH = var.github_branch
   }
 
   metadata_startup_script = file("${path.module}/startup.sh")
@@ -64,7 +66,7 @@ resource "google_compute_instance_group_manager" "nodejs_mig" {
     instance_template = google_compute_instance_template.nodejs_template.self_link
   }
 
-  target_size = 2
+  target_size = var.instance_count
   named_port {
     name = "http"
     port = 3000

@@ -9,7 +9,7 @@ echo "============================"
 # -------------------------
 # FIXED USER + APP DIRECTORY
 # -------------------------
-APP_USER="prasenjit10112"
+APP_USER="nodeapp"
 APP_DIR="/home/$APP_USER/nodeapp"
 
 # -------------------------
@@ -27,13 +27,15 @@ sudo apt install -y \
   at
 
 # -------------------------
-# Create app directory
+# Create app user if needed
 # -------------------------
-sudo mkdir -p $APP_DIR
+if ! id "$APP_USER" >/dev/null 2>&1; then
+  sudo useradd -m -s /bin/bash "$APP_USER"
+fi
 
-sudo chown -R $APP_USER:$APP_USER $APP_DIR
-
-cd $APP_DIR
+sudo mkdir -p "$APP_DIR"
+sudo chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+cd "$APP_DIR"
 
 # -------------------------
 # Fetch metadata
@@ -109,16 +111,26 @@ echo "============================"
 echo "Cloning repository..."
 echo "============================"
 
-if [ ! -d ".git" ]; then
-  sudo -u $APP_USER git clone https://github.com/prasenjit1011/NodeMaster.git .
-else
-  sudo -u $APP_USER git fetch origin
+GITHUB_REPO="$(curl -fsS -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/GITHUB_REPO || true)"
+GITHUB_BRANCH="$(curl -fsS -H "Metadata-Flavor: Google" http://metadata.google.internal/computeMetadata/v1/instance/attributes/GITHUB_BRANCH || true)"
+
+if [ -z "$GITHUB_REPO" ]; then
+  GITHUB_REPO="https://github.com/prasenjit1011/NodeMaster.git"
+fi
+if [ -z "$GITHUB_BRANCH" ]; then
+  GITHUB_BRANCH="main"
 fi
 
-sudo -u $APP_USER git checkout typescript_main_teraform_gcp
-sudo -u $APP_USER git pull origin typescript_main_teraform_gcp
+if [ ! -d ".git" ]; then
+  sudo -u "$APP_USER" git clone "$GITHUB_REPO" .
+else
+  sudo -u "$APP_USER" git fetch origin
+fi
 
-sudo chown -R $APP_USER:$APP_USER $APP_DIR
+sudo -u "$APP_USER" git checkout "$GITHUB_BRANCH" || sudo -u "$APP_USER" git checkout main || true
+sudo -u "$APP_USER" git pull origin "$GITHUB_BRANCH" || true
+
+sudo chown -R "$APP_USER:$APP_USER" "$APP_DIR"
 
 # -------------------------
 # Create .env
@@ -159,27 +171,17 @@ tail -50 /home/$APP_USER/npm_install.log || true
 # Build project
 # -------------------------
 echo "============================"
-echo "Building project..."
+echo "Checking build script..."
 echo "============================"
 
 if npm run | grep -q "build"; then
-  sudo -u $APP_USER npm run build
+  sudo -u "$APP_USER" npm run build
 fi
-
-# -------------------------
-# Verify build
-# -------------------------
-echo "============================"
-echo "DIST CHECK"
-echo "============================"
-
-ls -la
-ls -la dist || true
 
 # -------------------------
 # Stop existing PM2 app
 # -------------------------
-sudo -u $APP_USER pm2 delete nodeapp || true
+sudo -u "$APP_USER" pm2 delete nodeapp || true
 
 # -------------------------
 # Create PM2 ecosystem file
@@ -194,7 +196,7 @@ module.exports = {
     {
       name: "nodeapp",
       script: "npm",
-      args: "start",
+      args: "run dev",
       cwd: "$APP_DIR",
       instances: 1,
       exec_mode: "fork",

@@ -54,7 +54,19 @@ variable "boot_disk_size" {
 variable "github_repo" {
   description = "GitHub repository URL (optional)"
   type        = string
-  default     = ""
+  default     = "https://github.com/prasenjit1011/NodeMaster.git"
+}
+
+variable "github_branch" {
+  description = "GitHub repository branch to deploy"
+  type        = string
+  default     = "typescript_main_teraform_gcp"
+}
+
+variable "instance_count" {
+  description = "Number of VMs to deploy in the managed instance group"
+  type        = number
+  default     = 1
 }
 
 # -----------------------------
