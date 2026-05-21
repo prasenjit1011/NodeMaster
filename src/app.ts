@@ -140,7 +140,7 @@ app.use("/about", (req: Request, res: Response, next: NextFunction) => {
 app.use("/", (req: Request, res: Response, next: NextFunction) => {
     try {
         res.status(200).send(
-            "-: Welcome To GCP Terraform 001 :- " +
+            "-: Welcome To GCP Terraform 722 :- " +
                 new Date().toLocaleString("en-IN", {
                     timeZone: "Asia/Kolkata",
                 })
