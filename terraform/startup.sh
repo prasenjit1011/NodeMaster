@@ -118,7 +118,7 @@ if [ -z "$GITHUB_REPO" ]; then
   GITHUB_REPO="https://github.com/prasenjit1011/NodeMaster.git"
 fi
 if [ -z "$GITHUB_BRANCH" ]; then
-  GITHUB_BRANCH="main"
+  GITHUB_BRANCH="typescript_main_teraform_gcp"
 fi
 
 if [ ! -d ".git" ]; then
@@ -127,7 +127,7 @@ else
   sudo -u "$APP_USER" git fetch origin
 fi
 
-sudo -u "$APP_USER" git checkout "$GITHUB_BRANCH" || sudo -u "$APP_USER" git checkout main || true
+sudo -u "$APP_USER" git checkout "$GITHUB_BRANCH" || sudo -u "$APP_USER" git checkout typescript_main_teraform_gcp || true
 sudo -u "$APP_USER" git pull origin "$GITHUB_BRANCH" || true
 
 sudo chown -R "$APP_USER:$APP_USER" "$APP_DIR"
