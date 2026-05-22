@@ -1,4 +1,4 @@
-name: Terraform AWS Deploy
+name: Deploy And Auto Destroy
 
 on:
   push:
@@ -17,14 +17,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
         run: terraform init
-
-      - name: Terraform Format
-        run: terraform fmt
 
       - name: Terraform Validate
         run: terraform validate
@@ -34,15 +38,12 @@ jobs:
 
       - name: Terraform Apply
         run: terraform apply -auto-approve
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
 
-      - name: Show Public IP
+      - name: Terraform Output
         run: terraform output
 
       - name: Wait 5 Minutes
         run: sleep 300
 
-      - name: Terraform Destroy
+      - name: Terraform Destroy-
         run: terraform destroy -auto-approve
