@@ -33,6 +33,13 @@ resource "aws_instance" "node_server" {
 
   security_groups = [aws_security_group.node_sg.name]
 
+
+  root_block_device {
+    volume_size           = 8
+    volume_type           = "gp3"
+    delete_on_termination = true
+  }
+
   user_data = <<-EOF
               #!/bin/bash
               yum update -y
