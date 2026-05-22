@@ -19,3 +19,4 @@ yarn-error.log
 /public/tradebook/*
 /heapdump
 /coverage
+/dist
