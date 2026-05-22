@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_security_group" "node_sg" {
-  name = "node-sg"
+  name = "node-sg-new"
 
   ingress {
     from_port   = 3000
