@@ -57,7 +57,7 @@ jobs:
             --region ap-south-1
 
       - name: Wait Before Destroy
-        run: sleep 600
+        run: sleep 90
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
