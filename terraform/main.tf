@@ -3,7 +3,7 @@ provider "aws" {
 }
 
 resource "aws_security_group" "node_sg" {
-  name = "node-sg-new"
+  name_prefix = "node-sg-abc"
 
   ingress {
     from_port   = 3000
@@ -31,8 +31,7 @@ resource "aws_instance" "node_server" {
   ami           = "ami-03f4878755434977f"
   instance_type = "t2.micro"
 
-  security_groups = [aws_security_group.node_sg.name]
-
+  vpc_security_group_ids = [aws_security_group.node_sg.id]
 
   root_block_device {
     volume_size           = 8
@@ -57,7 +56,7 @@ resource "aws_instance" "node_server" {
                 res.send("Hello from GitHub Actions");
               });
 
-              app.listen(3000, () => {
+              app.listen(3000, "0.0.0.0", () => {
                 console.log("Running");
               });
               EOL
