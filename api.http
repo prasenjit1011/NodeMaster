@@ -1,0 +1,108 @@
+### Health Check
+GET http://localhost:3000/
+
+###
+
+### Send Email Notification
+POST http://localhost:3000/api/notifications
+Content-Type: application/json
+
+{
+  "userId": "user123",
+  "type": "email",
+  "message": "Welcome User"
+}
+
+###
+
+### Send SMS Notification
+POST http://localhost:3000/api/notifications
+Content-Type: application/json
+
+{
+  "userId": "user123",
+  "type": "sms",
+  "message": "OTP is 123456"
+}
+
+###
+
+### Send Push Notification
+POST http://localhost:3000/api/notifications
+Content-Type: application/json
+
+{
+  "userId": "user123",
+  "type": "push",
+  "message": "You have a new alert"
+}
+
+###
+
+### Rate Limit Test - 1
+POST http://localhost:3000/api/notifications
+Content-Type: application/json
+
+{
+  "userId": "user999",
+  "type": "email",
+  "message": "Test 1"
+}
+
+###
+
+### Rate Limit Test - 2
+POST http://localhost:3000/api/notifications
+Content-Type: application/json
+
+{
+  "userId": "user999",
+  "type": "email",
+  "message": "Test 2"
+}
+
+###
+
+### Rate Limit Test - 3
+POST http://localhost:3000/api/notifications
+Content-Type: application/json
+
+{
+  "userId": "user999",
+  "type": "email",
+  "message": "Test 3"
+}
+
+###
+
+### Rate Limit Test - 4 (Should Fail)
+POST http://localhost:3000/api/notifications
+Content-Type: application/json
+
+{
+  "userId": "user999",
+  "type": "email",
+  "message": "Test 4"
+}
+
+###
+
+### Invalid Type Test
+POST http://localhost:3000/api/notifications
+Content-Type: application/json
+
+{
+  "userId": "user123",
+  "type": "whatsapp",
+  "message": "Invalid Type"
+}
+
+###
+
+### Missing Fields Test
+POST http://localhost:3000/api/notifications
+Content-Type: application/json
+
+{
+  "userId": "user123"
+}
