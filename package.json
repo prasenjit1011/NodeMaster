@@ -1,12 +1,13 @@
 {
   "name": "nodejsmongodbtodo",
   "version": "1.0.0",
-  "description": "",
-  "main": "app.js",
+  "description": "Node.js MongoDB Todo App with TypeScript",
+  "main": "dist/app.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "ts-node-dev --respawn --transpile-only src/app.ts",
-    "dev": "ts-node-dev --respawn --transpile-only src/app.ts"
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "ts-node-dev --respawn --transpile-only src/app.ts",
+    "test": "echo \"No test specified\" && exit 0"
   },
   "author": "",
   "license": "ISC",
@@ -16,5 +17,15 @@
     "express": "^4.18.2",
     "express-session": "^1.17.3",
     "mongodb": "^6.3.0"
+  },
+  "devDependencies": {
+    "@types/body-parser": "^1.19.5",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.3",
+    "@types/express-session": "^1.18.2",
+    "@types/node": "^24.0.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3"
   }
 }
