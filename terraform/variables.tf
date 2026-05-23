@@ -15,3 +15,8 @@ variable "ami_id" {
 variable "app_port" {
   default = 3000
 }
+
+variable "key_name" {
+  description = "AWS EC2 Key Pair Name"
+  type        = string
+}

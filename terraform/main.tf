@@ -7,33 +7,6 @@ provider "aws" {
 }
 
 # ==============================
-# Variables
-# ==============================
-
-variable "aws_region" {
-  description = "AWS Region"
-  type        = string
-  default     = "ap-south-1"
-}
-
-variable "ami_id" {
-  description = "Amazon Linux 2 AMI"
-  type        = string
-  default     = "ami-0f58b397bc5c1f2e8"
-}
-
-variable "instance_type" {
-  description = "EC2 Instance Type"
-  type        = string
-  default     = "t2.micro"
-}
-
-variable "key_name" {
-  description = "AWS EC2 Key Pair Name"
-  type        = string
-}
-
-# ==============================
 # Security Group
 # ==============================
 
@@ -42,8 +15,8 @@ resource "aws_security_group" "node_sg" {
 
   ingress {
     description = "Node.js App Port"
-    from_port   = 3000
-    to_port     = 3000
+    from_port   = var.app_port
+    to_port     = var.app_port
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -96,16 +69,4 @@ resource "aws_instance" "node_server" {
   }
 }
 
-# ==============================
-# Outputs
-# ==============================
-
-output "server_ip" {
-  description = "Public IP of EC2"
-  value       = aws_instance.node_server.public_ip
-}
-
-output "instance_id" {
-  description = "EC2 Instance ID"
-  value       = aws_instance.node_server.id
-}
+# outputs are defined in outputs.tf

@@ -37,27 +37,56 @@ jobs:
         run: terraform plan
 
       - name: Terraform Apply
+        env:
+          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
         run: terraform apply -auto-approve
 
-      - name: Terraform Output
-        run: terraform output
-
-      - name: Get Instance ID
+      - name: Get Terraform Outputs
         id: ec2
         run: |
+          echo "server_ip=$(terraform output -raw server_ip)" >> $GITHUB_OUTPUT
           echo "instance_id=$(terraform output -raw instance_id)" >> $GITHUB_OUTPUT
 
-      - name: Stop EC2 Instance
+      - name: Add SSH key
         run: |
-          aws ec2 stop-instances \
-            --instance-ids ${{ steps.ec2.outputs.instance_id }} \
-            --region ap-south-1
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
 
-      - name: Wait Before Destroy
+      - name: Wait for SSH
+        run: |
+          for i in {1..30}; do
+            ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 -i ~/.ssh/id_rsa ec2-user@${{ steps.ec2.outputs.server_ip }} 'echo ok' >/dev/null 2>&1 && exit 0 || sleep 5
+          done
+          echo "SSH not ready" && exit 1
+
+      - name: Copy repository to EC2
+        run: |
+          scp -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa -r $GITHUB_WORKSPACE/* ec2-user@${{ steps.ec2.outputs.server_ip }}:/home/ec2-user/app
+
+      - name: Install Node, pm2 and start app on EC2
+        run: |
+          ssh -o StrictHostKeyChecking=no -i ~/.ssh/id_rsa ec2-user@${{ steps.ec2.outputs.server_ip }} << 'EOF'
+          sudo yum update -y
+          curl -sL https://rpm.nodesource.com/setup_18.x | sudo bash -
+          sudo yum install -y nodejs git
+          mkdir -p /home/ec2-user/app
+          cd /home/ec2-user/app || exit 1
+          npm install --production || true
+          sudo npm install -g pm2
+          pm2 start server.js --name node_app || true
+          pm2 save || true
+          sudo env PATH=$PATH:/usr/bin pm2 startup systemd -u ec2-user --hp /home/ec2-user || true
+          EOF
+
+      - name: Show App URL
+        run: echo "App should be available at http://${{ steps.ec2.outputs.server_ip }}:3000"
+
+      - name: Wait Before Destroy (6 minutes)
         run: sleep 420
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
 
-      - name: Terraform Output
-        run: terraform output
+      - name: Terraform Output After Destroy
+        run: terraform output || true
