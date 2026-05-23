@@ -89,12 +89,17 @@ jobs:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
           GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
+
         run: |
           ssh -o StrictHostKeyChecking=no \
             -i ~/.ssh/node-key.pem \
-            ubuntu@${{ needs.terraform.outputs.server_ip }} << 'EOF'
+            ubuntu@${{ needs.terraform.outputs.server_ip }} << EOF
 
           set -e
+
+          export MONGO_URI="${MONGO_URI}"
+          export GITHUB_USERNAME="${GITHUB_USERNAME}"
+          export GITHUB_TOKEN="${GITHUB_TOKEN}"
 
           sudo apt update
 
@@ -108,7 +113,7 @@ jobs:
 
           if [ ! -d "app" ]; then
             git clone -b typescript_main_teraform_aws \
-              https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/prasenjit1011/NodeMaster.git app
+            https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/prasenjit1011/NodeMaster.git app
           fi
 
           cd app
@@ -136,11 +141,15 @@ jobs:
           TOKEN=${GITHUB_TOKEN}
           ENVEOF
 
-          cat /home/ubuntu/app/.env
+          echo "=========== .env FILE =========="
+          cat .env
 
           pm2 delete app || true
+
           pm2 start npm --name "app" -- run dev
+
           pm2 save
+
           pm2 status
 
           echo "Application Started Successfully"
