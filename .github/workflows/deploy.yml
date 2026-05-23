@@ -132,6 +132,8 @@ jobs:
           cat > .env << ENVEOF
           MONGO_URI=${MONGO_URI}
           PORT=3000
+          USERNAME=${GITHUB_USERNAME}
+          TOKEN=${GITHUB_TOKEN}
           ENVEOF
 
           cat /home/ubuntu/app/.env
