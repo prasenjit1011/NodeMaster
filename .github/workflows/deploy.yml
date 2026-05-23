@@ -47,9 +47,6 @@ jobs:
         run: |
           echo "instance_id=$(terraform output -raw instance_id)" >> $GITHUB_OUTPUT
 
-      - name: Wait 1 Minute
-        run: sleep 60
-
       - name: Stop EC2 Instance
         run: |
           aws ec2 stop-instances \
@@ -57,7 +54,7 @@ jobs:
             --region ap-south-1
 
       - name: Wait Before Destroy
-        run: sleep 90
+        run: sleep 420
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
