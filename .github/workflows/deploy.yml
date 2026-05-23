@@ -287,3 +287,43 @@ jobs:
       # ==============================
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
+
+      # ==============================
+      # Force Delete AWS Resources
+      # ==============================
+      - name: Delete AWS Resources
+        run: |
+
+          echo "Deleting Load Balancers..."
+          aws elbv2 describe-load-balancers \
+          --query "LoadBalancers[*].LoadBalancerArn" \
+          --output text | xargs -n1 -I {} \
+          aws elbv2 delete-load-balancer --load-balancer-arn {}
+
+          echo "Deleting NAT Gateways..."
+          aws ec2 describe-nat-gateways \
+          --query "NatGateways[*].NatGatewayId" \
+          --output text | xargs -n1 -I {} \
+          aws ec2 delete-nat-gateway --nat-gateway-id {}
+
+          echo "Releasing Elastic IPs..."
+          aws ec2 describe-addresses \
+          --query "Addresses[*].AllocationId" \
+          --output text | xargs -n1 -I {} \
+          aws ec2 release-address --allocation-id {}
+
+          echo "Deleting RDS Databases..."
+          aws rds describe-db-instances \
+          --query "DBInstances[*].DBInstanceIdentifier" \
+          --output text | xargs -n1 -I {} \
+          aws rds delete-db-instance \
+            --db-instance-identifier {} \
+            --skip-final-snapshot
+
+          echo "Deleting Subnets..."
+          aws ec2 describe-subnets \
+          --query "Subnets[*].SubnetId" \
+          --output text | xargs -n1 -I {} \
+          aws ec2 delete-subnet --subnet-id {}
+
+          echo "AWS Resource Cleanup Completed"
