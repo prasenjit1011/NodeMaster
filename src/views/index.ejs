@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+    <title>GCP Terraform App</title>
+
+    <style>
+        body {
+            margin: 0;
+            padding: 30px;
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: Arial, sans-serif;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        .card {
+            background: #1e293b;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.3);
+        }
+
+        h1 {
+            color: #38bdf8;
+        }
+
+        h2 {
+            color: #facc15;
+        }
+
+        p {
+            margin: 8px 0;
+        }
+
+        code {
+            color: #4ade80;
+        }
+
+        pre {
+            background: #0f172a;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+
+    <!-- Header -->
+    <div class="card">
+        <h1>🚀 <%= message %></h1>
+
+        <p>
+            <strong>Timestamp:</strong>
+            <%= timestamp %>
+        </p> 
+        <table width="100%">
+            <tr>
+                <td>
+        <h2>🌐 IP Details</h2>
+        <p>
+            <strong>Local Server IP:</strong>
+            <code>
+                <%= Array.isArray(ipDetails.localServerIP)
+                    ? ipDetails.localServerIP.join(", ")
+                    : ipDetails.localServerIP %>
+            </code>
+        </p>
+
+        <p>
+            <strong>Client IP:</strong>
+            <code><%= ipDetails.clientIP %></code>
+        </p>
+
+        <p>
+            <strong>Public Server IP:</strong>
+            <code><%= ipDetails.publicServerIP %></code>
+        </p>
+                </td>
+                <td>
+                    
+                
+
+        <h2>⚖️ Load Balancer Context</h2>
+
+        <p>
+            <strong>Load Balancer IP:</strong>
+            <code><%= lbContext.loadBalancerIP %></code>
+        </p>
+
+        <p>
+            <strong>Load Balancer URL:</strong>
+            <code><%= lbContext.loadBalancerURL %></code>
+        </p>
+</td>
+            </tr>
+        </table>
+        <h2>☁️ GCP Context</h2>
+
+        <pre><%= JSON.stringify(gcpContext, null, 2) %></pre>
+    </div>
+
+</div>
+
+</body>
+</html>

@@ -5,9 +5,26 @@ dotenv.config(); // MUST be first
 console.clear();
 console.log('\n\n-: App Started :-');
 import { connectDB } from "./config/db";
+import path from "path";
+import productRoutes from "./routes/product.routes";
+import itemRoutes from "./routes/item.routes";
+import serverRoutes from "./routes/server.routes";
+
+
 
 const express = require('express');
 const app = express();
+app.use(express.json());
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "./views"));
+
+// ================================
+// ROUTES
+// ================================
+app.use("/items", itemRoutes);
+app.use("/products", productRoutes);
+app.use("/server", serverRoutes);
+
 
 app.use('/about', (req, res) => {
     console.log('-: Welcome :-');
