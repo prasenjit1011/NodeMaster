@@ -18,7 +18,7 @@ app.use('/about', (req, res) => {
 app.use('/', (req, res) => {
     const dtd = new Date().toLocaleString();
     const mongoURI = process.env.MONGO_URI || process.env.MONGO_URL || process.env.MONGODB_URI;
-    console.log('-: Welcome :-');
+    console.log('-: Welcome TO AWS EC2 :-');
     res.send('-: Welcome | ' + mongoURI + ' | '+dtd);
 });
 
