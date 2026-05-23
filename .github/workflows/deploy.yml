@@ -117,7 +117,8 @@ jobs:
           EOF
 
   auto-destroy:
-    needs: deploy
+    if: always()
+    needs: [terraform, deploy]
     runs-on: ubuntu-latest
 
     defaults:
@@ -127,6 +128,13 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+
+      # Download Terraform state from previous job
+      - name: Download Terraform State
+        uses: actions/download-artifact@v4
+        with:
+          name: terraform-state
+          path: terraform/
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -141,10 +149,16 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Wait Before Destroy
+      - name: Show Terraform State
+        run: terraform state list || true
+
+      - name: Wait 7 Minutes
         run: |
-          echo "Server will stay alive for 24 hours..."
+          echo "Server will stay alive for 7 minutes..."
           sleep 420
 
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
+
+      - name: Confirm Destroy
+        run: terraform state list || true
