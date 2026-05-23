@@ -82,6 +82,8 @@ jobs:
           "echo SSH Connected Successfully"
 
       - name: Deploy Node.js App
+        env:
+          MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
           ssh -o StrictHostKeyChecking=no \
           -i ~/.ssh/node-key.pem \
@@ -108,9 +110,12 @@ jobs:
 
             npm install
 
+            # Set MONGO_URI environment variable
+            export MONGO_URI="${{ secrets.MONGO_URI }}"
+
             pkill node || true
 
-            nohup node server.js > /home/ubuntu/app/app.log 2>&1 &
+            nohup npm run dev > /home/ubuntu/app/app.log 2>&1 &
 
             echo "Application Started"
 
