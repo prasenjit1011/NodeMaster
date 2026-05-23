@@ -51,7 +51,7 @@ jobs:
       - name: Get Terraform Outputs
         id: tf_outputs
         run: |
-          echo "server_ip=$(terraform output -raw server_ip)" >> $GITHUB_OUTPUT
+          echo "server_ip=$(terraform output -raw server_ip)" >> "$GITHUB_OUTPUT"
 
   deploy:
     needs: terraform
@@ -80,18 +80,17 @@ jobs:
       - name: Test SSH Connection
         run: |
           ssh -o StrictHostKeyChecking=no \
-          -i ~/.ssh/node-key.pem \
-          ubuntu@${{ needs.terraform.outputs.server_ip }} \
-          "echo SSH Connected"
+            -i ~/.ssh/node-key.pem \
+            ubuntu@${{ needs.terraform.outputs.server_ip }} \
+            "echo SSH Connected"
 
       - name: Deploy Application
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
         run: |
-
           ssh -o StrictHostKeyChecking=no \
-          -i ~/.ssh/node-key.pem \
-          ubuntu@${{ needs.terraform.outputs.server_ip }} << EOF
+            -i ~/.ssh/node-key.pem \
+            ubuntu@${{ needs.terraform.outputs.server_ip }} << EOF
 
             set -e
 
@@ -107,7 +106,7 @@ jobs:
 
             if [ ! -d "app" ]; then
               git clone -b typescript_main_teraform_aws \
-              https://github.com/prasenjit1011/NodeMaster.git app
+                https://github.com/prasenjit1011/NodeMaster.git app
             fi
 
             cd app
@@ -120,26 +119,27 @@ jobs:
 
             npm install
 
-            # Install missing packages
             npm install dotenv
 
             npm install --save-dev \
-            ts-node-dev \
-            ts-node \
-            typescript \
-            @types/node
+              ts-node-dev \
+              ts-node \
+              typescript \
+              @types/node
 
-            # Create .env automatically
             cat > .env << ENVEOF
 MONGO_URI=${MONGO_URI}
 PORT=3000
 ENVEOF
+
             pm2 delete app || true
             pm2 start npm --name "app" -- run dev
             pm2 save
             pm2 status
+
             echo "Application Started Successfully"
-EOF
+
+          EOF
 
   auto-destroy:
     if: always()
