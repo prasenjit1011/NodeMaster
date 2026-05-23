@@ -2,6 +2,11 @@ provider "aws" {
   region = var.aws_region
 }
 
+variable "key_name" {
+  description = "AWS EC2 Key Pair name"
+  type        = string
+}
+
 resource "aws_security_group" "node_sg" {
   name_prefix = "node-sg-abc"
 
