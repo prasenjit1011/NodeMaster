@@ -131,15 +131,15 @@ jobs:
 
             # Create .env automatically
             cat > .env << ENVEOF
-              MONGO_URI=${MONGO_URI}
-              PORT=3000
-              ENVEOF
-                pm2 delete app || true
-                pm2 start npm --name "app" -- run dev
-                pm2 save
-                pm2 status
-                echo "Application Started Successfully"
-              EOF
+        MONGO_URI=${MONGO_URI}
+        PORT=3000
+        ENVEOF
+            pm2 delete app || true
+            pm2 start npm --name "app" -- run dev
+            pm2 save
+            pm2 status
+            echo "Application Started Successfully"
+          EOF
 
   auto-destroy:
     if: always()
