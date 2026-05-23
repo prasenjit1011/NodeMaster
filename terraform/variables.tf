@@ -1,23 +1,49 @@
 # terraform/variables.tf
 
 variable "aws_region" {
-  default = "ap-south-1"
+  description = "AWS Region"
+  type        = string
+  default     = "ap-south-1"
 }
 
 variable "instance_type" {
-  default = "t2.micro"
+  description = "EC2 Instance Type"
+  type        = string
+  default     = "t2.micro"
 }
 
 variable "ami_id" {
-  default = "ami-03f4878755434977f"
+  description = "Ubuntu AMI ID"
+  type        = string
+  default     = "ami-03f4878755434977f"
 }
 
 variable "app_port" {
-  default = 3000
+  description = "Node.js Application Port"
+  type        = number
+  default     = 3000
+}
+
+variable "alb_port" {
+  description = "Application Load Balancer Port"
+  type        = number
+  default     = 80
 }
 
 variable "key_name" {
   description = "AWS EC2 Key Pair Name"
   type        = string
   default     = "node-key"
+}
+
+variable "project_name" {
+  description = "Project Name"
+  type        = string
+  default     = "nodejs-app"
+}
+
+variable "health_check_path" {
+  description = "Load Balancer Health Check Path"
+  type        = string
+  default     = "/"
 }

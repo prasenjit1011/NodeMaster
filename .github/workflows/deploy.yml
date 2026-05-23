@@ -3,7 +3,7 @@ name: Deploy And Auto Destroy
 on:
   push:
     branches:
-      - typescript_main_teraform_aws
+      - typescript_main_teraform_aws_loadbalancer
 
 jobs:
 
@@ -16,11 +16,18 @@ jobs:
 
     outputs:
       server_ip: ${{ steps.tf_outputs.outputs.server_ip }}
+      load_balancer_dns: ${{ steps.tf_outputs.outputs.load_balancer_dns }}
 
     steps:
+      # ==============================
+      # Checkout
+      # ==============================
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # ==============================
+      # AWS Credentials
+      # ==============================
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -28,18 +35,33 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
+      # ==============================
+      # Terraform Setup
+      # ==============================
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      # ==============================
+      # Terraform Init
+      # ==============================
       - name: Terraform Init
         run: terraform init
 
+      # ==============================
+      # Terraform Validate
+      # ==============================
       - name: Terraform Validate
         run: terraform validate
 
+      # ==============================
+      # Terraform Apply
+      # ==============================
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
+      # ==============================
+      # Save Terraform State
+      # ==============================
       - name: Save Terraform State
         uses: actions/upload-artifact@v4
         with:
@@ -48,35 +70,64 @@ jobs:
             terraform/terraform.tfstate
             terraform/terraform.tfstate.backup
 
+      # ==============================
+      # Terraform Outputs
+      # ==============================
       - name: Get Terraform Outputs
         id: tf_outputs
         run: |
           echo "server_ip=$(terraform output -raw server_ip)" >> "$GITHUB_OUTPUT"
+          echo "load_balancer_dns=$(terraform output -raw load_balancer_dns)" >> "$GITHUB_OUTPUT"
+
+      # ==============================
+      # Show Load Balancer URL
+      # ==============================
+      - name: Show Load Balancer URL
+        run: |
+          echo "======================================"
+          echo "APPLICATION URL"
+          echo "http://${{ steps.tf_outputs.outputs.load_balancer_dns }}"
+          echo "======================================"
 
   deploy:
     needs: terraform
     runs-on: ubuntu-latest
 
     steps:
+      # ==============================
+      # Checkout
+      # ==============================
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # ==============================
+      # SSH Folder
+      # ==============================
       - name: Create SSH Directory
         run: mkdir -p ~/.ssh
 
+      # ==============================
+      # Write PEM Key
+      # ==============================
       - name: Write PEM Key
         run: |
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/node-key.pem
-          chmod 600 ~/.ssh/node-key.pem
+          chmod 400 ~/.ssh/node-key.pem
 
       - name: Verify PEM File
         run: |
           ls -la ~/.ssh
           head -n 2 ~/.ssh/node-key.pem
 
+      # ==============================
+      # Wait For EC2
+      # ==============================
       - name: Wait For EC2 Boot
         run: sleep 90
 
+      # ==============================
+      # Test SSH
+      # ==============================
       - name: Test SSH Connection
         run: |
           ssh -o StrictHostKeyChecking=no \
@@ -84,7 +135,11 @@ jobs:
             ubuntu@${{ needs.terraform.outputs.server_ip }} \
             "echo SSH Connected"
 
+      # ==============================
+      # Deploy Node.js App
+      # ==============================
       - name: Deploy Application
+
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
           GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
@@ -111,8 +166,12 @@ jobs:
 
           cd /home/ubuntu
 
+          # Remove old app
+          rm -rf app
+
           if [ ! -d "app" ]; then
-            git clone -b typescript_main_teraform_aws \
+            # Clone Repository
+            git clone -b typescript_main_teraform_aws_loadbalancer \
             https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/prasenjit1011/NodeMaster.git app
           fi
 
@@ -134,6 +193,7 @@ jobs:
             typescript \
             @types/node
 
+          # Create .env
           cat > .env << ENVEOF
           MONGO_URI=${MONGO_URI}
           PORT=3000
@@ -166,15 +226,24 @@ jobs:
         working-directory: terraform
 
     steps:
+      # ==============================
+      # Checkout
+      # ==============================
       - name: Checkout Repository
         uses: actions/checkout@v4
 
+      # ==============================
+      # Download Terraform State
+      # ==============================
       - name: Download Terraform State
         uses: actions/download-artifact@v4
         with:
           name: terraform-state
           path: terraform/
 
+      # ==============================
+      # AWS Credentials
+      # ==============================
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -182,19 +251,34 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
+      # ==============================
+      # Setup Terraform
+      # ==============================
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      # ==============================
+      # Terraform Init
+      # ==============================
       - name: Terraform Init
         run: terraform init
 
-      - name: Show Terraform State
+      # ==============================
+      # Show Terraform Resources
+      # ==============================
+      - name: Terraform State List
         run: terraform state list || true
 
+      # ==============================
+      # Wait 7 Minutes
+      # ==============================
       - name: Wait 7 Minutes
         run: |
-          echo "Server running for 7 minutes..."
+          echo "Infrastructure will be destroyed in 7 minutes"
           sleep 420
 
+      # ==============================
+      # Terraform Destroy
+      # ==============================
       - name: Terraform Destroy
         run: terraform destroy -auto-approve
