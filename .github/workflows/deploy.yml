@@ -8,13 +8,15 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
-
     defaults:
       run:
         working-directory: terraform
 
+    outputs:
+      server_ip: ${{ steps.tf_outputs.outputs.server_ip }}
+
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
@@ -30,128 +32,53 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
-      - name: Terraform Validate
-        run: terraform validate
-
-      - name: Terraform Plan
-        env:
-          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
-        run: terraform plan
-
       - name: Terraform Apply
-        env:
-          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
         run: terraform apply -auto-approve
 
       - name: Get Terraform Outputs
-        id: ec2
+        id: tf_outputs
         run: |
           echo "server_ip=$(terraform output -raw server_ip)" >> $GITHUB_OUTPUT
-          echo "instance_id=$(terraform output -raw instance_id)" >> $GITHUB_OUTPUT
 
-      - name: Setup SSH Key
+  deploy:
+    needs: terraform
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Create SSH Folder
         run: |
           mkdir -p ~/.ssh
 
-          printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-
-          chmod 600 ~/.ssh/id_rsa
-
-          ssh-keyscan -H ${{ steps.ec2.outputs.server_ip }} >> ~/.ssh/known_hosts
-
-      - name: Debug SSH Key
+      - name: Add SSH Key
         run: |
-          file ~/.ssh/id_rsa
-          head -n 2 ~/.ssh/id_rsa
+          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/node-key.pem
+          chmod 600 ~/.ssh/node-key.pem
 
-      - name: Wait For EC2 SSH
+      - name: Wait For EC2
         run: |
-          for i in {1..30}; do
+          sleep 60
 
-            ssh \
-              -o StrictHostKeyChecking=no \
-              -o ConnectTimeout=10 \
-              -i ~/.ssh/id_rsa \
-              ubuntu@${{ steps.ec2.outputs.server_ip }} "echo SSH Connected"
-
-            if [ $? -eq 0 ]; then
-              echo "SSH is ready"
-              break
-            fi
-
-            echo "Waiting for SSH..."
-            sleep 10
-
-          done
-
-      - name: Create App Directory
+      - name: Test SSH Connection
         run: |
-          ssh \
-            -o StrictHostKeyChecking=no \
-            -i ~/.ssh/id_rsa \
-            ubuntu@${{ steps.ec2.outputs.server_ip }} \
-            "mkdir -p ~/app"
+          ssh -o StrictHostKeyChecking=no \
+          -i ~/.ssh/node-key.pem \
+          ubuntu@${{ needs.terraform.outputs.server_ip }} \
+          "echo Connected"
 
-      - name: Copy Project To EC2
+      - name: Deploy Node App
         run: |
-          scp \
-            -o StrictHostKeyChecking=no \
-            -i ~/.ssh/id_rsa \
-            -r ../* \
-            ubuntu@${{ steps.ec2.outputs.server_ip }}:~/app
+          ssh -o StrictHostKeyChecking=no \
+          -i ~/.ssh/node-key.pem \
+          ubuntu@${{ needs.terraform.outputs.server_ip }} << 'EOF'
+            sudo apt update
+            sudo apt install -y nodejs npm git
 
-      - name: Install NodeJS And Start App
-        run: |
-          ssh \
-            -o StrictHostKeyChecking=no \
-            -i ~/.ssh/id_rsa \
-            ubuntu@${{ steps.ec2.outputs.server_ip }} << 'EOF'
-
-          sudo apt update -y
-
-          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
-
-          sudo apt install -y nodejs
-
-          node -v
-          npm -v
-
-          cd ~/app || exit 1
-
-          npm install
-
-          sudo npm install -g pm2
-
-          pm2 delete node_app || true
-
-          pm2 start server.js --name node_app
-
-          pm2 save
-
-          pm2 status
-
+            rm -rf app
+            git clone YOUR_GITHUB_REPO_URL app
+            cd app
+            npm install
+            nohup node server.js > app.log 2>&1 &
           EOF
-
-      - name: Verify Files On EC2
-        run: |
-          ssh \
-            -o StrictHostKeyChecking=no \
-            -i ~/.ssh/id_rsa \
-            ubuntu@${{ steps.ec2.outputs.server_ip }} \
-            "cd ~/app && ls -la"
-
-      - name: Show Application URL
-        run: |
-          echo "Application URL:"
-          echo "http://${{ steps.ec2.outputs.server_ip }}:3000"
-
-      - name: Wait Before Destroy
-        run: sleep 420
-
-      - name: Terraform Destroy
-        env:
-          TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
-        run: terraform destroy -auto-approve
-
-      - name: Verify Destroy
-        run: terraform output || true
