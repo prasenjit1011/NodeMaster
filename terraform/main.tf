@@ -153,8 +153,9 @@ resource "aws_lb_target_group" "app_tg" {
 # ==============================
 
 resource "aws_lb_target_group_attachment" "app_attach" {
+  count = 2
   target_group_arn = aws_lb_target_group.app_tg.arn
-  target_id        = aws_instance.node_server.id
+  target_id        = aws_instance.node_server[count.index].id
   port             = var.app_port
 }
 

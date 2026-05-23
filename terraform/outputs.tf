@@ -1,13 +1,13 @@
 # terraform/outputs.tf
 
-output "server_ip" {
-  description = "EC2 Public IP Address"
-  value       = aws_instance.node_server.public_ip
+output "server_ips" {
+  description = "EC2 Public IP Addresses"
+  value       = aws_instance.node_server[*].public_ip
 }
 
-output "instance_id" {
-  description = "EC2 Instance ID"
-  value       = aws_instance.node_server.id
+output "instance_ids" {
+  description = "EC2 Instance IDs"
+  value       = aws_instance.node_server[*].id
 }
 
 output "load_balancer_dns" {

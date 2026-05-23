@@ -15,7 +15,7 @@ jobs:
         working-directory: terraform
 
     outputs:
-      server_ip: ${{ steps.tf_outputs.outputs.server_ip }}
+      server_ips: ${{ steps.tf_outputs.outputs.server_ips }}
       load_balancer_dns: ${{ steps.tf_outputs.outputs.load_balancer_dns }}
 
     steps:
@@ -76,7 +76,7 @@ jobs:
       - name: Get Terraform Outputs
         id: tf_outputs
         run: |
-          echo "server_ip=$(terraform output -raw server_ip)" >> "$GITHUB_OUTPUT"
+          echo "server_ips=$(terraform output -json server_ips | jq -c .)" >> "$GITHUB_OUTPUT"
           echo "load_balancer_dns=$(terraform output -raw load_balancer_dns)" >> "$GITHUB_OUTPUT"
 
       # ==============================
@@ -92,6 +92,10 @@ jobs:
   deploy:
     needs: terraform
     runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        server_ip: ${{ fromJson(needs.terraform.outputs.server_ips) }}
 
     steps:
       # ==============================
@@ -114,6 +118,9 @@ jobs:
           echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/node-key.pem
           chmod 400 ~/.ssh/node-key.pem
 
+      # ==============================
+      # Verify PEM File
+      # ==============================
       - name: Verify PEM File
         run: |
           ls -la ~/.ssh
@@ -132,7 +139,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
             -i ~/.ssh/node-key.pem \
-            ubuntu@${{ needs.terraform.outputs.server_ip }} \
+            ubuntu@${{ matrix.server_ip }} \
             "echo SSH Connected"
 
       # ==============================
@@ -148,7 +155,7 @@ jobs:
         run: |
           ssh -o StrictHostKeyChecking=no \
             -i ~/.ssh/node-key.pem \
-            ubuntu@${{ needs.terraform.outputs.server_ip }} << EOF
+            ubuntu@${{ matrix.server_ip }} << EOF
 
           set -e
 
@@ -169,17 +176,15 @@ jobs:
           # Remove old app
           rm -rf app
 
-          if [ ! -d "app" ]; then
-            # Clone Repository
-            git clone -b typescript_main_teraform_aws_loadbalancer \
-            https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/prasenjit1011/NodeMaster.git app
-          fi
+          # Clone Repository
+          git clone -b typescript_main_teraform_aws_loadbalancer \
+          https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/prasenjit1011/NodeMaster.git app
 
           cd app
 
           git fetch origin
 
-          git reset --hard origin/typescript_main_teraform_aws
+          git reset --hard origin/typescript_main_teraform_aws_loadbalancer
 
           rm -rf node_modules package-lock.json
 
