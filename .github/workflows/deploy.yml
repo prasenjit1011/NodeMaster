@@ -8,6 +8,7 @@ on:
 jobs:
   terraform:
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: terraform
@@ -16,7 +17,7 @@ jobs:
       server_ip: ${{ steps.tf_outputs.outputs.server_ip }}
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
@@ -32,6 +33,9 @@ jobs:
       - name: Terraform Init
         run: terraform init
 
+      - name: Terraform Validate
+        run: terraform validate
+
       - name: Terraform Apply
         run: terraform apply -auto-approve
 
@@ -45,40 +49,96 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Create SSH Folder
+      - name: Create SSH Directory
         run: |
           mkdir -p ~/.ssh
 
-      - name: Add SSH Key
+      - name: Write PEM Key
         run: |
-          echo "${{ secrets.EC2_SSH_KEY }}" > ~/.ssh/node-key.pem
+          cat << 'EOF' > ~/.ssh/node-key.pem
+          ${{ secrets.EC2_SSH_KEY }}
+          EOF
+
           chmod 600 ~/.ssh/node-key.pem
 
-      - name: Wait For EC2
+      - name: Verify PEM File
         run: |
-          sleep 60
+          ls -la ~/.ssh
+          head -n 2 ~/.ssh/node-key.pem
+
+      - name: Wait For EC2 Boot
+        run: |
+          echo "Waiting for EC2 instance..."
+          sleep 90
 
       - name: Test SSH Connection
         run: |
           ssh -o StrictHostKeyChecking=no \
           -i ~/.ssh/node-key.pem \
           ubuntu@${{ needs.terraform.outputs.server_ip }} \
-          "echo Connected"
+          "echo SSH Connected Successfully"
 
-      - name: Deploy Node App
+      - name: Deploy Node.js App
         run: |
           ssh -o StrictHostKeyChecking=no \
           -i ~/.ssh/node-key.pem \
           ubuntu@${{ needs.terraform.outputs.server_ip }} << 'EOF'
+
             sudo apt update
+
             sudo apt install -y nodejs npm git
 
+            node -v
+            npm -v
+
             rm -rf app
-            git clone YOUR_GITHUB_REPO_URL app
+
+            git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git app
+
             cd app
+
             npm install
+
+            pkill node || true
+
             nohup node server.js > app.log 2>&1 &
+
+            echo "Application Started"
+
           EOF
+
+  auto-destroy:
+    needs: deploy
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: terraform
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Wait Before Destroy
+        run: |
+          echo "Server will stay alive for 24 hours..."
+          sleep 420
+
+      - name: Terraform Destroy
+        run: terraform destroy -auto-approve
