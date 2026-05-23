@@ -132,6 +132,8 @@ jobs:
           PORT=3000
           ENVEOF
 
+          cat /home/ubuntu/app/.env
+
           pm2 delete app || true
           pm2 start npm --name "app" -- run dev
           pm2 save
