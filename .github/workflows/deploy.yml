@@ -14,7 +14,7 @@ jobs:
         working-directory: terraform
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Configure AWS Credentials
@@ -49,46 +49,72 @@ jobs:
           echo "server_ip=$(terraform output -raw server_ip)" >> $GITHUB_OUTPUT
           echo "instance_id=$(terraform output -raw instance_id)" >> $GITHUB_OUTPUT
 
-      - name: Add SSH key
+      - name: Setup SSH Key
         run: |
           mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+
+          printf "%s" "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
+
           chmod 600 ~/.ssh/id_rsa
 
-      - name: Wait for SSH
+          ssh-keyscan -H ${{ steps.ec2.outputs.server_ip }} >> ~/.ssh/known_hosts
+
+      - name: Debug SSH Key
+        run: |
+          file ~/.ssh/id_rsa
+          head -n 2 ~/.ssh/id_rsa
+
+      - name: Wait For EC2 SSH
         run: |
           for i in {1..30}; do
-            ssh -o StrictHostKeyChecking=no \
-                -o ConnectTimeout=10 \
-                -i ~/.ssh/id_rsa \
-                ubuntu@${{ steps.ec2.outputs.server_ip }} "echo SSH OK" && break
 
-            echo "SSH not ready yet..."
+            ssh \
+              -o StrictHostKeyChecking=no \
+              -o ConnectTimeout=10 \
+              -i ~/.ssh/id_rsa \
+              ubuntu@${{ steps.ec2.outputs.server_ip }} "echo SSH Connected"
+
+            if [ $? -eq 0 ]; then
+              echo "SSH is ready"
+              break
+            fi
+
+            echo "Waiting for SSH..."
             sleep 10
+
           done
 
-      - name: Create app directory
+      - name: Create App Directory
         run: |
-          ssh -o StrictHostKeyChecking=no \
-              -i ~/.ssh/id_rsa \
-              ubuntu@${{ steps.ec2.outputs.server_ip }} \
-              "mkdir -p ~/app"
+          ssh \
+            -o StrictHostKeyChecking=no \
+            -i ~/.ssh/id_rsa \
+            ubuntu@${{ steps.ec2.outputs.server_ip }} \
+            "mkdir -p ~/app"
 
-      - name: Copy repository to EC2
+      - name: Copy Project To EC2
         run: |
-          scp -o StrictHostKeyChecking=no \
-              -i ~/.ssh/id_rsa \
-              -r $GITHUB_WORKSPACE/* \
-              ubuntu@${{ steps.ec2.outputs.server_ip }}:~/app
+          scp \
+            -o StrictHostKeyChecking=no \
+            -i ~/.ssh/id_rsa \
+            -r ../* \
+            ubuntu@${{ steps.ec2.outputs.server_ip }}:~/app
 
-      - name: Install Node and Start App
+      - name: Install NodeJS And Start App
         run: |
-          ssh -o StrictHostKeyChecking=no \
-              -i ~/.ssh/id_rsa \
-              ubuntu@${{ steps.ec2.outputs.server_ip }} << 'EOF'
+          ssh \
+            -o StrictHostKeyChecking=no \
+            -i ~/.ssh/id_rsa \
+            ubuntu@${{ steps.ec2.outputs.server_ip }} << 'EOF'
 
           sudo apt update -y
-          sudo apt install -y nodejs npm
+
+          curl -fsSL https://deb.nodesource.com/setup_18.x | sudo -E bash -
+
+          sudo apt install -y nodejs
+
+          node -v
+          npm -v
 
           cd ~/app || exit 1
 
@@ -97,14 +123,26 @@ jobs:
           sudo npm install -g pm2
 
           pm2 delete node_app || true
+
           pm2 start server.js --name node_app
+
           pm2 save
+
+          pm2 status
 
           EOF
 
-      - name: Show App URL
+      - name: Verify Files On EC2
         run: |
-          echo "App URL:"
+          ssh \
+            -o StrictHostKeyChecking=no \
+            -i ~/.ssh/id_rsa \
+            ubuntu@${{ steps.ec2.outputs.server_ip }} \
+            "cd ~/app && ls -la"
+
+      - name: Show Application URL
+        run: |
+          echo "Application URL:"
           echo "http://${{ steps.ec2.outputs.server_ip }}:3000"
 
       - name: Wait Before Destroy
@@ -114,3 +152,6 @@ jobs:
         env:
           TF_VAR_key_name: ${{ secrets.EC2_KEY_NAME }}
         run: terraform destroy -auto-approve
+
+      - name: Verify Destroy
+        run: terraform output || true
