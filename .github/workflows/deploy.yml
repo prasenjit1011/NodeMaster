@@ -94,9 +94,12 @@ jobs:
             node -v
             npm -v
 
-            rm -rf app
+            if [ ! -d "app/.git" ]; then
+              rm -rf app
 
-            git clone https://github.com/YOUR_USERNAME/YOUR_REPO.git app
+              git clone -b typescript_main_teraform_aws \
+              https://github.com/YOUR_USERNAME/YOUR_REPO.git app
+            fi
 
             cd app
 
