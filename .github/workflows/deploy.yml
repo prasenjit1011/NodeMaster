@@ -91,7 +91,9 @@ jobs:
 
             sudo apt update
 
-            sudo apt install -y nodejs npm git
+            curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+
+            sudo apt install -y nodejs git
 
             cd /home/ubuntu
 
@@ -108,9 +110,10 @@ jobs:
 
             git reset --hard origin/typescript_main_teraform_aws
 
-            npm install
+            rm -rf node_modules package-lock.json
 
-            # Set MONGO_URI environment variable
+            npm install --include=dev
+
             export MONGO_URI="${{ secrets.MONGO_URI }}"
 
             pkill node || true
