@@ -91,23 +91,26 @@ jobs:
 
             sudo apt install -y nodejs npm git
 
-            node -v
-            npm -v
+            cd /home/ubuntu
 
             if [ ! -d "app/.git" ]; then
               rm -rf app
 
               git clone -b typescript_main_teraform_aws \
-              https://github.com/YOUR_USERNAME/YOUR_REPO.git app
+              https://github.com/prasenjit1011/NodeMaster.git app
             fi
 
-            cd app
+            cd /home/ubuntu/app
+
+            git fetch origin
+
+            git reset --hard origin/typescript_main_teraform_aws
 
             npm install
 
             pkill node || true
 
-            nohup node server.js > app.log 2>&1 &
+            nohup node server.js > /home/ubuntu/app/app.log 2>&1 &
 
             echo "Application Started"
 
