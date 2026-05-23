@@ -87,6 +87,8 @@ jobs:
       - name: Deploy Application
         env:
           MONGO_URI: ${{ secrets.MONGO_URI }}
+          GITHUB_USERNAME: ${{ secrets.GH_USERNAME }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
           ssh -o StrictHostKeyChecking=no \
             -i ~/.ssh/node-key.pem \
@@ -106,7 +108,7 @@ jobs:
 
           if [ ! -d "app" ]; then
             git clone -b typescript_main_teraform_aws \
-              https://github.com/prasenjit1011/NodeMaster.git app
+              https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/prasenjit1011/NodeMaster.git app
           fi
 
           cd app
