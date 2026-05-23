@@ -19,7 +19,7 @@ app.use('/', (req, res) => {
     const dtd = new Date().toLocaleString();
     const mongoURI = process.env.MONGO_URI || process.env.MONGO_URL || process.env.MONGODB_URI;
     console.log('-: Welcome :-');
-    res.send('-: Welcome ||| ' + mongoURI + ' | '+dtd);
+    res.send('-: Welcome | ' + mongoURI + ' | '+dtd);
 });
 
 // Centralized Error Handler
