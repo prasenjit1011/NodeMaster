@@ -120,21 +120,26 @@ jobs:
 
             npm install
 
-            npm install --save-dev ts-node-dev typescript ts-node
+            # Install missing packages
+            npm install dotenv
 
-            export MONGO_URI="${MONGO_URI}"
+            npm install --save-dev \
+            ts-node-dev \
+            ts-node \
+            typescript \
+            @types/node
 
-            pm2 delete app || true
-
-            pm2 start npm --name "app" -- run dev
-
-            pm2 save
-
-            pm2 status
-
-            echo "Application Started Successfully"
-
-          EOF
+            # Create .env automatically
+            cat > .env << ENVEOF
+              MONGO_URI=${MONGO_URI}
+              PORT=3000
+              ENVEOF
+                pm2 delete app || true
+                pm2 start npm --name "app" -- run dev
+                pm2 save
+                pm2 status
+                echo "Application Started Successfully"
+              EOF
 
   auto-destroy:
     if: always()
