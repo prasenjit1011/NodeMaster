@@ -1,95 +1,70 @@
-import express, { Request, Response, NextFunction } from "express";
+import dotenv from "dotenv";
+dotenv.config(); // MUST be first
+
 
 console.clear();
 console.log('\n\n-: App Started :-');
-
-// ================================
-// Uncaught Exception
-// ================================
-process.on('uncaughtException', (err: Error) => {
-    console.error('Uncaught Exception:', err.message);
-    process.exit(1);
-});
+import { connectDB } from "./config/db";
+import path from "path";
+import productRoutes from "./routes/product.routes";
+import itemRoutes from "./routes/item.routes";
+import serverRoutes from "./routes/server.routes";
 
 
-// ================================
-// Express App
-// ================================
+
+const express = require('express');
 const app = express();
+app.use(express.json());
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "./views"));
 
 // ================================
-// About Route
+// ROUTES
 // ================================
-app.use('/about', (req: Request, res: Response, next: NextFunction) => {
-    try {
+app.use("/items", itemRoutes);
+app.use("/products", productRoutes);
+app.use("/server", serverRoutes);
 
-        console.log('-: Welcome to About Me Page :-');
 
-        // Test Sync Error
-        // throw new Error('About Page Error');
-        res.status(200).send('-: Welcome to About Me Page :-');
-
-    }
-    catch (err) {
-        next(err);
-    }
+app.use('/about', (req, res) => {
+    console.log('-: Welcome :-');
+    res.send('-: Welcome About Page :-');
 });
 
 
-// ================================
-// Home Route
-// ================================
-app.use('/', async (req: Request, res: Response, next: NextFunction) => {
-    try {
-        console.log('-: Welcome :-');
-        // Test Promise Rejection
-        // await Promise.reject(new Error('Promise Rejection Error'));
-        res.status(200).send('-: Welcome :-');
-    }
-    catch (err) {
-        next(err);
-    }
+app.use('/', (req, res) => {
+    const dtd = new Date().toLocaleString();
+    const mongoURI = process.env.MONGO_URI || process.env.MONGO_URL || process.env.MONGODB_URI;
+    console.log('-: Welcome TO AWS EC2 :-');
+    res.send('-: Welcome | ' + mongoURI + ' | '+dtd);
 });
 
-
-// ================================
-// 404 Route
-// ================================
-app.use((req: Request, res: Response) => {
-    res.status(404).json({
-        success: false,
-        message: 'Route Not Found'
-    });
-});
-
-
-// ================================
 // Centralized Error Handler
-// ================================
-app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+app.use((err, req, res, next) => {
     console.error('Central Error Handler:', err.message);
-    res.status(err.statusCode || 500).json({
-        success: false,
-        message: err.message || 'Internal Server Error'
+    res.status(500).json({
+        message: 'Internal Server Error',
+        error: err.message
     });
 });
 
+console.log('-: App Running :-');
 
-// ================================
-// Start Server
-// ================================
-const server = app.listen(3000, () => {
-    console.log('-: App Running :-');
-    console.log('Server running on http://localhost:3000');
-});
+
 
 
 // ================================
-// Unhandled Promise Rejection
+// START SERVER (FIXED SCOPE)
 // ================================
-process.on('unhandledRejection', (reason: any) => {
-    console.error('Unhandled Promise Rejection:', reason);
-    server.close(() => {
-        process.exit(1);
+let server: any;
+
+const startServer = async () => {
+    await connectDB();
+
+    server = app.listen(3000, "0.0.0.0", () => {
+        console.log("-: App Running :-");
+        console.log("Server running on port 3000");
     });
-});
+};
+
+startServer();
