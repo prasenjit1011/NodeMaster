@@ -48,11 +48,11 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
 
             const publicIP = await getPublicIP();
 
-        const gcpContext = {
+        const awsContext = {
             nodeEnv: process.env.NODE_ENV || "development",
-            region: process.env.GCP_REGION || "unknown",
-            instanceName: process.env.GCE_INSTANCE_NAME || "unknown",
-            projectId: process.env.GCP_PROJECT_ID || "unknown",
+            region: process.env.AWS_REGION || "unknown",
+            instanceName: process.env.EC2_INSTANCE_ID || "unknown",
+            projectId: process.env.EKS_CLUSTER_NAME || "unknown",
         };
 
         // controller / route
@@ -73,7 +73,7 @@ router.use("/", async (req: Request, res: Response, next: NextFunction) => {
                 loadBalancerURL: process.env.LB_URL || "unknown",
             },
 
-            gcpContext: gcpContext,
+            awsContext: awsContext,
             });
 
         } catch (err) {

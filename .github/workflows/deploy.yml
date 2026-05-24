@@ -15,6 +15,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      # =========================
+      # AWS
+      # =========================
       - name: Configure AWS
         uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -22,17 +25,47 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
 
+      # =========================
+      # Terraform
+      # =========================
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
       - name: Terraform Init
         working-directory: terraform
-        run: terraform init
+        run: terraform init -upgrade
 
       - name: Terraform Apply
         working-directory: terraform
         run: terraform apply -auto-approve
 
+      # =========================
+      # kubectl
+      # =========================
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Connect EKS
+        run: |
+          aws eks update-kubeconfig \
+          --region ap-south-1 \
+          --name node-cluster
+
+      # =========================
+      # Secret
+      # =========================
+      - name: Replace ENV
+        run: |
+          export MONGO_URI="${{ secrets.MONGO_URI }}"
+          envsubst < k8s/secret.yaml > k8s/secret-final.yaml
+
+      - name: Apply Secret
+        run: |
+          kubectl apply -f k8s/secret-final.yaml
+
+      # =========================
+      # Docker + ECR
+      # =========================
       - name: Login To ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
@@ -50,38 +83,47 @@ jobs:
           docker push \
           ${{ steps.login-ecr.outputs.registry }}/nodejs-k8s-app:latest
 
-      - name: Setup kubectl
-        uses: azure/setup-kubectl@v4
-
-      - name: Connect EKS
-        run: |
-          aws eks update-kubeconfig \
-          --region ap-south-1 \
-          --name node-cluster
-
+      # =========================
+      # Update Deployment Image
+      # =========================
       - name: Update Deployment
         run: |
-          sed -i 's|IMAGE_NAME|${{ steps.login-ecr.outputs.registry }}/nodejs-k8s-app:latest|g' k8s/deployment.yaml
+          IMAGE="${{ steps.login-ecr.outputs.registry }}/nodejs-k8s-app:latest"
 
+          sed -i "s|IMAGE_NAME|$IMAGE|g" k8s/deployment.yaml
+
+      # =========================
+      # Deploy
+      # =========================
       - name: Deploy To Kubernetes
         run: |
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
 
-      # =========================
-      # Show Service URL
-      # =========================
       - name: Show LoadBalancer URL
         run: kubectl get svc
 
+      # =========================
+      # Wait
+      # =========================
       - name: Wait 7 Minutes
         run: sleep 420
 
+      # =========================
+      # Cleanup
+      # =========================
       - name: Delete Kubernetes Resources
+        if: always()
         run: |
-          kubectl delete -f k8s/service.yaml --ignore-not-found
-          kubectl delete -f k8s/deployment.yaml --ignore-not-found
+          kubectl delete -f k8s/service.yaml --ignore-not-found=true
+          kubectl delete -f k8s/deployment.yaml --ignore-not-found=true
+          kubectl delete -f k8s/secret-final.yaml --ignore-not-found=true
+
+      - name: Wait For LoadBalancer Cleanup
+        if: always()
+        run: sleep 120
 
       - name: Terraform Destroy
+        if: always()
         working-directory: terraform
         run: terraform destroy -auto-approve

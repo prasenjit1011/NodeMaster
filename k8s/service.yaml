@@ -8,7 +8,7 @@ spec:
   type: LoadBalancer
 
   selector:
-    app: node-app
+    app: nodejs-app
 
   ports:
     - protocol: TCP

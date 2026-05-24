@@ -2,29 +2,57 @@ apiVersion: apps/v1
 kind: Deployment
 
 metadata:
-  name: node-app
+  name: nodejs-app
 
 spec:
-  replicas: 2
+  replicas: 1
 
   selector:
     matchLabels:
-      app: node-app
+      app: nodejs-app
 
   template:
     metadata:
       labels:
-        app: node-app
+        app: nodejs-app
 
     spec:
       containers:
-        - name: node-app
+        - name: nodejs-app
 
           image: IMAGE_NAME
+
+          imagePullPolicy: Always
 
           ports:
             - containerPort: 3000
 
           env:
             - name: MONGO_URI
-              value: "YOUR_MONGO_URI"
+              valueFrom:
+                secretKeyRef:
+                  name: app-secret
+                  key: MONGO_URI
+
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+
+            limits:
+              memory: "256Mi"
+              cpu: "200m"
+
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 30
+            periodSeconds: 10
+
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 3000
+            initialDelaySeconds: 10
+            periodSeconds: 5
