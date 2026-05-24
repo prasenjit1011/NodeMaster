@@ -39,8 +39,7 @@ jobs:
       # Build Docker Image
       # =========================
       - name: Build Image
-        run: |
-          docker build -t nodejs-k8s-app .
+        run: docker build -t nodejs-k8s-app .
 
       # =========================
       # Tag Image
@@ -94,5 +93,4 @@ jobs:
       # Show Service URL
       # =========================
       - name: Show LoadBalancer URL
-        run: |
-          kubectl get svc
+        run: kubectl get svc
