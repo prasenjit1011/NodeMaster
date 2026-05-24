@@ -1,0 +1,98 @@
+name: Deploy To EKS
+
+on:
+  push:
+    branches:
+      - typescript_main_teraform_aws
+
+jobs:
+
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+
+      # =========================
+      # Checkout
+      # =========================
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # =========================
+      # AWS Login
+      # =========================
+      - name: Configure AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-south-1
+
+      # =========================
+      # Login ECR
+      # =========================
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      # =========================
+      # Build Docker Image
+      # =========================
+      - name: Build Image
+        run: |
+          docker build -t nodejs-k8s-app .
+
+      # =========================
+      # Tag Image
+      # =========================
+      - name: Tag Image
+        run: |
+          docker tag nodejs-k8s-app:latest \
+          ${{ steps.login-ecr.outputs.registry }}/nodejs-k8s-app:latest
+
+      # =========================
+      # Push Image
+      # =========================
+      - name: Push Image
+        run: |
+          docker push \
+          ${{ steps.login-ecr.outputs.registry }}/nodejs-k8s-app:latest
+
+      # =========================
+      # Setup kubectl
+      # =========================
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      # =========================
+      # Connect EKS
+      # =========================
+      - name: Connect EKS
+        run: |
+          aws eks update-kubeconfig \
+          --region ap-south-1 \
+          --name node-cluster
+
+      # =========================
+      # Replace Image Name
+      # =========================
+      - name: Update Deployment File
+        run: |
+          sed -i 's|IMAGE_NAME|${{ steps.login-ecr.outputs.registry }}/nodejs-k8s-app:latest|g' k8s/deployment.yaml
+
+          sed -i 's|YOUR_MONGO_URI|${{ secrets.MONGO_URI }}|g' k8s/deployment.yaml
+
+      # =========================
+      # Deploy Kubernetes
+      # =========================
+      - name: Deploy
+        run: |
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+
+      # =========================
+      # Show Service URL
+      # =========================
+      - name: Show LoadBalancer URL
+        run: |
+          kubectl get svc
