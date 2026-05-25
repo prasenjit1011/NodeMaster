@@ -12,6 +12,9 @@ jobs:
 
     steps:
 
+      # =========================
+      # Checkout
+      # =========================
       - name: Checkout
         uses: actions/checkout@v4
 
@@ -33,7 +36,7 @@ jobs:
 
       - name: Terraform Init
         working-directory: terraform
-        run: terraform init -upgrade
+        run: terraform init
 
       - name: Terraform Apply
         working-directory: terraform
@@ -48,8 +51,8 @@ jobs:
       - name: Connect EKS
         run: |
           aws eks update-kubeconfig \
-          --region ap-south-1 \
-          --name node-cluster
+            --region ap-south-1 \
+            --name node-cluster
 
       # =========================
       # Secret
@@ -71,7 +74,8 @@ jobs:
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build Docker Image
-        run: docker build -t nodejs-k8s-app .
+        run: |
+          docker build -t nodejs-k8s-app .
 
       - name: Tag Docker Image
         run: |
@@ -100,17 +104,22 @@ jobs:
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
 
-      - name: Show LoadBalancer URL
-        run: kubectl get svc
+      # =========================
+      # Show Service
+      # =========================
+      - name: Show Services
+        run: |
+          kubectl get pods
+          kubectl get svc
 
       # =========================
       # Wait
       # =========================
-      - name: Wait 7 Minutes
-        run: sleep 420
+      - name: Wait 2 Minutes
+        run: sleep 120
 
       # =========================
-      # Cleanup
+      # Cleanup Kubernetes
       # =========================
       - name: Delete Kubernetes Resources
         if: always()
@@ -119,10 +128,9 @@ jobs:
           kubectl delete -f k8s/deployment.yaml --ignore-not-found=true
           kubectl delete -f k8s/secret-final.yaml --ignore-not-found=true
 
-      - name: Wait For LoadBalancer Cleanup
-        if: always()
-        run: sleep 120
-
+      # =========================
+      # Terraform Destroy
+      # =========================
       - name: Terraform Destroy
         if: always()
         working-directory: terraform

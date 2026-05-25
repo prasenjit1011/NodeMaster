@@ -23,15 +23,34 @@ module "eks" {
   kubernetes_version = "1.30"
 
   vpc_id     = module.vpc.vpc_id
-  subnet_ids = module.vpc.private_subnets
+
+  # USE PUBLIC SUBNETS
+  subnet_ids = module.vpc.public_subnets
 
   eks_managed_node_groups = {
     default = {
       instance_types = ["t3.micro"]
+
+      subnet_ids = module.vpc.public_subnets
 
       min_size     = 1
       max_size     = 1
       desired_size = 1
     }
   }
+}
+
+terraform {
+  required_version = ">= 1.5.0"
+
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.42"
+    }
+  }
+}
+
+provider "aws" {
+  region = "ap-south-1"
 }
