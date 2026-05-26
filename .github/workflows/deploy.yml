@@ -3,7 +3,7 @@ name: Deploy And Destroy
 on:
   push:
     branches:
-      - typescript_main_teraform_aws_kubernetes_demo
+      - typescript_main_teraform_aws_kubernetes
 
 jobs:
 
