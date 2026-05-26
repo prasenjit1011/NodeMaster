@@ -59,7 +59,11 @@ console.log('-: App Running :-');
 let server: any;
 
 const startServer = async () => {
-    await connectDB();
+    try {
+        await connectDB();
+    } catch(err) {
+        console.log("DB failed");
+    }
 
     server = app.listen(3000, "0.0.0.0", () => {
         console.log("-: App Running :-");

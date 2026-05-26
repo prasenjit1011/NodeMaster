@@ -5,3 +5,7 @@ npm-debug.log
 .env
 dist
 coverage
+
+terraform
+k8s
+README.md

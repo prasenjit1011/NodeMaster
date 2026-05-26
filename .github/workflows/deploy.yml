@@ -3,12 +3,15 @@ name: Deploy And Destroy
 on:
   push:
     branches:
-      - typescript_main_teraform_aws_kubernetes
+      - typescript_main_teraform_aws_kubernetes_demo
 
 jobs:
 
   deploy:
     runs-on: ubuntu-latest
+
+    # Entire workflow hard limit
+    timeout-minutes: 55
 
     steps:
 
@@ -16,12 +19,14 @@ jobs:
       # Checkout
       # =========================
       - name: Checkout
+        timeout-minutes: 2
         uses: actions/checkout@v4
 
       # =========================
       # AWS
       # =========================
       - name: Configure AWS
+        timeout-minutes: 2
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -32,27 +37,34 @@ jobs:
       # Terraform
       # =========================
       - name: Setup Terraform
+        timeout-minutes: 3
         uses: hashicorp/setup-terraform@v3
 
       - name: Clean Terraform Cache
+        timeout-minutes: 2
         working-directory: terraform
         run: |
           rm -rf .terraform
           rm -f terraform.lock.hcl
 
       - name: Terraform Init
+        timeout-minutes: 8
         working-directory: terraform
         run: terraform init -upgrade
 
       - name: Terraform Validate
+        timeout-minutes: 3
         working-directory: terraform
         run: terraform validate
 
       - name: Terraform Plan
+        timeout-minutes: 8
         working-directory: terraform
         run: terraform plan
 
+      # EKS creation can take long
       - name: Terraform Apply
+        timeout-minutes: 28
         working-directory: terraform
         run: terraform apply -auto-approve
 
@@ -60,9 +72,11 @@ jobs:
       # kubectl
       # =========================
       - name: Setup kubectl
+        timeout-minutes: 3
         uses: azure/setup-kubectl@v4
 
       - name: Connect EKS
+        timeout-minutes: 5
         run: |
           aws eks update-kubeconfig \
             --region ap-south-1 \
@@ -72,11 +86,13 @@ jobs:
       # Secret
       # =========================
       - name: Replace ENV
+        timeout-minutes: 2
         run: |
           export MONGO_URI="${{ secrets.MONGO_URI }}"
           envsubst < k8s/secret.yaml > k8s/secret-final.yaml
 
       - name: Apply Secret
+        timeout-minutes: 3
         run: |
           kubectl apply -f k8s/secret-final.yaml
 
@@ -84,19 +100,23 @@ jobs:
       # Docker + ECR
       # =========================
       - name: Login To ECR
+        timeout-minutes: 3
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build Docker Image
+        timeout-minutes: 10
         run: |
           docker build -t nodejs-k8s-app .
 
       - name: Tag Docker Image
+        timeout-minutes: 2
         run: |
           docker tag nodejs-k8s-app:latest \
           ${{ steps.login-ecr.outputs.registry }}/nodejs-k8s-app:latest
 
       - name: Push Docker Image
+        timeout-minutes: 10
         run: |
           docker push \
           ${{ steps.login-ecr.outputs.registry }}/nodejs-k8s-app:latest
@@ -105,6 +125,7 @@ jobs:
       # Update Deployment Image
       # =========================
       - name: Update Deployment
+        timeout-minutes: 2
         run: |
           IMAGE="${{ steps.login-ecr.outputs.registry }}/nodejs-k8s-app:latest"
 
@@ -114,6 +135,7 @@ jobs:
       # Deploy
       # =========================
       - name: Deploy To Kubernetes
+        timeout-minutes: 5
         run: |
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
@@ -122,6 +144,7 @@ jobs:
       # Show Service
       # =========================
       - name: Show Services
+        timeout-minutes: 3
         run: |
           kubectl get pods
           kubectl get svc
@@ -129,13 +152,15 @@ jobs:
       # =========================
       # Wait
       # =========================
-      - name: Wait 2 Minutes
-        run: sleep 120
+      - name: Wait 1 Minute
+        timeout-minutes: 2
+        run: sleep 60
 
       # =========================
       # Cleanup Kubernetes
       # =========================
       - name: Delete Kubernetes Resources
+        timeout-minutes: 8
         if: always()
         run: |
           kubectl delete -f k8s/service.yaml --ignore-not-found=true
@@ -146,6 +171,7 @@ jobs:
       # Terraform Destroy
       # =========================
       - name: Terraform Destroy
+        timeout-minutes: 25
         if: always()
         working-directory: terraform
         run: terraform destroy -auto-approve
