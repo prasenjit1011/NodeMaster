@@ -1,3 +1,10 @@
+node_modules/
+*.zip
+.terraform/
+terraform.tfstate
+terraform.tfstate.backup
+
+
 # Dependencies
 node_modules/
 npm-debug.log*

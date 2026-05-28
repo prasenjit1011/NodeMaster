@@ -19,6 +19,30 @@ resource "aws_s3_bucket" "employee_bucket" {
   }
 }
 
+
+resource "aws_lambda_function" "seedAdmin" {
+
+  function_name = "seedAdminLambda"
+
+  role    = aws_iam_role.lambda_role.arn
+  runtime = "nodejs20.x"
+  handler = "index.handler"
+
+  filename = "../seedAdmin.zip"
+
+  source_code_hash = filebase64sha256("../seedAdmin.zip")
+
+  timeout = 30
+
+  environment {
+    variables = {
+      MONGO_URL = var.mongo_url
+    }
+  }
+}
+
+
+
 ##################################################
 # LOGIN LAMBDA
 ##################################################

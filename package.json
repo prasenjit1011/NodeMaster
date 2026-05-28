@@ -1,26 +1,104 @@
 {
-  "name": "nodejsmongodbtodo",
+  "name": "employee-system",
   "version": "1.0.0",
-  "description": "",
-  "main": "app.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "ts-node-dev --respawn --transpile-only src/app.ts"
+  "description": "NodeJS AWS Lambda Employee Management System with Terraform, Step Functions, MongoDB and GitHub Actions",
+  "main": "index.js",
+  "private": true,
+  "engines": {
+    "node": ">=20"
   },
+  "scripts": {
+
+    //////////////////////////////////////////////////
+    // CLEAN
+    //////////////////////////////////////////////////
+
+    "clean": "rm -f *.zip",
+
+    //////////////////////////////////////////////////
+    // LOGIN LAMBDA
+    //////////////////////////////////////////////////
+
+    "install:login": "cd lambdas/login && npm install",
+
+    "zip:login": "cd lambdas/login && zip -r ../../login.zip index.js package.json node_modules",
+
+    //////////////////////////////////////////////////
+    // VALIDATE JWT LAMBDA
+    //////////////////////////////////////////////////
+
+    "install:validateJwt": "cd lambdas/validateJwt && npm install",
+
+    "zip:validateJwt": "cd lambdas/validateJwt && zip -r ../../validateJwt.zip index.js package.json node_modules",
+
+    //////////////////////////////////////////////////
+    // CREATE EMPLOYEE LAMBDA
+    //////////////////////////////////////////////////
+
+    "install:createEmployee": "cd lambdas/createEmployee && npm install",
+
+    "zip:createEmployee": "cd lambdas/createEmployee && zip -r ../../createEmployee.zip index.js package.json node_modules",
+
+    //////////////////////////////////////////////////
+    // UPDATE EMPLOYEE LAMBDA
+    //////////////////////////////////////////////////
+
+    "install:updateEmployee": "cd lambdas/updateEmployee && npm install",
+
+    "zip:updateEmployee": "cd lambdas/updateEmployee && zip -r ../../updateEmployee.zip index.js package.json node_modules",
+
+    //////////////////////////////////////////////////
+    // UPLOAD IMAGE LAMBDA
+    //////////////////////////////////////////////////
+
+    "install:uploadImage": "cd lambdas/uploadImage && npm install",
+
+    "zip:uploadImage": "cd lambdas/uploadImage && zip -r ../../uploadImage.zip index.js package.json node_modules",
+
+    //////////////////////////////////////////////////
+    // SEED ADMIN LAMBDA
+    //////////////////////////////////////////////////
+
+    "install:seedAdmin": "cd lambdas/seedAdmin && npm install",
+
+    "zip:seedAdmin": "cd lambdas/seedAdmin && zip -r ../../seedAdmin.zip index.js package.json node_modules",
+
+    //////////////////////////////////////////////////
+    // BUILD ALL
+    //////////////////////////////////////////////////
+
+    "build": "npm run clean && npm run install:login && npm run zip:login && npm run install:validateJwt && npm run zip:validateJwt && npm run install:createEmployee && npm run zip:createEmployee && npm run install:updateEmployee && npm run zip:updateEmployee && npm run install:uploadImage && npm run zip:uploadImage && npm run install:seedAdmin && npm run zip:seedAdmin",
+
+    //////////////////////////////////////////////////
+    // TERRAFORM
+    //////////////////////////////////////////////////
+
+    "terraform:init": "cd terraform && terraform init",
+
+    "terraform:validate": "cd terraform && terraform validate",
+
+    "terraform:plan": "cd terraform && terraform plan",
+
+    "terraform:apply": "cd terraform && terraform apply -auto-approve",
+
+    "terraform:destroy": "cd terraform && terraform destroy -auto-approve",
+
+    //////////////////////////////////////////////////
+    // FULL DEPLOY
+    //////////////////////////////////////////////////
+
+    "deploy": "npm run build && npm run terraform:init && npm run terraform:validate && npm run terraform:apply"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "terraform",
+    "mongodb",
+    "step-functions",
+    "github-actions",
+    "nodejs"
+  ],
   "author": "",
   "license": "ISC",
-  "dependencies": {
-    "body-parser": "^1.20.2",
-    "ejs": "^3.1.9",
-    "express": "^4.18.2",
-    "express-session": "^1.17.3",
-    "mongodb": "^6.3.0"
-  },
-  "devDependencies": {
-    "@types/express": "^5.0.6",
-    "@types/node": "^25.8.0",
-    "ts-node": "^10.9.2",
-    "ts-node-dev": "^2.0.0",
-    "typescript": "^6.0.3"
-  }
+  "devDependencies": {}
 }
