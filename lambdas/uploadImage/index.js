@@ -1,63 +1,105 @@
-const {
-    S3Client,
-    PutObjectCommand
-} = require('@aws-sdk/client-s3');
+const AWS = require('aws-sdk');
 
-const jwt = require('jsonwebtoken');
+const { MongoClient, ObjectId } = require('mongodb');
 
-const s3 = new S3Client({});
+const s3 = new AWS.S3();
+
+const uri = process.env.MONGO_URI;
+
+const bucketName = process.env.BUCKET_NAME;
+
+let cachedClient = null;
+
+async function getClient() {
+
+    if (cachedClient) {
+        return cachedClient;
+    }
+
+    const client = new MongoClient(uri);
+
+    await client.connect();
+
+    cachedClient = client;
+
+    return client;
+}
 
 exports.handler = async (event) => {
 
     try {
 
-        const token =
-            event.headers.Authorization ||
-            event.headers.authorization;
+        const body =
+            typeof event.body === 'string'
+                ? JSON.parse(event.body)
+                : event.body;
 
-        if (!token) {
-            throw new Error('JWT token required');
-        }
+        const employeeId = body.employeeId;
 
-        jwt.verify(
-            token.replace('Bearer ', ''),
-            process.env.JWT_SECRET
-        );
+        const image = body.image;
 
-        const body = JSON.parse(event.body);
+        const fileName = `${Date.now()}.jpg`;
 
         const buffer = Buffer.from(
-            body.base64Image,
+            image,
             'base64'
         );
 
-        const fileName =
-            `${Date.now()}.png`;
+        await s3.putObject({
 
-        await s3.send(
-            new PutObjectCommand({
-                Bucket: process.env.BUCKET_NAME,
-                Key: fileName,
-                Body: buffer,
-                ContentType: 'image/png'
-            })
+            Bucket: bucketName,
+
+            Key: `employees/${fileName}`,
+
+            Body: buffer,
+
+            ContentType: 'image/jpeg'
+
+        }).promise();
+
+        const imageUrl =
+            `https://${bucketName}.s3.amazonaws.com/employees/${fileName}`;
+
+        const client = await getClient();
+
+        const db = client.db('demodb');
+
+        await db.collection('employees').updateOne(
+
+            {
+                _id: new ObjectId(employeeId)
+            },
+
+            {
+                $set: {
+                    image: imageUrl
+                }
+            }
         );
 
         return {
+
             statusCode: 200,
+
             body: JSON.stringify({
-                success: true,
-                fileName
+
+                message: 'Employee image uploaded',
+
+                imageUrl
             })
         };
 
     } catch (error) {
 
+        console.log(error);
+
         return {
+
             statusCode: 500,
+
             body: JSON.stringify({
-                success: false,
-                error: error.message
+
+                message: 'Image upload failed'
             })
         };
     }

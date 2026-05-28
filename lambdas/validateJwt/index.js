@@ -4,31 +4,41 @@ exports.handler = async (event) => {
 
     try {
 
-        const headers =
-            event.headers || {};
-
         const token =
-            headers.Authorization ||
-            headers.authorization;
+            event.headers?.Authorization ||
+            event.headers?.authorization ||
+            event.token;
 
         if (!token) {
-            throw new Error('Token missing');
+
+            return {
+                statusCode: 401,
+                body: JSON.stringify({
+                    message: 'JWT token required'
+                })
+            };
         }
 
+        const cleanToken = token.replace('Bearer ', '');
+
         const decoded = jwt.verify(
-            token.replace('Bearer ', ''),
+            cleanToken,
             process.env.JWT_SECRET
         );
 
         return {
-            success: true,
-            user: decoded
+            statusCode: 200,
+            user: decoded,
+            message: 'JWT Valid'
         };
 
     } catch (error) {
 
-        throw new Error(
-            `Unauthorized: ${error.message}`
-        );
+        return {
+            statusCode: 401,
+            body: JSON.stringify({
+                message: 'Invalid JWT Token'
+            })
+        };
     }
 };

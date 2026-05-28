@@ -30,8 +30,10 @@ locals {
   lambda_runtime = "nodejs20.x"
 
   common_env = {
-    MONGO_URI = var.mongo_url
-    JWT_SECRET = var.jwt_secret
+    MONGO_URI      = var.mongo_uri
+    JWT_SECRET     = var.jwt_secret
+    BUCKET_NAME    = aws_s3_bucket.employee_bucket.bucket
+    EMPLOYEE_TABLE = "employees"
   }
 }
 
@@ -81,9 +83,12 @@ resource "aws_lambda_function" "startWorkflow" {
   memory_size = 256
 
   environment {
-    variables = {
-      STATE_MACHINE_ARN = aws_sfn_state_machine.employee_flow.id
-    }
+    variables = merge(
+      local.common_env,
+      {
+        STATE_MACHINE_ARN = aws_sfn_state_machine.employee_flow.id
+      }
+    )
   }
 
   tags = {
@@ -193,10 +198,7 @@ resource "aws_lambda_function" "uploadImage" {
   memory_size = 512
 
   environment {
-    variables = {
-      BUCKET_NAME = aws_s3_bucket.employee_bucket.bucket
-      JWT_SECRET  = var.jwt_secret
-    }
+    variables = local.common_env
   }
 
   tags = {

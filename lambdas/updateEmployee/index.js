@@ -2,57 +2,82 @@ const { MongoClient, ObjectId } = require('mongodb');
 
 const uri = process.env.MONGO_URI;
 
-exports.handler = async (event) => {
+let cachedClient = null;
 
-    let client;
+async function getClient() {
+
+    if (cachedClient) {
+        return cachedClient;
+    }
+
+    const client = new MongoClient(uri);
+
+    await client.connect();
+
+    cachedClient = client;
+
+    return client;
+}
+
+exports.handler = async (event) => {
 
     try {
 
-        const body = JSON.parse(event.body || '{}');
+        const body =
+            typeof event.body === 'string'
+                ? JSON.parse(event.body)
+                : event.body;
 
-        client = new MongoClient(uri);
+        const employeeId = body.employeeId;
 
-        await client.connect();
+        const client = await getClient();
 
         const db = client.db('demodb');
 
         await db.collection('employees').updateOne(
+
             {
-                _id: new ObjectId(body.id)
+                _id: new ObjectId(employeeId)
             },
+
             {
                 $set: {
+
                     name: body.name,
+
                     email: body.email,
+
                     mobile: body.mobile,
+
                     department: body.department,
+
                     updatedAt: new Date()
                 }
             }
         );
 
         return {
+
             statusCode: 200,
+
             body: JSON.stringify({
-                success: true,
+
                 message: 'Employee updated successfully'
             })
         };
 
     } catch (error) {
 
+        console.log(error);
+
         return {
+
             statusCode: 500,
+
             body: JSON.stringify({
-                success: false,
-                error: error.message
+
+                message: 'Failed to update employee'
             })
         };
-
-    } finally {
-
-        if (client) {
-            await client.close();
-        }
     }
 };
