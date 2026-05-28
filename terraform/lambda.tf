@@ -232,3 +232,24 @@ resource "aws_lambda_function" "updateEmployee" {
     Name = "update-employee-lambda"
   }
 }
+
+##################################################
+# INVOKE SEED ADMIN LAMBDA AFTER DEPLOY
+##################################################
+
+resource "null_resource" "invoke_seed_admin" {
+
+  depends_on = [
+    aws_lambda_function.seedAdmin
+  ]
+
+  provisioner "local-exec" {
+
+    command = <<EOT
+aws lambda invoke \
+  --function-name ${aws_lambda_function.seedAdmin.function_name} \
+  output.json
+EOT
+
+  }
+}
