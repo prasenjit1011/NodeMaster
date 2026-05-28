@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 exports.handler = async (event) => {
 
     try {
-
+        const headers = event.headers || event.Payload?.headers || {};
         const token =
             event.headers?.Authorization ||
             event.headers?.authorization ||
