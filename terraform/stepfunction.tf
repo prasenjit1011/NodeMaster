@@ -1,61 +1,4 @@
 ##################################################
-# STEP FUNCTION ROLE
-##################################################
-
-resource "aws_iam_role" "step_function_role" {
-
-  name = "employee-step-function-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-
-    Statement = [
-      {
-        Effect = "Allow"
-
-        Principal = {
-          Service = "states.amazonaws.com"
-        }
-
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-}
-
-##################################################
-# ALLOW STEP FUNCTION TO INVOKE LAMBDAS
-##################################################
-
-resource "aws_iam_role_policy" "step_function_policy" {
-
-  name = "employee-step-function-policy"
-
-  role = aws_iam_role.step_function_role.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-
-    Statement = [
-      {
-        Effect = "Allow"
-
-        Action = [
-          "lambda:InvokeFunction"
-        ]
-
-        Resource = [
-          aws_lambda_function.jwtValidation.arn,
-          aws_lambda_function.createEmployee.arn,
-          aws_lambda_function.updateEmployee.arn,
-          aws_lambda_function.uploadEmployeeImage.arn
-        ]
-      }
-    ]
-  })
-}
-
-##################################################
 # STEP FUNCTION
 ##################################################
 
@@ -77,7 +20,7 @@ resource "aws_sfn_state_machine" "employee_flow" {
 
         Type = "Task"
 
-        Resource = aws_lambda_function.jwtValidation.arn
+        Resource = aws_lambda_function.validateJwt.arn
 
         ResultPath = "$.auth"
 
@@ -140,7 +83,7 @@ resource "aws_sfn_state_machine" "employee_flow" {
 
         Type = "Task"
 
-        Resource = aws_lambda_function.uploadEmployeeImage.arn
+        Resource = aws_lambda_function.uploadImage.arn
 
         End = true
       }

@@ -3,7 +3,7 @@ variable "aws_region" {
   default = "ap-south-1"
 }
 
-variable "mongo_url" {
+variable "mongo_uri" {
   type = string
 }
 
