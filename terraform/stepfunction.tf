@@ -16,16 +16,58 @@ resource "aws_sfn_state_machine" "employee_flow" {
 
     States = {
 
+      ##################################################
+      # VALIDATE JWT
+      ##################################################
+
       ValidateJWT = {
 
         Type = "Task"
 
-        Resource = aws_lambda_function.validateJwt.arn
+        Resource = "arn:aws:states:::lambda:invoke"
+
+        TimeoutSeconds = 30
+
+        Parameters = {
+
+          FunctionName =
+            aws_lambda_function.validateJwt.arn
+
+          Payload.$ = "$"
+        }
 
         ResultPath = "$.auth"
 
-        Next = "EmployeeAction"
+        Next = "CheckAuthorization"
       }
+
+      ##################################################
+      # CHECK AUTH RESULT
+      ##################################################
+
+      CheckAuthorization = {
+
+        Type = "Choice"
+
+        Choices = [
+
+          {
+
+            Variable =
+              "$.auth.Payload.statusCode"
+
+            NumericEquals = 200
+
+            Next = "EmployeeAction"
+          }
+        ]
+
+        Default = "Unauthorized"
+      }
+
+      ##################################################
+      # EMPLOYEE ACTION ROUTER
+      ##################################################
 
       EmployeeAction = {
 
@@ -34,6 +76,7 @@ resource "aws_sfn_state_machine" "employee_flow" {
         Choices = [
 
           {
+
             Variable = "$.action"
 
             StringEquals = "create"
@@ -42,6 +85,7 @@ resource "aws_sfn_state_machine" "employee_flow" {
           },
 
           {
+
             Variable = "$.action"
 
             StringEquals = "update"
@@ -50,6 +94,7 @@ resource "aws_sfn_state_machine" "employee_flow" {
           },
 
           {
+
             Variable = "$.action"
 
             StringEquals = "upload"
@@ -61,32 +106,89 @@ resource "aws_sfn_state_machine" "employee_flow" {
         Default = "InvalidAction"
       }
 
+      ##################################################
+      # CREATE EMPLOYEE
+      ##################################################
+
       CreateEmployee = {
 
         Type = "Task"
 
-        Resource = aws_lambda_function.createEmployee.arn
+        Resource = "arn:aws:states:::lambda:invoke"
+
+        TimeoutSeconds = 30
+
+        Parameters = {
+
+          FunctionName =
+            aws_lambda_function.createEmployee.arn
+
+          Payload.$ = "$"
+        }
 
         End = true
       }
+
+      ##################################################
+      # UPDATE EMPLOYEE
+      ##################################################
 
       UpdateEmployee = {
 
         Type = "Task"
 
-        Resource = aws_lambda_function.updateEmployee.arn
+        Resource = "arn:aws:states:::lambda:invoke"
+
+        TimeoutSeconds = 30
+
+        Parameters = {
+
+          FunctionName =
+            aws_lambda_function.updateEmployee.arn
+            Payload.$ = "$"
+        }
 
         End = true
       }
+
+      ##################################################
+      # UPLOAD EMPLOYEE IMAGE
+      ##################################################
 
       UploadEmployeeImage = {
 
         Type = "Task"
 
-        Resource = aws_lambda_function.uploadImage.arn
+        Resource = "arn:aws:states:::lambda:invoke"
+
+        TimeoutSeconds = 30
+
+        Parameters = {
+
+          FunctionName =
+            aws_lambda_function.uploadImage.arn
+            Payload.$ = "$"
+        }
 
         End = true
       }
+
+      ##################################################
+      # UNAUTHORIZED
+      ##################################################
+
+      Unauthorized = {
+
+        Type = "Fail"
+
+        Error = "Unauthorized"
+
+        Cause = "JWT token invalid or missing"
+      }
+
+      ##################################################
+      # INVALID ACTION
+      ##################################################
 
       InvalidAction = {
 

@@ -1,8 +1,11 @@
-const AWS = require('aws-sdk');
+const {
+    S3Client,
+    PutObjectCommand
+} = require('@aws-sdk/client-s3');
 
 const { MongoClient, ObjectId } = require('mongodb');
 
-const s3 = new AWS.S3();
+const s3 = new S3Client({});
 
 const uri = process.env.MONGO_URI;
 
@@ -38,6 +41,16 @@ exports.handler = async (event) => {
 
         const image = body.image;
 
+        if (!employeeId || !image) {
+
+            return {
+                statusCode: 400,
+                body: JSON.stringify({
+                    message: 'employeeId and image are required'
+                })
+            };
+        }
+
         const fileName = `${Date.now()}.jpg`;
 
         const buffer = Buffer.from(
@@ -45,17 +58,20 @@ exports.handler = async (event) => {
             'base64'
         );
 
-        await s3.putObject({
+        await s3.send(
 
-            Bucket: bucketName,
+            new PutObjectCommand({
 
-            Key: `employees/${fileName}`,
+                Bucket: bucketName,
 
-            Body: buffer,
+                Key: `employees/${fileName}`,
 
-            ContentType: 'image/jpeg'
+                Body: buffer,
 
-        }).promise();
+                ContentType: 'image/jpeg'
+
+            })
+        );
 
         const imageUrl =
             `https://${bucketName}.s3.amazonaws.com/employees/${fileName}`;
@@ -99,7 +115,9 @@ exports.handler = async (event) => {
 
             body: JSON.stringify({
 
-                message: 'Image upload failed'
+                message: 'Image upload failed',
+
+                error: error.message
             })
         };
     }
