@@ -22,6 +22,20 @@ resource "aws_s3_bucket" "employee_bucket" {
 }
 
 ##################################################
+# COMMON LAMBDA SETTINGS
+##################################################
+
+locals {
+
+  lambda_runtime = "nodejs20.x"
+
+  common_env = {
+    MONGO_URI = var.mongo_url
+    JWT_SECRET = var.jwt_secret
+  }
+}
+
+##################################################
 # SEED ADMIN LAMBDA
 ##################################################
 
@@ -30,7 +44,7 @@ resource "aws_lambda_function" "seedAdmin" {
   function_name = "seedAdminLambda"
 
   role    = aws_iam_role.lambda_role.arn
-  runtime = "nodejs20.x"
+  runtime = local.lambda_runtime
   handler = "index.handler"
 
   filename         = "../zips/seedAdmin.zip"
@@ -40,18 +54,40 @@ resource "aws_lambda_function" "seedAdmin" {
   memory_size = 256
 
   environment {
-    variables = {
-      MONGO_URI = var.mongo_url
-      JWT_SECRET = var.jwt_secret
-    }
+    variables = local.common_env
   }
-
-  depends_on = [
-    aws_iam_role_policy_attachment.lambda_basic
-  ]
 
   tags = {
     Name = "seed-admin-lambda"
+  }
+}
+
+##################################################
+# START WORKFLOW LAMBDA
+##################################################
+
+resource "aws_lambda_function" "startWorkflow" {
+
+  function_name = "startWorkflowLambda"
+
+  role    = aws_iam_role.lambda_role.arn
+  runtime = local.lambda_runtime
+  handler = "index.handler"
+
+  filename         = "../zips/startWorkflow.zip"
+  source_code_hash = filebase64sha256("../zips/startWorkflow.zip")
+
+  timeout     = 30
+  memory_size = 256
+
+  environment {
+    variables = {
+      STATE_MACHINE_ARN = aws_sfn_state_machine.employee_flow.id
+    }
+  }
+
+  tags = {
+    Name = "start-workflow-lambda"
   }
 }
 
@@ -64,7 +100,7 @@ resource "aws_lambda_function" "login" {
   function_name = "loginLambda"
 
   role    = aws_iam_role.lambda_role.arn
-  runtime = "nodejs20.x"
+  runtime = local.lambda_runtime
   handler = "index.handler"
 
   filename         = "../zips/login.zip"
@@ -74,15 +110,8 @@ resource "aws_lambda_function" "login" {
   memory_size = 256
 
   environment {
-    variables = {
-      JWT_SECRET = var.jwt_secret
-      MONGO_URI  = var.mongo_url
-    }
+    variables = local.common_env
   }
-
-  depends_on = [
-    aws_lambda_function.seedAdmin
-  ]
 
   tags = {
     Name = "login-lambda"
@@ -98,7 +127,7 @@ resource "aws_lambda_function" "validateJwt" {
   function_name = "validateJwtLambda"
 
   role    = aws_iam_role.lambda_role.arn
-  runtime = "nodejs20.x"
+  runtime = local.lambda_runtime
   handler = "index.handler"
 
   filename         = "../zips/validateJwt.zip"
@@ -112,10 +141,6 @@ resource "aws_lambda_function" "validateJwt" {
       JWT_SECRET = var.jwt_secret
     }
   }
-
-  depends_on = [
-    aws_lambda_function.login
-  ]
 
   tags = {
     Name = "validate-jwt-lambda"
@@ -131,7 +156,7 @@ resource "aws_lambda_function" "createEmployee" {
   function_name = "createEmployeeLambda"
 
   role    = aws_iam_role.lambda_role.arn
-  runtime = "nodejs20.x"
+  runtime = local.lambda_runtime
   handler = "index.handler"
 
   filename         = "../zips/createEmployee.zip"
@@ -141,15 +166,8 @@ resource "aws_lambda_function" "createEmployee" {
   memory_size = 256
 
   environment {
-    variables = {
-      MONGO_URI = var.mongo_url
-      JWT_SECRET = var.jwt_secret
-    }
+    variables = local.common_env
   }
-
-  depends_on = [
-    aws_lambda_function.validateJwt
-  ]
 
   tags = {
     Name = "create-employee-lambda"
@@ -165,7 +183,7 @@ resource "aws_lambda_function" "uploadImage" {
   function_name = "uploadImageLambda"
 
   role    = aws_iam_role.lambda_role.arn
-  runtime = "nodejs20.x"
+  runtime = local.lambda_runtime
   handler = "index.handler"
 
   filename         = "../zips/uploadImage.zip"
@@ -181,11 +199,6 @@ resource "aws_lambda_function" "uploadImage" {
     }
   }
 
-  depends_on = [
-    aws_lambda_function.createEmployee,
-    aws_iam_role_policy_attachment.lambda_s3
-  ]
-
   tags = {
     Name = "upload-image-lambda"
   }
@@ -200,7 +213,7 @@ resource "aws_lambda_function" "updateEmployee" {
   function_name = "updateEmployeeLambda"
 
   role    = aws_iam_role.lambda_role.arn
-  runtime = "nodejs20.x"
+  runtime = local.lambda_runtime
   handler = "index.handler"
 
   filename         = "../zips/updateEmployee.zip"
@@ -210,15 +223,8 @@ resource "aws_lambda_function" "updateEmployee" {
   memory_size = 256
 
   environment {
-    variables = {
-      MONGO_URI = var.mongo_url
-      JWT_SECRET = var.jwt_secret
-    }
+    variables = local.common_env
   }
-
-  depends_on = [
-    aws_lambda_function.uploadImage
-  ]
 
   tags = {
     Name = "update-employee-lambda"

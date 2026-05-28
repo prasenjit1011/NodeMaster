@@ -55,3 +55,28 @@ resource "aws_iam_role_policy" "step_function_policy" {
     ]
   })
 }
+
+resource "aws_iam_role_policy" "step_function_start_policy" {
+
+  name = "start-step-function-policy"
+
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+
+    Version = "2012-10-17"
+
+    Statement = [
+
+      {
+        Effect = "Allow"
+
+        Action = [
+          "states:StartExecution"
+        ]
+
+        Resource = "*"
+      }
+    ]
+  })
+}

@@ -1,0 +1,16 @@
+{
+  "name": "start-workflow-lambda",
+  "version": "1.0.0",
+  "description": "AWS Lambda to start AWS Step Functions workflow",
+  "main": "index.js",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "zip": "zip -r function.zip .",
+    "test": "echo \"No tests configured\""
+  },
+  "dependencies": {}
+}
