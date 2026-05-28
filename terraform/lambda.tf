@@ -77,7 +77,8 @@ resource "aws_lambda_function" "validateJwt" {
     }
   }
 
-  depends_on = [
+  depends_on = [ 
+    aws_lambda_function.login,
     aws_iam_role_policy_attachment.lambda_basic
   ]
 

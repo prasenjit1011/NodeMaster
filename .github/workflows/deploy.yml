@@ -46,7 +46,7 @@ jobs:
         timeout-minutes: 2
         run: |
           cd lambdas/login
-          zip -r ../../login.zip .
+          zip -r ../../login.zip index.js package.json node_modules
 
       ##################################################
       # VALIDATE JWT LAMBDA
@@ -120,6 +120,10 @@ jobs:
         timeout-minutes: 2
         run: |
           ls -lh
+
+      - name: Show ZIP Size
+        run: |
+          ls -lh *.zip
 
       ##################################################
       # TERRAFORM INIT
