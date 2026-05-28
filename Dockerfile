@@ -1,6 +1,6 @@
 FROM public.ecr.aws/lambda/nodejs:20
 
-WORKDIR /app
+WORKDIR ${LAMBDA_TASK_ROOT}
 
 COPY package*.json ./
 
@@ -10,4 +10,4 @@ COPY . .
 
 RUN npm run build
 
-CMD [ "dist/handler.handler" ]
+CMD ["dist/handler.handler"]

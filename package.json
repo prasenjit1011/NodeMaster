@@ -2,11 +2,14 @@
   "name": "nodemaster",
   "version": "1.0.0",
   "scripts": {
-    "build": "tsc"
+    "build": "tsc",
+    "start": "node dist/handler.js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "aws-lambda": "^8.10.145"
+  },
   "devDependencies": {
     "@types/aws-lambda": "^8.10.145",
-    "typescript": "^5.8.3"
+    "typescript": "^5.9.3"
   }
 }
