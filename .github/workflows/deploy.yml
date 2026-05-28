@@ -3,7 +3,7 @@ name: Deploy And Destroy
 on:
   push:
     branches:
-      - typescript_main_teraform_aws_kubernetes
+      - typescript_main_teraform_aws_kubernetes_demo
 
 jobs:
 
@@ -64,7 +64,7 @@ jobs:
 
       # EKS creation can take long
       - name: Terraform Apply
-        timeout-minutes: 28
+        timeout-minutes: 60
         working-directory: terraform
         run: terraform apply -auto-approve
 

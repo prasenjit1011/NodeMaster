@@ -30,7 +30,7 @@ module "eks" {
   version = "21.22.0"
 
   name               = "node-cluster"
-  kubernetes_version = "1.30"
+  kubernetes_version = "1.29"
 
   vpc_id     = module.vpc.vpc_id
   subnet_ids = module.vpc.public_subnets
@@ -42,7 +42,7 @@ module "eks" {
     default = {
 
       ami_type       = "AL2023_x86_64_STANDARD"
-      instance_types = ["t3.small"]
+      instance_types = ["t3.medium"]
 
       subnet_ids = module.vpc.public_subnets
 
