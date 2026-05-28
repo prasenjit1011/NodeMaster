@@ -9,3 +9,7 @@ variable "mongo_url" {
 variable "jwt_secret" {
   default = "MY_SECRET"
 }
+
+variable "project_name" {
+  default = "employee-system"
+}

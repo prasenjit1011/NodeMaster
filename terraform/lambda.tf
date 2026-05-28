@@ -1,5 +1,9 @@
 resource "aws_s3_bucket" "employee_bucket" {
-  bucket = "employee-system-image-bucket-demo-2026"
+  bucket = "employee-system-${random_id.bucket_id.hex}"
+}
+
+resource "random_id" "bucket_id" {
+  byte_length = 4
 }
 
 resource "aws_lambda_function" "login" {

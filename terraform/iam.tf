@@ -1,17 +1,15 @@
 resource "aws_iam_role" "lambda_role" {
-  name = "employee-system-lambda-role"
+  name = "${var.project_name}-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "lambda.amazonaws.com"
-        }
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "lambda.amazonaws.com"
       }
-    ]
+    }]
   })
 }
 
@@ -26,19 +24,17 @@ resource "aws_iam_role_policy_attachment" "lambda_s3" {
 }
 
 resource "aws_iam_role" "step_function_role" {
-  name = "employee-step-function-role"
+  name = "${var.project_name}-step-function-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
-    Statement = [
-      {
-        Action = "sts:AssumeRole"
-        Effect = "Allow"
-        Principal = {
-          Service = "states.amazonaws.com"
-        }
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = {
+        Service = "states.amazonaws.com"
       }
-    ]
+    }]
   })
 }
 
