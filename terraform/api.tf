@@ -93,7 +93,7 @@ resource "aws_lambda_permission" "employee_permission" {
 
   statement_id  = "AllowAPIGatewayInvokeEmployee"
   action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.createEmployee.function_name
+  function_name = aws_lambda_function.startWorkflow.function_name
 
   principal = "apigateway.amazonaws.com"
 
@@ -246,4 +246,13 @@ resource "aws_cloudwatch_log_group" "api_logs" {
 
   name              = "/aws/apigateway/employee-api"
   retention_in_days = 7
+}
+
+
+resource "aws_lambda_permission" "allow_step_function_create" {
+
+  statement_id  = "AllowExecutionFromStepFunctionsCreate"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.createEmployee.function_name
+  principal     = "states.amazonaws.com"
 }

@@ -10,6 +10,9 @@
   "scripts": {
     "clean": "rmdir /s /q zips 2>nul & mkdir zips",
 
+    "install:startWorkflow": "cd lambdas/startWorkflow && npm install",
+    "zip:startWorkflow": "cd lambdas/startWorkflow && powershell Compress-Archive -Path index.js,package.json,node_modules -DestinationPath ../../zips/startWorkflow.zip -Force",
+
     "install:login": "cd lambdas/login && npm install",
     "zip:login": "cd lambdas/login && powershell Compress-Archive -Path index.js,package.json,node_modules -DestinationPath ../../zips/login.zip -Force",
 
@@ -28,7 +31,7 @@
     "install:seedAdmin": "cd lambdas/seedAdmin && npm install",
     "zip:seedAdmin": "cd lambdas/seedAdmin && powershell Compress-Archive -Path index.js,package.json,node_modules -DestinationPath ../../zips/seedAdmin.zip -Force",
 
-    "build": "npm run clean && npm run install:login && npm run zip:login && npm run install:validateJwt && npm run zip:validateJwt && npm run install:createEmployee && npm run zip:createEmployee && npm run install:updateEmployee && npm run zip:updateEmployee && npm run install:uploadImage && npm run zip:uploadImage && npm run install:seedAdmin && npm run zip:seedAdmin",
+    "build": "npm run clean && npm run install:login && npm run zip:login && npm run install:validateJwt && npm run zip:validateJwt && npm run install:createEmployee && npm run zip:createEmployee && npm run install:updateEmployee && npm run zip:updateEmployee && npm run install:uploadImage && npm run zip:uploadImage && npm run install:seedAdmin && npm run zip:seedAdmin && npm run install:startWorkflow && npm run zip:startWorkflow",
 
     "terraform:init": "cd terraform && terraform init",
 

@@ -186,6 +186,25 @@ jobs:
           ls -lh zips/
 
       ##################################################
+      # START WORKFLOW LAMBDA
+      ##################################################
+
+      - name: Install Start Workflow Dependencies
+        timeout-minutes: 5
+        run: |
+          cd lambdas/startWorkflow
+          npm install
+
+      - name: Zip Start Workflow Lambda
+        timeout-minutes: 2
+        run: |
+          cd lambdas/startWorkflow
+          zip -r ../../zips/startWorkflow.zip \
+            index.js \
+            package.json \
+            node_modules
+
+      ##################################################
       # TERRAFORM INIT
       ##################################################
 

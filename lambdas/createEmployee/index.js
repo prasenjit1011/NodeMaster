@@ -1,7 +1,7 @@
 const { MongoClient } = require('mongodb');
 const jwt = require('jsonwebtoken');
 
-const uri = process.env.MONGO_URL;
+const uri = process.env.MONGO_URI;
 
 let cachedClient = null;
 
