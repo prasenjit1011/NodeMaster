@@ -1,9 +1,25 @@
 {
-  "Comment": "Employee Workflow",
+  "Comment": "Employee System Workflow",
   "StartAt": "ValidateJWT",
   "States": {
     "ValidateJWT": {
       "Type": "Task",
+      "Resource": "arn:aws:lambda:ap-south-1:123456789012:function:validateJwtLambda",
+      "Next": "CreateEmployee"
+    },
+    "CreateEmployee": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:ap-south-1:123456789012:function:createEmployeeLambda",
+      "Next": "UploadImage"
+    },
+    "UploadImage": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:ap-south-1:123456789012:function:uploadImageLambda",
+      "Next": "UpdateEmployee"
+    },
+    "UpdateEmployee": {
+      "Type": "Task",
+      "Resource": "arn:aws:lambda:ap-south-1:123456789012:function:updateEmployeeLambda",
       "End": true
     }
   }

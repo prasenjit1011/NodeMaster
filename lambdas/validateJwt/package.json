@@ -1,3 +1,8 @@
 {
-  "name": "validate-jwt"
+  "name": "validate-jwt-lambda",
+  "version": "1.0.0",
+  "main": "index.js",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2"
+  }
 }

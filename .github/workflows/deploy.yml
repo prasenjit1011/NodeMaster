@@ -10,15 +10,60 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup NodeJS
+        uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - uses: hashicorp/setup-terraform@v3
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
 
-      - uses: aws-actions/configure-aws-credentials@v4
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ap-south-1
+
+      - name: Zip Login Lambda
+        run: |
+          cd lambdas/login
+          npm install
+          zip -r ../../login.zip .
+
+      - name: Zip Validate JWT Lambda
+        run: |
+          cd lambdas/validateJwt
+          npm install
+          zip -r ../../validateJwt.zip .
+
+      - name: Zip Create Employee Lambda
+        run: |
+          cd lambdas/createEmployee
+          npm install
+          zip -r ../../createEmployee.zip .
+
+      - name: Zip Upload Image Lambda
+        run: |
+          cd lambdas/uploadImage
+          npm install
+          zip -r ../../uploadImage.zip .
+
+      - name: Zip Update Employee Lambda
+        run: |
+          cd lambdas/updateEmployee
+          npm install
+          zip -r ../../updateEmployee.zip .
+
+      - name: Terraform Init
+        run: |
+          cd terraform
+          terraform init
+
+      - name: Terraform Apply
+        run: |
+          cd terraform
+          terraform apply -auto-approve
