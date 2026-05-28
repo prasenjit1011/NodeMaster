@@ -24,9 +24,9 @@ exports.handler = async (event) => {
     try {
 
         const body =
-            typeof event.body === 'string'
-                ? JSON.parse(event.body)
-                : event.body;
+        typeof event.body === 'string'
+            ? JSON.parse(event.body)
+            : (event.body || {});
 
         const employeeId = body.employeeId;
 

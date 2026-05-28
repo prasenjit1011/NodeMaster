@@ -6,10 +6,10 @@ exports.handler = async (event) => {
 
     try {
 
-        const body =
-            typeof event.body === 'string'
-                ? JSON.parse(event.body)
-                : event.body;
+       const body =
+        typeof event.body === 'string'
+            ? JSON.parse(event.body)
+            : (event.body || {});
 
         const execution =
             await stepfunctions.startExecution({

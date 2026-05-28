@@ -32,7 +32,10 @@ zip -r "../../zips/${LAMBDA_NAME}.zip" . \
   -x "*.git*" \
   -x "*.md" \
   -x "README*" \
-  -x "*.log"
+  -x "*.log" \
+  -x "node_modules/aws-sdk/apis/*" \
+  -x "node_modules/aws-sdk/dist/*" \
+  -x "node_modules/.cache/*"
 
 echo "Created:"
 ls -lh ../../zips/${LAMBDA_NAME}.zip

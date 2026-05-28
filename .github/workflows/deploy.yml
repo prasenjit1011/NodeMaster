@@ -52,6 +52,10 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ secrets.AWS_REGION }}
 
+
+      - name: Install ZIP
+        run: sudo apt-get update && sudo apt-get install -y zip
+
       ##################################################
       # BUILD ALL LAMBDAS
       ##################################################
@@ -79,14 +83,19 @@ jobs:
               if [ -f package-lock.json ]; then
                 npm ci --omit=dev
               else
-                npm install --omit=dev
+                npm ci --omit=dev
               fi
 
               zip -r "../../zips/${LAMBDA_NAME}.zip" \
                 index.js \
                 node_modules \
                 package.json \
-                -x "*.map"
+                -x "*.map" \
+                -x "*.md" \
+                -x "*.log" \
+                -x "node_modules/aws-sdk/apis/*" \
+                -x "node_modules/aws-sdk/dist/*" \
+                -x "node_modules/.cache/*"
 
               echo "ZIP CREATED:"
               ls -lh ../../zips/${LAMBDA_NAME}.zip

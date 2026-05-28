@@ -25,7 +25,7 @@ exports.handler = async (event) => {
         const body =
         typeof event.body === 'string'
             ? JSON.parse(event.body)
-            : (event.body || event);
+            : (event.body || {});
 
         const client = await getClient();
 
