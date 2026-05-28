@@ -3,7 +3,7 @@ name: Deploy Lambda
 on:
   push:
     branches:
-      - main
+      - typescript_main_teraform_aws_lambda_step
 
 jobs:
   deploy:
