@@ -84,6 +84,61 @@ jobs:
           cd lambdas/updateEmployee
           zip -r ../../updateEmployee.zip .
 
+      - name: Install Login Dependencies
+        run: |
+          cd lambdas/login
+          npm install
+
+      - name: Zip Login Lambda
+        run: |
+          cd lambdas/login
+          zip -r ../../login.zip .
+
+      - name: Install Validate JWT Dependencies
+        run: |
+          cd lambdas/validateJwt
+          npm install
+
+      - name: Zip Validate JWT Lambda
+        run: |
+          cd lambdas/validateJwt
+          zip -r ../../validateJwt.zip .
+
+      - name: Install Create Employee Dependencies
+        run: |
+          cd lambdas/createEmployee
+          npm install
+
+      - name: Zip Create Employee Lambda
+        run: |
+          cd lambdas/createEmployee
+          zip -r ../../createEmployee.zip .
+
+      - name: Install Upload Image Dependencies
+        run: |
+          cd lambdas/uploadImage
+          npm install
+
+      - name: Zip Upload Image Lambda
+        run: |
+          cd lambdas/uploadImage
+          zip -r ../../uploadImage.zip .
+
+      - name: Install Update Employee Dependencies
+        run: |
+          cd lambdas/updateEmployee
+          npm install
+
+      - name: Zip Update Employee Lambda
+        run: |
+          cd lambdas/updateEmployee
+          zip -r ../../updateEmployee.zip .
+
+      - name: Verify ZIP Files
+        run: |
+          ls -lh
+
+
       # TERRAFORM
       - name: Terraform Init
         run: |
