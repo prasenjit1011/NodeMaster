@@ -8,70 +8,27 @@
     "node": ">=20"
   },
   "scripts": {
-
-    //////////////////////////////////////////////////
-    // CLEAN
-    //////////////////////////////////////////////////
-
-    "clean": "rm -f *.zip",
-
-    //////////////////////////////////////////////////
-    // LOGIN LAMBDA
-    //////////////////////////////////////////////////
+    "clean": "rmdir /s /q zips 2>nul & mkdir zips",
 
     "install:login": "cd lambdas/login && npm install",
-
-    "zip:login": "cd lambdas/login && zip -r ../../login.zip index.js package.json node_modules",
-
-    //////////////////////////////////////////////////
-    // VALIDATE JWT LAMBDA
-    //////////////////////////////////////////////////
+    "zip:login": "cd lambdas/login && powershell Compress-Archive -Path index.js,package.json,node_modules -DestinationPath ../../zips/login.zip -Force",
 
     "install:validateJwt": "cd lambdas/validateJwt && npm install",
-
-    "zip:validateJwt": "cd lambdas/validateJwt && zip -r ../../validateJwt.zip index.js package.json node_modules",
-
-    //////////////////////////////////////////////////
-    // CREATE EMPLOYEE LAMBDA
-    //////////////////////////////////////////////////
+    "zip:validateJwt": "cd lambdas/validateJwt && powershell Compress-Archive -Path index.js,package.json,node_modules -DestinationPath ../../zips/validateJwt.zip -Force",
 
     "install:createEmployee": "cd lambdas/createEmployee && npm install",
-
-    "zip:createEmployee": "cd lambdas/createEmployee && zip -r ../../createEmployee.zip index.js package.json node_modules",
-
-    //////////////////////////////////////////////////
-    // UPDATE EMPLOYEE LAMBDA
-    //////////////////////////////////////////////////
+    "zip:createEmployee": "cd lambdas/createEmployee && powershell Compress-Archive -Path index.js,package.json,node_modules -DestinationPath ../../zips/createEmployee.zip -Force",
 
     "install:updateEmployee": "cd lambdas/updateEmployee && npm install",
-
-    "zip:updateEmployee": "cd lambdas/updateEmployee && zip -r ../../updateEmployee.zip index.js package.json node_modules",
-
-    //////////////////////////////////////////////////
-    // UPLOAD IMAGE LAMBDA
-    //////////////////////////////////////////////////
+    "zip:updateEmployee": "cd lambdas/updateEmployee && powershell Compress-Archive -Path index.js,package.json,node_modules -DestinationPath ../../zips/updateEmployee.zip -Force",
 
     "install:uploadImage": "cd lambdas/uploadImage && npm install",
-
-    "zip:uploadImage": "cd lambdas/uploadImage && zip -r ../../uploadImage.zip index.js package.json node_modules",
-
-    //////////////////////////////////////////////////
-    // SEED ADMIN LAMBDA
-    //////////////////////////////////////////////////
+    "zip:uploadImage": "cd lambdas/uploadImage && powershell Compress-Archive -Path index.js,package.json,node_modules -DestinationPath ../../zips/uploadImage.zip -Force",
 
     "install:seedAdmin": "cd lambdas/seedAdmin && npm install",
-
-    "zip:seedAdmin": "cd lambdas/seedAdmin && zip -r ../../seedAdmin.zip index.js package.json node_modules",
-
-    //////////////////////////////////////////////////
-    // BUILD ALL
-    //////////////////////////////////////////////////
+    "zip:seedAdmin": "cd lambdas/seedAdmin && powershell Compress-Archive -Path index.js,package.json,node_modules -DestinationPath ../../zips/seedAdmin.zip -Force",
 
     "build": "npm run clean && npm run install:login && npm run zip:login && npm run install:validateJwt && npm run zip:validateJwt && npm run install:createEmployee && npm run zip:createEmployee && npm run install:updateEmployee && npm run zip:updateEmployee && npm run install:uploadImage && npm run zip:uploadImage && npm run install:seedAdmin && npm run zip:seedAdmin",
-
-    //////////////////////////////////////////////////
-    // TERRAFORM
-    //////////////////////////////////////////////////
 
     "terraform:init": "cd terraform && terraform init",
 
@@ -82,10 +39,6 @@
     "terraform:apply": "cd terraform && terraform apply -auto-approve",
 
     "terraform:destroy": "cd terraform && terraform destroy -auto-approve",
-
-    //////////////////////////////////////////////////
-    // FULL DEPLOY
-    //////////////////////////////////////////////////
 
     "deploy": "npm run build && npm run terraform:init && npm run terraform:validate && npm run terraform:apply"
   },

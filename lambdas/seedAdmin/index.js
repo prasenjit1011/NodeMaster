@@ -1,18 +1,40 @@
 const { MongoClient } = require('mongodb');
+const bcrypt = require('bcryptjs');
 
-const uri = process.env.MONGO_URL;
+const uri = process.env.MONGO_URI;
 
-exports.handler = async () => {
+let cachedClient = null;
+
+async function getMongoClient() {
+
+    if (cachedClient) {
+        return cachedClient;
+    }
 
     const client = new MongoClient(uri);
 
+    await client.connect();
+
+    cachedClient = client;
+
+    return client;
+}
+
+exports.handler = async () => {
+
     try {
 
-        await client.connect();
+        const client = await getMongoClient();
 
         const db = client.db('demodb');
 
         const users = db.collection('users');
+
+        // Create unique index for username
+        await users.createIndex(
+            { username: 1 },
+            { unique: true }
+        );
 
         const existingAdmin = await users.findOne({
             username: 'admin'
@@ -23,38 +45,49 @@ exports.handler = async () => {
             return {
                 statusCode: 200,
                 body: JSON.stringify({
+                    success: true,
                     message: 'Admin already exists'
                 })
             };
         }
 
-        await users.insertOne({
+        // Hash password
+        const hashedPassword = await bcrypt.hash(
+            'admin123',
+            10
+        );
+
+        const result = await users.insertOne({
             username: 'admin',
-            password: 'admin123',
+            password: hashedPassword,
             role: 'ADMIN',
-            createdAt: new Date()
+            status: 'ACTIVE',
+            createdAt: new Date(),
+            updatedAt: new Date()
         });
 
         return {
             statusCode: 200,
             body: JSON.stringify({
+                success: true,
                 message: 'Admin user seeded successfully',
-                username: 'admin',
-                password: 'admin123'
+                userId: result.insertedId,
+                username: 'admin'
             })
         };
 
     } catch (error) {
 
+        console.error('Seed Admin Error:', error);
+
         return {
             statusCode: 500,
             body: JSON.stringify({
+                success: false,
+                message: 'Failed to seed admin user',
                 error: error.message
             })
         };
 
-    } finally {
-
-        await client.close();
     }
 };

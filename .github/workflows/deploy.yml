@@ -54,6 +54,14 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       ##################################################
+      # CREATE ZIP DIRECTORY
+      ##################################################
+
+      - name: Create ZIP Directory
+        run: |
+          mkdir -p zips
+
+      ##################################################
       # LOGIN LAMBDA
       ##################################################
 
@@ -67,7 +75,10 @@ jobs:
         timeout-minutes: 2
         run: |
           cd lambdas/login
-          zip -r ../../login.zip index.js package.json node_modules
+          zip -r ../../zips/login.zip \
+            index.js \
+            package.json \
+            node_modules
 
       ##################################################
       # VALIDATE JWT LAMBDA
@@ -83,7 +94,7 @@ jobs:
         timeout-minutes: 2
         run: |
           cd lambdas/validateJwt
-          zip -r ../../validateJwt.zip \
+          zip -r ../../zips/validateJwt.zip \
             index.js \
             package.json \
             node_modules
@@ -102,7 +113,7 @@ jobs:
         timeout-minutes: 2
         run: |
           cd lambdas/createEmployee
-          zip -r ../../createEmployee.zip \
+          zip -r ../../zips/createEmployee.zip \
             index.js \
             package.json \
             node_modules
@@ -121,7 +132,7 @@ jobs:
         timeout-minutes: 2
         run: |
           cd lambdas/uploadImage
-          zip -r ../../uploadImage.zip \
+          zip -r ../../zips/uploadImage.zip \
             index.js \
             package.json \
             node_modules
@@ -140,7 +151,26 @@ jobs:
         timeout-minutes: 2
         run: |
           cd lambdas/updateEmployee
-          zip -r ../../updateEmployee.zip \
+          zip -r ../../zips/updateEmployee.zip \
+            index.js \
+            package.json \
+            node_modules
+
+      ##################################################
+      # SEED ADMIN LAMBDA
+      ##################################################
+
+      - name: Install Seed Admin Dependencies
+        timeout-minutes: 5
+        run: |
+          cd lambdas/seedAdmin
+          npm install
+
+      - name: Zip Seed Admin Lambda
+        timeout-minutes: 2
+        run: |
+          cd lambdas/seedAdmin
+          zip -r ../../zips/seedAdmin.zip \
             index.js \
             package.json \
             node_modules
@@ -153,7 +183,7 @@ jobs:
         timeout-minutes: 2
         run: |
           echo "Generated ZIP Files"
-          ls -lh *.zip
+          ls -lh zips/
 
       ##################################################
       # TERRAFORM INIT
@@ -161,8 +191,8 @@ jobs:
 
       - name: Terraform Init
         timeout-minutes: 10
+        working-directory: terraform
         run: |
-          cd terraform
           terraform init
 
       ##################################################
@@ -171,8 +201,8 @@ jobs:
 
       - name: Terraform Validate
         timeout-minutes: 5
+        working-directory: terraform
         run: |
-          cd terraform
           terraform validate
 
       ##################################################
@@ -255,18 +285,6 @@ jobs:
 
           node test.js
 
-
-      - name: Install Seed Admin Dependencies
-        run: |
-          cd lambdas/seedAdmin
-          npm install
-
-      - name: Zip Seed Admin Lambda
-        run: |
-          cd lambdas/seedAdmin
-          zip -r ../../seedAdmin.zip index.js package.json node_modules
-
-
       ##################################################
       # TERRAFORM PLAN
       ##################################################
@@ -291,5 +309,13 @@ jobs:
           TF_VAR_mongo_url: ${{ secrets.MONGO_URI }}
           TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
         run: |
-          terraform init
           terraform apply -auto-approve
+
+      ##################################################
+      # TERRAFORM OUTPUTS
+      ##################################################
+
+      - name: Show Terraform Outputs
+        working-directory: terraform
+        run: |
+          terraform output

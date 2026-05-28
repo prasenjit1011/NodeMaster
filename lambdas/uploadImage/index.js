@@ -1,13 +1,18 @@
-const AWS = require('aws-sdk');
+const {
+    S3Client,
+    PutObjectCommand
+} = require('@aws-sdk/client-s3');
+
 const jwt = require('jsonwebtoken');
 
-const s3 = new AWS.S3();
+const s3 = new S3Client({});
 
 exports.handler = async (event) => {
 
     try {
 
-        const token = event.headers.Authorization ||
+        const token =
+            event.headers.Authorization ||
             event.headers.authorization;
 
         if (!token) {
@@ -26,19 +31,22 @@ exports.handler = async (event) => {
             'base64'
         );
 
-        const fileName = `${Date.now()}.png`;
+        const fileName =
+            `${Date.now()}.png`;
 
-        await s3.putObject({
-            Bucket: process.env.BUCKET_NAME,
-            Key: fileName,
-            Body: buffer,
-            ContentType: 'image/png'
-        }).promise();
+        await s3.send(
+            new PutObjectCommand({
+                Bucket: process.env.BUCKET_NAME,
+                Key: fileName,
+                Body: buffer,
+                ContentType: 'image/png'
+            })
+        );
 
         return {
             statusCode: 200,
             body: JSON.stringify({
-                message: 'Image uploaded successfully',
+                success: true,
                 fileName
             })
         };
@@ -48,6 +56,7 @@ exports.handler = async (event) => {
         return {
             statusCode: 500,
             body: JSON.stringify({
+                success: false,
                 error: error.message
             })
         };

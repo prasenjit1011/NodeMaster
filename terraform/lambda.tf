@@ -14,11 +14,16 @@ resource "aws_s3_bucket" "employee_bucket" {
 
   bucket = "employee-system-${random_id.bucket_id.hex}"
 
+  force_destroy = true
+
   tags = {
     Name = "employee-system-bucket"
   }
 }
 
+##################################################
+# SEED ADMIN LAMBDA
+##################################################
 
 resource "aws_lambda_function" "seedAdmin" {
 
@@ -28,20 +33,27 @@ resource "aws_lambda_function" "seedAdmin" {
   runtime = "nodejs20.x"
   handler = "index.handler"
 
-  filename = "../seedAdmin.zip"
+  filename         = "../zips/seedAdmin.zip"
+  source_code_hash = filebase64sha256("../zips/seedAdmin.zip")
 
-  source_code_hash = filebase64sha256("../seedAdmin.zip")
-
-  timeout = 30
+  timeout     = 30
+  memory_size = 256
 
   environment {
     variables = {
-      MONGO_URL = var.mongo_url
+      MONGO_URI = var.mongo_url
+      JWT_SECRET = var.jwt_secret
     }
   }
+
+  depends_on = [
+    aws_iam_role_policy_attachment.lambda_basic
+  ]
+
+  tags = {
+    Name = "seed-admin-lambda"
+  }
 }
-
-
 
 ##################################################
 # LOGIN LAMBDA
@@ -55,8 +67,8 @@ resource "aws_lambda_function" "login" {
   runtime = "nodejs20.x"
   handler = "index.handler"
 
-  filename         = "../login.zip"
-  source_code_hash = filebase64sha256("../login.zip")
+  filename         = "../zips/login.zip"
+  source_code_hash = filebase64sha256("../zips/login.zip")
 
   timeout     = 30
   memory_size = 256
@@ -64,12 +76,12 @@ resource "aws_lambda_function" "login" {
   environment {
     variables = {
       JWT_SECRET = var.jwt_secret
-      MONGO_URL  = var.mongo_url
+      MONGO_URI  = var.mongo_url
     }
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.lambda_basic
+    aws_lambda_function.seedAdmin
   ]
 
   tags = {
@@ -89,8 +101,8 @@ resource "aws_lambda_function" "validateJwt" {
   runtime = "nodejs20.x"
   handler = "index.handler"
 
-  filename         = "../validateJwt.zip"
-  source_code_hash = filebase64sha256("../validateJwt.zip")
+  filename         = "../zips/validateJwt.zip"
+  source_code_hash = filebase64sha256("../zips/validateJwt.zip")
 
   timeout     = 15
   memory_size = 128
@@ -101,9 +113,8 @@ resource "aws_lambda_function" "validateJwt" {
     }
   }
 
-  depends_on = [ 
-    aws_lambda_function.login,
-    aws_iam_role_policy_attachment.lambda_basic
+  depends_on = [
+    aws_lambda_function.login
   ]
 
   tags = {
@@ -123,20 +134,21 @@ resource "aws_lambda_function" "createEmployee" {
   runtime = "nodejs20.x"
   handler = "index.handler"
 
-  filename         = "../createEmployee.zip"
-  source_code_hash = filebase64sha256("../createEmployee.zip")
+  filename         = "../zips/createEmployee.zip"
+  source_code_hash = filebase64sha256("../zips/createEmployee.zip")
 
   timeout     = 30
   memory_size = 256
 
   environment {
     variables = {
-      MONGO_URL = var.mongo_url
+      MONGO_URI = var.mongo_url
+      JWT_SECRET = var.jwt_secret
     }
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.lambda_basic
+    aws_lambda_function.validateJwt
   ]
 
   tags = {
@@ -156,8 +168,8 @@ resource "aws_lambda_function" "uploadImage" {
   runtime = "nodejs20.x"
   handler = "index.handler"
 
-  filename         = "../uploadImage.zip"
-  source_code_hash = filebase64sha256("../uploadImage.zip")
+  filename         = "../zips/uploadImage.zip"
+  source_code_hash = filebase64sha256("../zips/uploadImage.zip")
 
   timeout     = 60
   memory_size = 512
@@ -170,7 +182,7 @@ resource "aws_lambda_function" "uploadImage" {
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.lambda_basic,
+    aws_lambda_function.createEmployee,
     aws_iam_role_policy_attachment.lambda_s3
   ]
 
@@ -191,20 +203,21 @@ resource "aws_lambda_function" "updateEmployee" {
   runtime = "nodejs20.x"
   handler = "index.handler"
 
-  filename         = "../updateEmployee.zip"
-  source_code_hash = filebase64sha256("../updateEmployee.zip")
+  filename         = "../zips/updateEmployee.zip"
+  source_code_hash = filebase64sha256("../zips/updateEmployee.zip")
 
   timeout     = 30
   memory_size = 256
 
   environment {
     variables = {
-      MONGO_URL = var.mongo_url
+      MONGO_URI = var.mongo_url
+      JWT_SECRET = var.jwt_secret
     }
   }
 
   depends_on = [
-    aws_iam_role_policy_attachment.lambda_basic
+    aws_lambda_function.uploadImage
   ]
 
   tags = {

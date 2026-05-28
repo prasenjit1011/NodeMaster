@@ -4,8 +4,12 @@ exports.handler = async (event) => {
 
     try {
 
-        const token = event.headers.Authorization ||
-            event.headers.authorization;
+        const headers =
+            event.headers || {};
+
+        const token =
+            headers.Authorization ||
+            headers.authorization;
 
         if (!token) {
             throw new Error('Token missing');
@@ -17,21 +21,14 @@ exports.handler = async (event) => {
         );
 
         return {
-            statusCode: 200,
-            body: JSON.stringify({
-                valid: true,
-                user: decoded
-            })
+            success: true,
+            user: decoded
         };
 
     } catch (error) {
 
-        return {
-            statusCode: 401,
-            body: JSON.stringify({
-                valid: false,
-                message: error.message
-            })
-        };
+        throw new Error(
+            `Unauthorized: ${error.message}`
+        );
     }
 };

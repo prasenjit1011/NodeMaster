@@ -1,8 +1,19 @@
 {
   "name": "seed-admin-lambda",
   "version": "1.0.0",
+  "description": "AWS Lambda for seeding admin user into MongoDB",
   "main": "index.js",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "zip": "zip -r function.zip .",
+    "test": "echo \"No tests configured\""
+  },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "mongodb": "^6.5.0"
   }
 }

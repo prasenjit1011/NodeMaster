@@ -1,34 +1,63 @@
 const { MongoClient } = require('mongodb');
 
-const uri = process.env.MONGO_URL;
+const uri = process.env.MONGO_URI;
 
-exports.handler = async (event) => {
+let cachedClient = null;
 
-    const body = JSON.parse(event.body);
+async function getClient() {
+
+    if (cachedClient) {
+        return cachedClient;
+    }
 
     const client = new MongoClient(uri);
 
     await client.connect();
 
-    const db = client.db('demodb');
+    cachedClient = client;
 
-    const employee = {
-        name: body.name,
-        email: body.email,
-        mobile: body.mobile,
-        department: body.department,
-        createdAt: new Date()
-    };
+    return client;
+}
 
-    const result = await db
-        .collection('employees')
-        .insertOne(employee);
+exports.handler = async (event) => {
 
-    return {
-        statusCode: 200,
-        body: JSON.stringify({
-            message: 'Employee created successfully',
+    try {
+
+        const client = await getClient();
+
+        const db = client.db('demodb');
+
+        const body =
+            typeof event.body === 'string'
+                ? JSON.parse(event.body)
+                : event.body;
+
+        const employee = {
+
+            name: body.name,
+            email: body.email,
+            mobile: body.mobile,
+            department: body.department,
+
+            createdBy:
+                event.user?.username || 'system',
+
+            createdAt: new Date()
+        };
+
+        const result = await db
+            .collection('employees')
+            .insertOne(employee);
+
+        return {
+            success: true,
             employeeId: result.insertedId
-        })
-    };
+        };
+
+    } catch (error) {
+
+        console.error(error);
+
+        throw error;
+    }
 };

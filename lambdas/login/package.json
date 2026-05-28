@@ -1,8 +1,19 @@
 {
   "name": "login-lambda",
   "version": "1.0.0",
+  "description": "AWS Lambda Login API with JWT Authentication and MongoDB",
   "main": "index.js",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "zip": "zip -r function.zip .",
+    "test": "echo \"No tests configured\""
+  },
   "dependencies": {
+    "bcryptjs": "^2.4.3",
     "jsonwebtoken": "^9.0.2",
     "mongodb": "^6.5.0"
   }
