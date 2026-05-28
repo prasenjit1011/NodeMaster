@@ -1,5 +1,5 @@
 resource "aws_iam_role" "lambda_role" {
-  name = "${var.project_name}-lambda-role"
+  name_prefix = "${var.project_name}-lambda-role-"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -24,7 +24,7 @@ resource "aws_iam_role_policy_attachment" "lambda_s3" {
 }
 
 resource "aws_iam_role" "step_function_role" {
-  name = "${var.project_name}-step-function-role"
+  name_prefix = "${var.project_name}-step-function-role-"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
