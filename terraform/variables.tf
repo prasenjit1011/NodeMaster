@@ -3,7 +3,7 @@ variable "aws_region" {
 }
 
 variable "mongo_url" {
-  default = "mongodb+srv://myuser:password@cluster0.hlicuim.mongodb.net/demodb?retryWrites=true&w=majority&appName=Cluster0"
+  type = string
 }
 
 variable "jwt_secret" {
