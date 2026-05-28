@@ -30,10 +30,9 @@ resource "aws_sfn_state_machine" "employee_flow" {
 
         Parameters = {
 
-          FunctionName =
-            aws_lambda_function.validateJwt.arn
+          FunctionName = aws_lambda_function.validateJwt.arn
 
-          Payload.$ = "$"
+          "Payload.$" = "$"
         }
 
         ResultPath = "$.auth"
@@ -52,9 +51,7 @@ resource "aws_sfn_state_machine" "employee_flow" {
         Choices = [
 
           {
-
-            Variable =
-              "$.auth.Payload.statusCode"
+            Variable = "$.auth.Payload.statusCode"
 
             NumericEquals = 200
 
@@ -76,7 +73,6 @@ resource "aws_sfn_state_machine" "employee_flow" {
         Choices = [
 
           {
-
             Variable = "$.action"
 
             StringEquals = "create"
@@ -85,7 +81,6 @@ resource "aws_sfn_state_machine" "employee_flow" {
           },
 
           {
-
             Variable = "$.action"
 
             StringEquals = "update"
@@ -94,7 +89,6 @@ resource "aws_sfn_state_machine" "employee_flow" {
           },
 
           {
-
             Variable = "$.action"
 
             StringEquals = "upload"
@@ -120,10 +114,9 @@ resource "aws_sfn_state_machine" "employee_flow" {
 
         Parameters = {
 
-          FunctionName =
-            aws_lambda_function.createEmployee.arn
+          FunctionName = aws_lambda_function.createEmployee.arn
 
-          Payload.$ = "$"
+          "Payload.$" = "$"
         }
 
         End = true
@@ -143,10 +136,9 @@ resource "aws_sfn_state_machine" "employee_flow" {
 
         Parameters = {
 
-          FunctionName =
-            aws_lambda_function.updateEmployee.arn
+          FunctionName = aws_lambda_function.updateEmployee.arn
 
-          Payload.$ = "$"
+          "Payload.$" = "$"
         }
 
         End = true
@@ -166,10 +158,9 @@ resource "aws_sfn_state_machine" "employee_flow" {
 
         Parameters = {
 
-          FunctionName =
-            aws_lambda_function.uploadImage.arn
+          FunctionName = aws_lambda_function.uploadImage.arn
 
-          Payload.$ = "$"
+          "Payload.$" = "$"
         }
 
         End = true
