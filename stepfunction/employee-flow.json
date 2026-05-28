@@ -1,0 +1,10 @@
+{
+  "Comment": "Employee Workflow",
+  "StartAt": "ValidateJWT",
+  "States": {
+    "ValidateJWT": {
+      "Type": "Task",
+      "End": true
+    }
+  }
+}

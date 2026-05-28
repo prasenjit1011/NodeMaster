@@ -1,0 +1,7 @@
+{
+  "name": "login-lambda",
+  "dependencies": {
+    "jsonwebtoken": "^9.0.2",
+    "mongodb": "^6.5.0"
+  }
+}
