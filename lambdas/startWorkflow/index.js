@@ -18,10 +18,9 @@ exports.handler = async (event) => {
                     process.env.STATE_MACHINE_ARN,
 
                 input: JSON.stringify({
-
                     headers: event.headers,
-
-                    body: body
+                    body: body,
+                    action: body.action
                 })
 
             }).promise();

@@ -9,7 +9,6 @@ variable "mongo_uri" {
 
 variable "jwt_secret" {
   type    = string
-  default = "MY_SECRET"
 }
 
 variable "project_name" {

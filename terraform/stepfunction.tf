@@ -4,7 +4,7 @@
 
 resource "aws_sfn_state_machine" "employee_flow" {
 
-  name     = "employee-flow"
+  name = "employee-flow"
 
   role_arn = aws_iam_role.step_function_role.arn
 
@@ -42,7 +42,7 @@ resource "aws_sfn_state_machine" "employee_flow" {
       }
 
       ##################################################
-      # CHECK AUTH RESULT
+      # CHECK AUTHORIZATION
       ##################################################
 
       CheckAuthorization = {
@@ -145,7 +145,8 @@ resource "aws_sfn_state_machine" "employee_flow" {
 
           FunctionName =
             aws_lambda_function.updateEmployee.arn
-            Payload.$ = "$"
+
+          Payload.$ = "$"
         }
 
         End = true
@@ -167,7 +168,8 @@ resource "aws_sfn_state_machine" "employee_flow" {
 
           FunctionName =
             aws_lambda_function.uploadImage.arn
-            Payload.$ = "$"
+
+          Payload.$ = "$"
         }
 
         End = true

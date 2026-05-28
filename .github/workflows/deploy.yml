@@ -6,15 +6,15 @@ on:
       - typescript_main_teraform_aws_lambda_step_fn
 
 jobs:
-
   deploy:
-
     runs-on: ubuntu-latest
-
     timeout-minutes: 45
 
     env:
       AWS_REGION: ${{ secrets.AWS_REGION }}
+      TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
+      TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+      TF_VAR_jwt_secret: ${{ secrets.JWT_SECRET }}
 
     steps:
 
@@ -54,206 +54,84 @@ jobs:
           aws-region: ${{ secrets.AWS_REGION }}
 
       ##################################################
-      # CREATE ZIP DIRECTORY
+      # BUILD ALL LAMBDAS
       ##################################################
 
-      - name: Create ZIP Directory
+      - name: Build Lambda Packages
+        timeout-minutes: 20
         run: |
+          set -e
+
+          rm -rf zips
           mkdir -p zips
 
-      ##################################################
-      # LOGIN LAMBDA
-      ##################################################
+          for dir in lambdas/*; do
 
-      - name: Install Login Lambda Dependencies
-        timeout-minutes: 5
-        run: |
-          cd lambdas/login
-          npm install
+            if [ -d "$dir" ]; then
 
-      - name: Zip Login Lambda
-        timeout-minutes: 2
-        run: |
-          cd lambdas/login
-          zip -r ../../zips/login.zip \
-            index.js \
-            package.json \
-            node_modules
+              LAMBDA_NAME=$(basename "$dir")
 
-      ##################################################
-      # VALIDATE JWT LAMBDA
-      ##################################################
+              echo "========================================="
+              echo "Building Lambda: $LAMBDA_NAME"
+              echo "========================================="
 
-      - name: Install Validate JWT Dependencies
-        timeout-minutes: 5
-        run: |
-          cd lambdas/validateJwt
-          npm install
+              cd "$dir"
 
-      - name: Zip Validate JWT Lambda
-        timeout-minutes: 2
-        run: |
-          cd lambdas/validateJwt
-          zip -r ../../zips/validateJwt.zip \
-            index.js \
-            package.json \
-            node_modules
+              if [ -f package-lock.json ]; then
+                npm ci --omit=dev
+              else
+                npm install --omit=dev
+              fi
 
-      ##################################################
-      # CREATE EMPLOYEE LAMBDA
-      ##################################################
+              zip -r "../../zips/${LAMBDA_NAME}.zip" \
+                index.js \
+                node_modules \
+                package.json \
+                -x "*.map"
 
-      - name: Install Create Employee Dependencies
-        timeout-minutes: 5
-        run: |
-          cd lambdas/createEmployee
-          npm install
+              echo "ZIP CREATED:"
+              ls -lh ../../zips/${LAMBDA_NAME}.zip
 
-      - name: Zip Create Employee Lambda
-        timeout-minutes: 2
-        run: |
-          cd lambdas/createEmployee
-          zip -r ../../zips/createEmployee.zip \
-            index.js \
-            package.json \
-            node_modules
+              cd ../..
+            fi
 
-      ##################################################
-      # UPLOAD IMAGE LAMBDA
-      ##################################################
+          done
 
-      - name: Install Upload Image Dependencies
-        timeout-minutes: 5
-        run: |
-          cd lambdas/uploadImage
-          npm install
-
-      - name: Zip Upload Image Lambda
-        timeout-minutes: 2
-        run: |
-          cd lambdas/uploadImage
-          zip -r ../../zips/uploadImage.zip \
-            index.js \
-            package.json \
-            node_modules
-
-      ##################################################
-      # UPDATE EMPLOYEE LAMBDA
-      ##################################################
-
-      - name: Install Update Employee Dependencies
-        timeout-minutes: 5
-        run: |
-          cd lambdas/updateEmployee
-          npm install
-
-      - name: Zip Update Employee Lambda
-        timeout-minutes: 2
-        run: |
-          cd lambdas/updateEmployee
-          zip -r ../../zips/updateEmployee.zip \
-            index.js \
-            package.json \
-            node_modules
-
-      ##################################################
-      # SEED ADMIN LAMBDA
-      ##################################################
-
-      - name: Install Seed Admin Dependencies
-        timeout-minutes: 5
-        run: |
-          cd lambdas/seedAdmin
-          npm install
-
-      - name: Zip Seed Admin Lambda
-        timeout-minutes: 2
-        run: |
-          cd lambdas/seedAdmin
-          zip -r ../../zips/seedAdmin.zip \
-            index.js \
-            package.json \
-            node_modules
 
       ##################################################
       # VERIFY ZIP FILES
       ##################################################
 
       - name: Verify ZIP Files
-        timeout-minutes: 2
         run: |
+          echo "========================================="
           echo "Generated ZIP Files"
+          echo "========================================="
+
           ls -lh zips/
-
-      ##################################################
-      # START WORKFLOW LAMBDA
-      ##################################################
-
-      - name: Install Start Workflow Dependencies
-        timeout-minutes: 5
-        run: |
-          cd lambdas/startWorkflow
-          npm install
-
-      - name: Zip Start Workflow Lambda
-        timeout-minutes: 2
-        run: |
-          cd lambdas/startWorkflow
-          zip -r ../../zips/startWorkflow.zip \
-            index.js \
-            package.json \
-            node_modules
-
-      ##################################################
-      # TERRAFORM INIT
-      ##################################################
-
-      - name: Terraform Init
-        timeout-minutes: 10
-        working-directory: terraform
-        run: |
-          terraform init
-
-      ##################################################
-      # TERRAFORM VALIDATE
-      ##################################################
-
-      - name: Terraform Validate
-        timeout-minutes: 5
-        working-directory: terraform
-        run: |
-          terraform validate
 
       ##################################################
       # TEST MONGODB CONNECTION
       ##################################################
 
       - name: Test MongoDB Connection
-        timeout-minutes: 10
-        env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
+        timeout-minutes: 5
         run: |
-
-          mkdir mongo-test
-
+          mkdir -p mongo-test
           cd mongo-test
 
-          npm init -y
-
-          npm install mongodb
+          npm init -y > /dev/null 2>&1
+          npm install mongodb > /dev/null 2>&1
 
           cat > test.js << 'EOF'
-
           const { MongoClient } = require('mongodb');
 
           async function testConnection() {
-
             try {
-
               console.log('Connecting to MongoDB...');
 
               const client = new MongoClient(
-                process.env.MONGO_URI,
+                process.env.TF_VAR_mongo_uri,
                 {
                   serverSelectionTimeoutMS: 10000,
                   connectTimeoutMS: 10000,
@@ -263,24 +141,11 @@ jobs:
 
               await client.connect();
 
-              console.log(
-                'MongoDB Connection Successful'
-              );
+              console.log('MongoDB Connection Successful');
 
               const db = client.db('demodb');
 
-              const collections =
-                await db.listCollections().toArray();
-
-              console.log(
-                'Database Connected:',
-                db.databaseName
-              );
-
-              console.log(
-                'Collections:',
-                collections.map(c => c.name)
-              );
+              console.log('Connected Database:', db.databaseName);
 
               await client.close();
 
@@ -288,10 +153,7 @@ jobs:
 
             } catch (error) {
 
-              console.error(
-                'MongoDB Connection Failed'
-              );
-
+              console.error('MongoDB Connection Failed');
               console.error(error);
 
               process.exit(1);
@@ -299,10 +161,27 @@ jobs:
           }
 
           testConnection();
-
           EOF
 
           node test.js
+
+      ##################################################
+      # TERRAFORM INIT
+      ##################################################
+
+      - name: Terraform Init
+        working-directory: terraform
+        timeout-minutes: 10
+        run: terraform init
+
+      ##################################################
+      # TERRAFORM VALIDATE
+      ##################################################
+
+      - name: Terraform Validate
+        working-directory: terraform
+        timeout-minutes: 5
+        run: terraform validate
 
       ##################################################
       # TERRAFORM PLAN
@@ -311,11 +190,7 @@ jobs:
       - name: Terraform Plan
         working-directory: terraform
         timeout-minutes: 10
-        env:
-          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
-          TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
-        run: |
-          terraform plan
+        run: terraform plan -out=tfplan
 
       ##################################################
       # TERRAFORM APPLY
@@ -324,17 +199,17 @@ jobs:
       - name: Terraform Apply
         working-directory: terraform
         timeout-minutes: 20
-        env:
-          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
-          TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
-        run: |
-          terraform apply -auto-approve
+        run: terraform apply -auto-approve tfplan
 
       ##################################################
-      # TERRAFORM OUTPUTS
+      # SHOW OUTPUTS
       ##################################################
 
-      - name: Show Terraform Outputs
+      - name: Terraform Outputs
         working-directory: terraform
         run: |
+          echo "========================================="
+          echo "Terraform Outputs"
+          echo "========================================="
+
           terraform output
