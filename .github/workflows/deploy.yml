@@ -6,24 +6,45 @@ on:
       - typescript_main_teraform_aws_lambda_step_fn
 
 jobs:
+
   deploy:
+
     runs-on: ubuntu-latest
 
-    # JOB TIMEOUT
     timeout-minutes: 45
+
+    env:
+      AWS_REGION: ${{ secrets.AWS_REGION }}
 
     steps:
 
+      ##################################################
+      # CHECKOUT
+      ##################################################
+
       - name: Checkout Source
         uses: actions/checkout@v4
+
+      ##################################################
+      # NODEJS
+      ##################################################
 
       - name: Setup NodeJS
         uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
+
+      ##################################################
+      # TERRAFORM
+      ##################################################
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
+
+      ##################################################
+      # AWS LOGIN
+      ##################################################
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -46,7 +67,10 @@ jobs:
         timeout-minutes: 2
         run: |
           cd lambdas/login
-          zip -r ../../login.zip index.js package.json node_modules
+          zip -r ../../login.zip \
+            index.js \
+            package.json \
+            node_modules
 
       ##################################################
       # VALIDATE JWT LAMBDA
@@ -62,7 +86,10 @@ jobs:
         timeout-minutes: 2
         run: |
           cd lambdas/validateJwt
-          zip -r ../../validateJwt.zip .
+          zip -r ../../validateJwt.zip \
+            index.js \
+            package.json \
+            node_modules
 
       ##################################################
       # CREATE EMPLOYEE LAMBDA
@@ -78,7 +105,10 @@ jobs:
         timeout-minutes: 2
         run: |
           cd lambdas/createEmployee
-          zip -r ../../createEmployee.zip .
+          zip -r ../../createEmployee.zip \
+            index.js \
+            package.json \
+            node_modules
 
       ##################################################
       # UPLOAD IMAGE LAMBDA
@@ -94,7 +124,10 @@ jobs:
         timeout-minutes: 2
         run: |
           cd lambdas/uploadImage
-          zip -r ../../uploadImage.zip .
+          zip -r ../../uploadImage.zip \
+            index.js \
+            package.json \
+            node_modules
 
       ##################################################
       # UPDATE EMPLOYEE LAMBDA
@@ -110,19 +143,19 @@ jobs:
         timeout-minutes: 2
         run: |
           cd lambdas/updateEmployee
-          zip -r ../../updateEmployee.zip .
+          zip -r ../../updateEmployee.zip \
+            index.js \
+            package.json \
+            node_modules
 
       ##################################################
-      # VERIFY FILES
+      # VERIFY ZIP FILES
       ##################################################
 
       - name: Verify ZIP Files
         timeout-minutes: 2
         run: |
-          ls -lh
-
-      - name: Show ZIP Size
-        run: |
+          echo "Generated ZIP Files"
           ls -lh *.zip
 
       ##################################################
@@ -136,6 +169,16 @@ jobs:
           terraform init
 
       ##################################################
+      # TERRAFORM VALIDATE
+      ##################################################
+
+      - name: Terraform Validate
+        timeout-minutes: 5
+        run: |
+          cd terraform
+          terraform validate
+
+      ##################################################
       # TEST MONGODB CONNECTION
       ##################################################
 
@@ -146,6 +189,7 @@ jobs:
         run: |
 
           mkdir mongo-test
+
           cd mongo-test
 
           npm init -y
@@ -153,6 +197,7 @@ jobs:
           npm install mongodb
 
           cat > test.js << 'EOF'
+
           const { MongoClient } = require('mongodb');
 
           async function testConnection() {
@@ -172,7 +217,9 @@ jobs:
 
               await client.connect();
 
-              console.log('MongoDB Connection Successful');
+              console.log(
+                'MongoDB Connection Successful'
+              );
 
               const db = client.db('demodb');
 
@@ -206,9 +253,22 @@ jobs:
           }
 
           testConnection();
+
           EOF
 
           node test.js
+
+      ##################################################
+      # TERRAFORM PLAN
+      ##################################################
+
+      - name: Terraform Plan
+        timeout-minutes: 10
+        env:
+          TF_VAR_mongo_url: ${{ secrets.MONGO_URI }}
+        run: |
+          cd terraform
+          terraform plan
 
       ##################################################
       # TERRAFORM APPLY
