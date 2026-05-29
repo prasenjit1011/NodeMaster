@@ -17,5 +17,5 @@ variable "project_name" {
 
 variable "environment" {
   type    = string
-  default = "devd"
+  default = "devd1"
 }

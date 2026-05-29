@@ -22,6 +22,10 @@ jobs:
           cp -r node_modules lambdas/dbLookup/
           cp -r node_modules lambdas/store/
 
+        - name: Check ZIP Size
+          run: |
+            ls -lh lambdas/*.zip
+
       - name: Terraform Init
         run: terraform init
         working-directory: infra
