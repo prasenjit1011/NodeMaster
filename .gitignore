@@ -1,16 +1,71 @@
-/node_modules
-/public/hot
-/public/storage
-/storage/*.key
-/vendor
+# ==========================================
+# NODE
+# ==========================================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ==========================================
+# TERRAFORM
+# ==========================================
+
+.terraform/
+.terraform.lock.hcl
+*.tfstate
+*.tfstate.*
+crash.log
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# ==========================================
+# ENV FILES
+# ==========================================
+
 .env
-.env.backup
-.phpunit.result.cache
-docker-compose.override.yml
-Homestead.json
-Homestead.yaml
-npm-debug.log
-yarn-error.log
-/.idea
-/.vscode
-/dist
+.env.*
+!.env.example
+
+# ==========================================
+# ZIP FILES
+# ==========================================
+
+*.zip
+
+# ==========================================
+# OS FILES
+# ==========================================
+
+.DS_Store
+Thumbs.db
+
+# ==========================================
+# IDE
+# ==========================================
+
+.vscode/
+.idea/
+
+# ==========================================
+# LOGS
+# ==========================================
+
+logs/
+*.log
+
+# ==========================================
+# TEST / COVERAGE
+# ==========================================
+
+coverage/
+.nyc_output/
+
+# ==========================================
+# BUILD
+# ==========================================
+
+dist/
+build/
