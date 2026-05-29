@@ -51,7 +51,7 @@ data "archive_file" "store_zip" {
 # ==========================================
 
 resource "aws_iam_role" "lambda_role" {
-  name = "faq-lambda-role"
+  name = "${var.project_name}-${var.environment}-lambda-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -133,7 +133,7 @@ resource "aws_lambda_function" "store" {
 # ==========================================
 
 resource "aws_iam_role" "stepfn_role" {
-  name = "faq-stepfn-role"
+  name = "${var.project_name}-${var.environment}-stepfn-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"

@@ -9,3 +9,13 @@ variable "mongo_uri" {
   type        = string
   sensitive   = true
 }
+
+variable "project_name" {
+  type    = string
+  default = "nodemaster"
+}
+
+variable "environment" {
+  type    = string
+  default = "dev"
+}
