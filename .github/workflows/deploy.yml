@@ -14,18 +14,25 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      - name: Install Dependencies
+        run: npm install
+
+      - name: Copy node_modules
+        run: |
+          cp -r node_modules lambdas/dbLookup/
+          cp -r node_modules lambdas/store/
+
       - name: Terraform Init
         run: terraform init
         working-directory: infra
 
       - name: Terraform Apply
-        run: terraform apply -auto-approve
+        run: TF_LOG=INFO terraform apply -auto-approve
         working-directory: infra
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-          MONGO_URI: ${{ secrets.MONGO_URI }}
           TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
 
       - name: Print API Gateway URL
