@@ -1,0 +1,19 @@
+const { MongoClient } = require("mongodb");
+
+exports.handler = async (event) => {
+  const client = new MongoClient(process.env.MONGO_URI);
+
+  await client.connect();
+  const db = client.db("faq");
+  const col = db.collection("answers");
+
+  const result = await col.findOne({ question: event.question });
+
+  await client.close();
+
+  if (result) {
+    return { found: true, answer: result.answer };
+  }
+
+  return { found: false, question: event.question };
+};

@@ -16,3 +16,18 @@
     "mongodb": "^6.3.0"
   }
 }
+{
+  "name": "nodemaster-faq-workflow",
+  "version": "1.0.0",
+  "description": "Serverless FAQ workflow using AWS Lambda, Step Functions, Terraform, MongoDB, and GitHub Actions",
+  "main": "index.js",
+  "license": "MIT",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"No tests configured\"",
+    "zip:lambdas": "echo \"Zip handled in GitHub Actions or Terraform\""
+  },
+  "dependencies": {
+    "mongodb": "^6.18.0"
+  }
+}
