@@ -7,7 +7,7 @@ exports.handler = async (event) => {
   const db = client.db("demodb");
   const col = db.collection("faqs");
 
-  await col.insertOne({
+  const result = await col.insertOne({
     question: event.answer,
     answer: 'FAQ ANSWER : '+event.answer,
     createdAt: new Date()
@@ -15,5 +15,5 @@ exports.handler = async (event) => {
 
   await client.close();
 
-  return { stored: true };
+  return { stored: true, result };
 };
