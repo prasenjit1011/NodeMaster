@@ -1,19 +1,37 @@
 const { MongoClient } = require("mongodb");
 
 exports.handler = async (event) => {
-  const client = new MongoClient(process.env.MONGO_URI);
+  let client;
 
-  await client.connect();
-  const db = client.db("demodb");
-  const col = db.collection("faqs");
+  try {
+    client = new MongoClient(process.env.MONGO_URI);
 
-  const result = await col.insertOne({
-    question: event.answer,
-    answer: 'FAQ ANSWER : '+event.answer,
-    createdAt: new Date()
-  });
+    await client.connect();
 
-  await client.close();
+    const db = client.db("demodb");
+    const col = db.collection("faqs");
 
-  return { stored: true, id: result.insertedId, question: event.answer, msg : "FAQ stored successfully!" };
+    const result = await col.insertOne({
+      question: event.answer,
+      answer: "FAQ ANSWER : " + event.answer,
+      createdAt: new Date()
+    });
+
+    return {
+      found: true,
+      answer: "FAQ ANSWER : " + event.answer,
+      id: result.insertedId.toString()
+    };
+  } catch (err) {
+    console.error("Store Lambda Error:", err);
+
+    return {
+      found: false,
+      error: err.message
+    };
+  } finally {
+    if (client) {
+      await client.close();
+    }
+  }
 };
