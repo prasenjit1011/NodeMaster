@@ -8,6 +8,12 @@ exports.handler = async (event) => {
   const col = db.collection("faqs");
 
   const result = await col.findOne({ question: event.question });
+  const result = await col.findOne({
+                      $or: [
+                        { question: event.question },
+                        { answer: event.question }
+                      ]
+                    });
 
   await client.close();
 

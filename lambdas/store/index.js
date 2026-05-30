@@ -8,8 +8,8 @@ exports.handler = async (event) => {
   const col = db.collection("faqs");
 
   await col.insertOne({
-    question: event.question,
-    answer: event.answer,
+    question: event.answer,
+    answer: 'FAQ ANSWER : '+event.answer,
     createdAt: new Date()
   });
 
