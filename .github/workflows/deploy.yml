@@ -21,44 +21,18 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # -------------------------
-      # BUILD LAMBDA ZIPS
-      # -------------------------
-      - name: Build Lambda ZIPs
-        run: |
-          mkdir -p build
-
-          zip -j build/dbLookup.zip lambdas/dbLookup/index.js
-          zip -j build/store.zip lambdas/store/index.js
-          zip -j build/validate.zip lambdas/validate/index.js
-          zip -j build/fallback.zip lambdas/fallback/index.js
-
-      # -------------------------
-      # TERRAFORM INIT
-      # -------------------------
       - name: Terraform Init
         working-directory: infra
         run: terraform init -reconfigure
 
-      # -------------------------
-      # TERRAFORM PLAN
-      # -------------------------
       - name: Terraform Plan
         working-directory: infra
         run: terraform plan
 
-      # -------------------------
-      # TERRAFORM APPLY
-      # -------------------------
       - name: Terraform Apply
         working-directory: infra
         run: terraform apply -auto-approve -input=false -lock-timeout=5m
 
-      # -------------------------
-      # OUTPUT CHECK
-      # -------------------------
       - name: Print API Gateway URL
         working-directory: infra
-        run: |
-          echo "API URL:"
-          terraform output -raw api_gateway_url
+        run: terraform output -raw api_gateway_url
