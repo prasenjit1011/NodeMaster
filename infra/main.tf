@@ -290,16 +290,25 @@ resource "aws_lambda_permission" "apigw" {
 }
 
 resource "aws_apigatewayv2_integration" "stepfn_integration" {
-  api_id             = aws_apigatewayv2_api.http_api.id
-  integration_type   = "AWS_PROXY"
+  api_id              = aws_apigatewayv2_api.http_api.id
+  integration_type    = "AWS_PROXY"
   integration_subtype = "StepFunctions-StartExecution"
 
-  credentials_arn = aws_iam_role.api_gateway_stepfn_role.arn
+  credentials_arn     = aws_iam_role.api_gateway_stepfn_role.arn
+
+  payload_format_version = "1.0"
 
   request_parameters = {
     StateMachineArn = aws_sfn_state_machine.faq.arn
   }
+
+  request_templates = {
+    "application/json" = jsonencode({
+      input = "$util.escapeJavaScript($input.body)"
+    })
+  }
 }
+
 
 resource "aws_iam_role" "api_gateway_stepfn_role" {
   name = "${var.project_name}-${var.environment}-apigw-stepfn-role"
