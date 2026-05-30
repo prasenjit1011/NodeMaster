@@ -1,8 +1,14 @@
 exports.handler = async (event) => {
   const question = event.question;
 
-  if (!question || question.length < 3) {
-    throw new Error("Invalid question Ask!");
+  console.log("EVENT:", JSON.stringify(event));
+
+  if (!question) {
+    throw new Error("Question missing in input");
+  }
+
+  if (question.length < 3) {
+    throw new Error("Invalid question");
   }
 
   return { question };
