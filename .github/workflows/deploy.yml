@@ -14,7 +14,6 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
       TF_LOG: INFO
-      TF_LOG: INFO
       TF_INPUT: 0
       TF_IN_AUTOMATION: true
       CHECKPOINT_DISABLE: 1
