@@ -8,7 +8,7 @@ exports.handler = async (event) => {
   }
 
   if (question.length < 3) {
-    throw new Error("Invalid question");
+    throw new Error("Invalid question. Too short!!!");
   }
 
   return { question };
