@@ -196,7 +196,11 @@ resource "aws_sfn_state_machine" "faq" {
       Validate = {
         Type     = "Task"
         Resource = aws_lambda_function.validate.arn
-        Next     = "DBLookup"
+        Parameters = {
+          "question.$" = "$.question"
+        }
+
+        Next = "DBLookup"
       }
 
       DBLookup = {

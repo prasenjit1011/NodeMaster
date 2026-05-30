@@ -1,0 +1,26 @@
+### HEALTH CHECK (basic test)
+GET https://kljs8m35ze.execute-api.ap-south-1.amazonaws.com/
+
+### CALL FAQ API (MAIN TEST - Step Function trigger)
+POST https://kljs8m35ze.execute-api.ap-south-1.amazonaws.com/faq
+Content-Type: application/json
+
+{
+  "question": "what is terraform?"
+}
+
+### ANOTHER TEST QUESTION
+POST https://kljs8m35ze.execute-api.ap-south-1.amazonaws.com/faq
+Content-Type: application/json
+
+{
+  "question": "what is aws lambda?"
+}
+
+### INVALID TEST (to check validation Lambda)
+POST https://kljs8m35ze.execute-api.ap-south-1.amazonaws.com/faq
+Content-Type: application/json
+
+{
+  "question": "hi"
+}
