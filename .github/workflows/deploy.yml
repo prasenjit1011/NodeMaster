@@ -2,7 +2,7 @@ name: deploy
 
 on:
   push:
-    branches: [stb]
+    branches: [stc]
 
 jobs:
   deploy:
