@@ -46,6 +46,11 @@ data "archive_file" "store_zip" {
   output_path = "../lambdas/store.zip"
 }
 
+data "archive_file" "stepfn_invoker_zip" {
+  type        = "zip"
+  source_dir  = "../lambdas/stepfnInvoker"
+  output_path = "../lambdas/stepfnInvoker.zip"
+}
 # ==========================================
 # IAM ROLE FOR LAMBDA
 # ==========================================
@@ -70,6 +75,25 @@ resource "aws_iam_role" "lambda_role" {
 resource "aws_iam_role_policy_attachment" "lambda_basic" {
   role       = aws_iam_role.lambda_role.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+}
+
+resource "aws_iam_role_policy" "lambda_stepfn_policy" {
+  name = "lambda-stepfn-policy"
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+
+    Statement = [{
+      Effect = "Allow"
+
+      Action = [
+        "states:StartSyncExecution"
+      ]
+
+      Resource = aws_sfn_state_machine.faq.arn
+    }]
+  })
 }
 
 # ==========================================
@@ -132,6 +156,31 @@ resource "aws_lambda_function" "store" {
   }
 }
 
+resource "aws_lambda_function" "stepfn_invoker" {
+  function_name = "${var.project_name}-stepfn-invoker"
+
+  role    = aws_iam_role.lambda_role.arn
+  runtime = "nodejs20.x"
+  handler = "index.handler"
+
+  filename         = data.archive_file.stepfn_invoker_zip.output_path
+  source_code_hash = data.archive_file.stepfn_invoker_zip.output_base64sha256
+
+  environment {
+    variables = {
+      STATE_MACHINE_ARN = aws_sfn_state_machine.faq.arn
+    }
+  }
+}
+
+resource "aws_lambda_permission" "faq_apigw" {
+  statement_id  = "AllowApiGatewayInvokeFaq"
+  action        = "lambda:InvokeFunction"
+  function_name = aws_lambda_function.stepfn_invoker.function_name
+  principal     = "apigateway.amazonaws.com"
+
+  source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*/POST/faq"
+}
 # ==========================================
 # STEP FUNCTION ROLE
 # ==========================================
@@ -186,6 +235,7 @@ resource "aws_sfn_state_machine" "faq" {
   name     = "faqWorkflow"
   role_arn = aws_iam_role.stepfn_role.arn
 
+  type = "EXPRESS"
   definition = jsonencode({
     Comment = "FAQ Workflow"
 
@@ -289,26 +339,37 @@ resource "aws_lambda_permission" "apigw" {
   source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*/POST/validate"
 }
 
-resource "aws_apigatewayv2_integration" "stepfn_integration" {
-  api_id              = aws_apigatewayv2_api.http_api.id
-  integration_type    = "AWS_PROXY"
-  integration_subtype = "StepFunctions-StartExecution"
 
-  credentials_arn     = aws_iam_role.api_gateway_stepfn_role.arn
 
-  # payload_format_version = "1.0"
 
-  request_parameters = {
-    StateMachineArn = aws_sfn_state_machine.faq.arn
-    Input = "$request.body"
-  }
-
-  # request_templates = {
-  #  "application/json" = jsonencode({
-  #    input = "$util.escapeJavaScript($input.body)"
-  #  })
-  # }
+resource "aws_apigatewayv2_integration" "faq_lambda_integration" {
+  api_id                 = aws_apigatewayv2_api.http_api.id
+  integration_type       = "AWS_PROXY"
+  integration_uri        = aws_lambda_function.stepfn_invoker.invoke_arn
+  payload_format_version = "2.0"
 }
+
+# resource "aws_apigatewayv2_integration" "stepfn_integration" {
+#   api_id              = aws_apigatewayv2_api.http_api.id
+#   integration_type    = "AWS_PROXY"
+#   integration_subtype = "StepFunctions-StartExecution"
+#   payload_format_version = "1.0"
+
+#   credentials_arn     = aws_iam_role.api_gateway_stepfn_role.arn
+
+#   # payload_format_version = "1.0"
+
+#   request_parameters = {
+#     StateMachineArn = aws_sfn_state_machine.faq.arn
+#     Input = "$request.body"
+#   }
+
+#   # request_templates = {
+#   #  "application/json" = jsonencode({
+#   #    input = "$util.escapeJavaScript($input.body)"
+#   #  })
+#   # }
+# }
 
 
 resource "aws_iam_role" "api_gateway_stepfn_role" {
@@ -345,6 +406,7 @@ resource "aws_apigatewayv2_route" "faq_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "POST /faq"
 
-  target = "integrations/${aws_apigatewayv2_integration.stepfn_integration.id}"
+  # target = "integrations/${aws_apigatewayv2_integration.stepfn_integration.id}"
+  target = "integrations/${aws_apigatewayv2_integration.faq_lambda_integration.id}"
 }
 
