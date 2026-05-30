@@ -275,11 +275,6 @@ resource "aws_apigatewayv2_route" "validate_route" {
   target    = "integrations/${aws_apigatewayv2_integration.validate_integration.id}"
 }
 
-resource "aws_apigatewayv2_stage" "default" {
-  api_id      = aws_apigatewayv2_api.http_api.id
-  name        = "$default"
-  auto_deploy = true
-}
 
 resource "aws_lambda_permission" "apigw" {
   statement_id  = "AllowAPIGatewayInvoke"
