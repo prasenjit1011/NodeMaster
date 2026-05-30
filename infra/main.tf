@@ -347,6 +347,9 @@ resource "aws_apigatewayv2_integration" "faq_lambda_integration" {
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.stepfn_invoker.invoke_arn
   payload_format_version = "2.0"
+  lifecycle {
+    create_before_destroy = true
+  }
 }
 
 # resource "aws_apigatewayv2_integration" "stepfn_integration" {
