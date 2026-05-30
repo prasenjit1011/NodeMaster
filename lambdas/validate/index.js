@@ -7,7 +7,7 @@ exports.handler = async (event) => {
     throw new Error("Question missing in input");
   }
 
-  if (question.length < 3) {
+  if (question.length < 300) {
     throw new Error("Invalid question");
   }
 
