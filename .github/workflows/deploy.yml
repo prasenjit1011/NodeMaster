@@ -29,7 +29,25 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
-            
+
+      - name: Terraform Import IAM Role (lambda)
+        working-directory: infra
+        run: |
+          terraform import aws_iam_role.lambda_role nodemaster-devd1-lambda-role || true
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
+      - name: Terraform Import IAM Role (stepfn)
+        working-directory: infra
+        run: |
+          terraform import aws_iam_role.stepfn_role nodemaster-devd1-stepfn-role || true
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
       - name: Terraform Plan
         run: terraform plan
         working-directory: infra
