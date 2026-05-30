@@ -2,7 +2,7 @@ name: deploy
 
 on:
   push:
-    branches: [stdx]
+    branches: [terraform_aws_lambda_step_fn]
 
 jobs:
   deploy:
