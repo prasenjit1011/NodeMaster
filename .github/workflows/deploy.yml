@@ -105,6 +105,14 @@ jobs:
         working-directory: infra
         run: terraform plan
 
+      - name: Show Terraform State
+        working-directory: infra
+        run: terraform state list
+
+      - name: Remove old integration from state
+        working-directory: infra
+        run: terraform state rm aws_apigatewayv2_integration.stepfn_integration || true
+
       # -------------------------
       # APPLY
       # -------------------------
