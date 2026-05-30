@@ -18,6 +18,30 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # -------------------------
+      # BUILD LAMBDAS (ADD THIS HERE)
+      # -------------------------
+      - name: Build Lambda ZIPs
+        run: |
+          mkdir -p build
+
+          cd lambdas/dbLookup
+          npm install --production
+          zip -r ../../build/dbLookup.zip .
+
+          cd ../store
+          npm install --production
+          zip -r ../../build/store.zip .
+
+          cd ../validate
+          npm install --production
+          zip -r ../../build/validate.zip .
+
+          cd ../fallback
+          npm install --production
+          zip -r ../../build/fallback.zip .
+
+
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
