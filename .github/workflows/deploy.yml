@@ -17,11 +17,6 @@ jobs:
       - name: Install Dependencies
         run: npm install
 
-      - name: Copy node_modules
-        run: |
-          zip -r dbLookup.zip index.js
-          zip -r store.zip index.js
-
       - name: Build Lambda ZIPs
         run: |
           mkdir -p build
@@ -29,7 +24,6 @@ jobs:
           zip -j build/store.zip lambdas/store/index.js
           zip -j build/validate.zip lambdas/validate/index.js
           zip -j build/fallback.zip lambdas/fallback/index.js
-
 
       - name: Terraform Init
         working-directory: infra
