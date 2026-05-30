@@ -300,6 +300,7 @@ resource "aws_apigatewayv2_integration" "stepfn_integration" {
 
   request_parameters = {
     StateMachineArn = aws_sfn_state_machine.faq.arn
+    Input = "$request.body"
   }
 
   # request_templates = {
