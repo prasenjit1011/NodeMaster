@@ -297,7 +297,16 @@ resource "aws_apigatewayv2_integration" "stepfn_integration" {
   credentials_arn = aws_iam_role.api_gateway_stepfn_role.arn
 
   request_parameters = {
-    "StateMachineArn" = aws_sfn_state_machine.faq.arn
+    StateMachineArn = aws_sfn_state_machine.faq.arn
+  }
+
+  # 🔥 ADD THIS (IMPORTANT FIX)
+  payload_format_version = "1.0"
+
+  request_templates = {
+    "application/json" = jsonencode({
+      input = "$request.body"
+    })
   }
 }
 
