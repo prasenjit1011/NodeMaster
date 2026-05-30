@@ -4,7 +4,7 @@ exports.handler = async (event) => {
   console.log("EVENT:", JSON.stringify(event));
 
   if (!question) {
-    throw new Error("Question missing in input");
+    throw new Error("Question missing in input!");
   }
 
   if (question.length < 300) {
