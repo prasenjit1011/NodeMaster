@@ -126,6 +126,10 @@ resource "aws_lambda_function" "store" {
       MONGO_URI = var.mongo_uri
     }
   }
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 # ==========================================

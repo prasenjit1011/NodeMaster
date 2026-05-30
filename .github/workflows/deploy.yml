@@ -14,9 +14,6 @@ jobs:
       AWS_REGION: ${{ secrets.AWS_REGION }}
       TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
       TF_LOG: INFO
-      TF_INPUT: 0
-      TF_IN_AUTOMATION: true
-      CHECKPOINT_DISABLE: 1
 
     steps:
       - uses: actions/checkout@v4
@@ -24,18 +21,76 @@ jobs:
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
+      # -------------------------
+      # INIT
+      # -------------------------
       - name: Terraform Init
         working-directory: infra
         run: terraform init -reconfigure
 
+      # -------------------------
+      # STATE CHECK
+      # -------------------------
+      - name: Terraform State Check
+        working-directory: infra
+        run: terraform state list || true
+
+      # -------------------------
+      # SMART IMPORT (SAFE)
+      # -------------------------
+      - name: Smart Import Lambda - fallback
+        working-directory: infra
+        run: |
+          terraform state list | grep aws_lambda_function.fallback || \
+          terraform import aws_lambda_function.fallback fallbackLambda || true
+
+      - name: Smart Import Lambda - validate
+        working-directory: infra
+        run: |
+          terraform state list | grep aws_lambda_function.validate || \
+          terraform import aws_lambda_function.validate validateLambda || true
+
+      - name: Smart Import Lambda - dblookup
+        working-directory: infra
+        run: |
+          terraform state list | grep aws_lambda_function.dblookup || \
+          terraform import aws_lambda_function.dblookup dbLookupLambda || true
+
+      - name: Smart Import Lambda - store
+        working-directory: infra
+        run: |
+          terraform state list | grep aws_lambda_function.store || \
+          terraform import aws_lambda_function.store storeLambda || true
+
+      - name: Smart Import IAM Role - lambda
+        working-directory: infra
+        run: |
+          terraform state list | grep aws_iam_role.lambda_role || \
+          terraform import aws_iam_role.lambda_role nodemaster-devd1-lambda-role || true
+
+      - name: Smart Import IAM Role - stepfn
+        working-directory: infra
+        run: |
+          terraform state list | grep aws_iam_role.stepfn_role || \
+          terraform import aws_iam_role.stepfn_role nodemaster-devd1-stepfn-role || true
+
+      # -------------------------
+      # PLAN
+      # -------------------------
       - name: Terraform Plan
         working-directory: infra
         run: terraform plan
 
+      # -------------------------
+      # APPLY
+      # -------------------------
       - name: Terraform Apply
         working-directory: infra
         run: terraform apply -auto-approve -input=false -lock-timeout=5m
 
+      # -------------------------
+      # OUTPUT
+      # -------------------------
       - name: Print API Gateway URL
         working-directory: infra
         run: terraform output -raw api_gateway_url
