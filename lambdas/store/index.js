@@ -15,5 +15,5 @@ exports.handler = async (event) => {
 
   await client.close();
 
-  return { stored: true, result };
+  return { stored: true, id: result.insertedId, question: event.answer, msg : "FAQ stored successfully!" };
 };

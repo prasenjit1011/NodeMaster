@@ -6,7 +6,7 @@ POST https://kljs8m35ze.execute-api.ap-south-1.amazonaws.com/faq
 Content-Type: application/json
 
 {
-  "question": "Abc Def Ghi Jkl?"
+  "question": "Hello ABCD?"
 }
 
 ### ANOTHER TEST QUESTION
