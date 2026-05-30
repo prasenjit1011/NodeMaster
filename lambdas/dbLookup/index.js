@@ -9,11 +9,11 @@ exports.handler = async (event) => {
 
   // const result = await col.findOne({ question: event.question });
   const result = await col.findOne({
-                      $or: [
-                        { question: event.question },
-                        { answer: event.question }
-                      ]
-                    });
+                            $or: [
+                              { question: { $regex: event.question, $options: "i" } },
+                              { answer: { $regex: event.question, $options: "i" } }
+                            ]
+                          });
 
   await client.close();
 
