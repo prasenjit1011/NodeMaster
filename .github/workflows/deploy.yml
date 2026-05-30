@@ -8,82 +8,57 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    env:
+      AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+      AWS_REGION: ${{ secrets.AWS_REGION }}
+      TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
+      TF_LOG: INFO
+
     steps:
       - uses: actions/checkout@v4
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      - name: Install Dependencies
-        run: npm install
-
+      # -------------------------
+      # BUILD LAMBDA ZIPS
+      # -------------------------
       - name: Build Lambda ZIPs
         run: |
           mkdir -p build
+
           zip -j build/dbLookup.zip lambdas/dbLookup/index.js
           zip -j build/store.zip lambdas/store/index.js
           zip -j build/validate.zip lambdas/validate/index.js
           zip -j build/fallback.zip lambdas/fallback/index.js
 
+      # -------------------------
+      # TERRAFORM INIT
+      # -------------------------
       - name: Terraform Init
         working-directory: infra
         run: terraform init -reconfigure
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
 
-      - name: Terraform Import IAM Role (lambda)
-        working-directory: infra
-        run: |
-          terraform state show aws_iam_role.lambda_role || \
-          terraform import aws_iam_role.lambda_role nodemaster-devd1-lambda-role || true
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}         
-          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
-
-      - name: Terraform Import IAM Role (stepfn)
-        working-directory: infra
-        run: |
-          terraform import aws_iam_role.stepfn_role nodemaster-devd1-stepfn-role || true
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
-
+      # -------------------------
+      # TERRAFORM PLAN
+      # -------------------------
       - name: Terraform Plan
+        working-directory: infra
         run: terraform plan
-        working-directory: infra
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
 
+      # -------------------------
+      # TERRAFORM APPLY
+      # -------------------------
       - name: Terraform Apply
-        run: terraform apply -auto-approve -input=false -lock-timeout=5m
         working-directory: infra
-        env:
-          TF_LOG: INFO
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
+        run: terraform apply -auto-approve -input=false -lock-timeout=5m
 
-      - name: Check ZIP Size
-        run: |
-          ls -lh lambdas/*.zip
-
+      # -------------------------
+      # OUTPUT CHECK
+      # -------------------------
       - name: Print API Gateway URL
         working-directory: infra
         run: |
           echo "API URL:"
           terraform output -raw api_gateway_url
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
