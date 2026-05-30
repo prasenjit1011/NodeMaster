@@ -7,7 +7,7 @@ exports.handler = async (event) => {
   const db = client.db("demodb");
   const col = db.collection("faqs");
 
-  const result = await col.findOne({ question: event.question });
+  // const result = await col.findOne({ question: event.question });
   const result = await col.findOne({
                       $or: [
                         { question: event.question },
