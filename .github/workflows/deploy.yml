@@ -3,7 +3,7 @@ name: Deploy And Auto Destroy
 on:
   push:
     branches:
-      - typescript_main_teraform_aws
+      - terraform_aws_ec2
 
 jobs:
 
