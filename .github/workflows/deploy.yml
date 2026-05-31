@@ -153,6 +153,10 @@ jobs:
           pm2 status
 
           echo "Application Started Successfully"
+          echo "===================================="
+          echo "Application URL:"
+          echo "http://${{ needs.terraform.outputs.server_ip }}:3000/server"
+          echo "===================================="
 
           EOF
 
