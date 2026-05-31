@@ -112,7 +112,7 @@ jobs:
           cd /home/ubuntu
 
           if [ ! -d "app" ]; then
-            git clone -b typescript_main_teraform_aws \
+            git clone -b terraform_aws_ec2 \
             https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/prasenjit1011/NodeMaster.git app
           fi
 
@@ -120,7 +120,7 @@ jobs:
 
           git fetch origin
 
-          git reset --hard origin/typescript_main_teraform_aws
+          git reset --hard origin/terraform_aws_ec2
 
           rm -rf node_modules package-lock.json
 
