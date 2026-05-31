@@ -19,7 +19,7 @@ exports.handler = async (event) => {
 
     return {
       found: true,
-      answer: "FAQ NEW ANSWER Created : " + event.answer,
+      answer: "FAQ NEW ANSWER Created Successfully: " + event.answer,
       id: result.insertedId.toString()
     };
   } catch (err) {
