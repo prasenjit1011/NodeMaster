@@ -86,8 +86,20 @@ jobs:
         run: |
           echo "======================================"
           echo "APPLICATION URL"
-          echo "http://${{ steps.tf_outputs.outputs.load_balancer_dns }}"
+          echo "http://${{ steps.tf_outputs.outputs.load_balancer_dns }}/server"
           echo "======================================"
+
+      - name: Show Infrastructure URLs
+        run: |
+          echo "======================================"
+          echo "LOAD BALANCER"
+          echo "http://${{ steps.tf_outputs.outputs.load_balancer_dns }}/server"
+          echo ""
+
+          echo "EC2 SERVERS"
+          echo '${{ steps.tf_outputs.outputs.server_ips }}'
+          echo "======================================"
+
 
   deploy:
     needs: terraform
@@ -177,14 +189,14 @@ jobs:
           rm -rf app
 
           # Clone Repository
-          git clone -b typescript_main_teraform_aws_loadbalancer \
+          git clone -b terraform_aws_loadbalancer \
           https://${GITHUB_USERNAME}:${GITHUB_TOKEN}@github.com/prasenjit1011/NodeMaster.git app
 
           cd app
 
           git fetch origin
 
-          git reset --hard origin/typescript_main_teraform_aws_loadbalancer
+          git reset --hard origin/terraform_aws_loadbalancer
 
           rm -rf node_modules package-lock.json
 
@@ -220,6 +232,29 @@ jobs:
           echo "Application Started Successfully"
 
           EOF
+
+      - name: Show Application URLs
+        run: |
+          echo ""
+          echo "===================================="
+          echo "Application URLs"
+          echo "===================================="
+
+          echo "Load Balancer URL:"
+          echo "http://${{ steps.tf_outputs.outputs.load_balancer_dns }}"
+          echo ""
+
+          IFS=',' read -ra IPS <<< "${{ steps.tf_outputs.outputs.server_ips }}"
+
+          echo "Server 1 URL:"
+          echo "http://${IPS[0]}:3000/server"
+          echo ""
+
+          echo "Server 2 URL:"
+          echo "http://${IPS[1]}:3000/server"
+          echo ""
+
+          echo "===================================="
 
   auto-destroy:
     if: always()
