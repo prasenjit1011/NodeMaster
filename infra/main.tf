@@ -420,39 +420,6 @@ resource "aws_cloudwatch_log_group" "faq_logs" {
   retention_in_days = 7
 }
 
-
-resource "aws_sfn_state_machine" "faq_workflow" {
-  name     = "faqWorkflow"
-  role_arn = aws_iam_role.stepfn_role.arn
-  type     = "EXPRESS"
-
-  definition = jsonencode({
-    Comment = "FAQ Workflow"
-    StartAt = "Success"
-    States = {
-      Success = {
-        Type = "Succeed"
-      }
-    }
-  })
-}
-
-resource "aws_sfn_state_machine" "faq_workflow" {
-  name     = "faqWorkflow"
-  role_arn = aws_iam_role.stepfn_role.arn
-
-  type = "EXPRESS"
-
-  definition = file("${path.module}/faq_workflow.json")
-
-  logging_configuration {
-    level                  = "ALL"
-    include_execution_data = true
-
-    log_destination = "${aws_cloudwatch_log_group.faq_logs.arn}:*"
-  }
-}
-
 resource "aws_iam_role_policy" "stepfn_logs" {
   name = "stepfn-logs"
   role = aws_iam_role.stepfn_role.id
@@ -469,10 +436,40 @@ resource "aws_iam_role_policy" "stepfn_logs" {
           "logs:DeleteLogDelivery",
           "logs:ListLogDeliveries",
           "logs:PutLogEvents",
-          "logs:CreateLogStream"
+          "logs:CreateLogStream",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams"
         ]
         Resource = "*"
       }
     ]
   })
+}
+
+resource "aws_sfn_state_machine" "faq_workflow" {
+  name     = "faqWorkflow"
+  role_arn = aws_iam_role.stepfn_role.arn
+  type     = "EXPRESS"
+
+  definition = jsonencode({
+    Comment = "FAQ Workflow"
+    StartAt = "Success"
+    States = {
+      Success = {
+        Type = "Succeed"
+      }
+    }
+  })
+
+  logging_configuration {
+    level                  = "ALL"
+    include_execution_data = true
+
+    log_destination = "${aws_cloudwatch_log_group.faq_logs.arn}:*"
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.faq_logs,
+    aws_iam_role_policy.stepfn_logs
+  ]
 }
