@@ -331,28 +331,28 @@ output "api_gateway_url" {
   value = aws_apigatewayv2_stage.default.invoke_url
 }
 
-resource "aws_apigatewayv2_integration" "validate_integration" {
-  api_id                 = aws_apigatewayv2_api.http_api.id
-  integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.validate_leave.invoke_arn
-  payload_format_version = "2.0"
-}
+# resource "aws_apigatewayv2_integration" "validate_integration" {
+#   api_id                 = aws_apigatewayv2_api.http_api.id
+#   integration_type       = "AWS_PROXY"
+#   integration_uri        = aws_lambda_function.validate_leave.invoke_arn
+#   payload_format_version = "2.0"
+# }
 
-resource "aws_apigatewayv2_route" "validate_route" {
-  api_id    = aws_apigatewayv2_api.http_api.id
-  route_key = "POST /validate"
-  target    = "integrations/${aws_apigatewayv2_integration.validate_integration.id}"
-}
+# resource "aws_apigatewayv2_route" "validate_route" {
+#   api_id    = aws_apigatewayv2_api.http_api.id
+#   route_key = "POST /validate"
+#   target    = "integrations/${aws_apigatewayv2_integration.validate_integration.id}"
+# }
 
 
-resource "aws_lambda_permission" "apigw" {
-  statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction" 
-  function_name = aws_lambda_function.validate_leave.function_name
-  principal     = "apigateway.amazonaws.com"
+# resource "aws_lambda_permission" "apigw" {
+#   statement_id  = "AllowAPIGatewayInvoke"
+#   action        = "lambda:InvokeFunction" 
+#   function_name = aws_lambda_function.validate_leave.function_name
+#   principal     = "apigateway.amazonaws.com"
 
-  source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*/POST/validate"
-}
+#   source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*/POST/validate"
+# }
 
 
 
@@ -388,5 +388,21 @@ resource "aws_apigatewayv2_route" "faq_route" {
   route_key = "POST /leave/apply"
 
   target = "integrations/${aws_apigatewayv2_integration.faq_lambda_integration.id}"
+}
+
+
+resource "aws_iam_role" "api_gateway_stepfn_role" {
+  name = "${var.project_name}-${var.environment}-apigw-stepfn-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "apigateway.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
 }
 
