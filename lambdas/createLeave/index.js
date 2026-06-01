@@ -4,6 +4,7 @@ exports.handler = async (event) => {
   let client;
 
   
+
   try {
     client = new MongoClient(process.env.MONGO_URI);
 
