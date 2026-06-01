@@ -415,36 +415,36 @@ resource "aws_apigatewayv2_route" "faq_route" {
 
 
 # Newly Added Code:
-resource "aws_cloudwatch_log_group" "faq_logs" {
-  name              = "/aws/vendedlogs/states/faqWorkflow"
-  retention_in_days = 7
-}
+# resource "aws_cloudwatch_log_group" "faq_logs" {
+#   name              = "/aws/vendedlogs/states/faqWorkflow"
+#   retention_in_days = 7
+# }
 
-resource "aws_iam_role_policy" "stepfn_logging" {
-  name = "stepfn-logging"
-  role = aws_iam_role.stepfn_role.id
+# resource "aws_iam_role_policy" "stepfn_logging" {
+#   name = "stepfn-logging"
+#   role = aws_iam_role.stepfn_role.id
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogDelivery",
-          "logs:GetLogDelivery",
-          "logs:UpdateLogDelivery",
-          "logs:DeleteLogDelivery",
-          "logs:ListLogDeliveries",
-          "logs:DescribeLogGroups",
-          "logs:PutResourcePolicy",
-          "logs:DescribeResourcePolicies",
-          "logs:DescribeLogStreams"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "logs:CreateLogDelivery",
+#           "logs:GetLogDelivery",
+#           "logs:UpdateLogDelivery",
+#           "logs:DeleteLogDelivery",
+#           "logs:ListLogDeliveries",
+#           "logs:DescribeLogGroups",
+#           "logs:PutResourcePolicy",
+#           "logs:DescribeResourcePolicies",
+#           "logs:DescribeLogStreams"
+#         ]
+#         Resource = "*"
+#       }
+#     ]
+#   })
+# }
 
 
 # resource "aws_iam_role_policy" "stepfn_logs" {
@@ -473,30 +473,30 @@ resource "aws_iam_role_policy" "stepfn_logging" {
 #   })
 # }
 
-resource "aws_sfn_state_machine" "faq_workflow" {
-  name     = "faqWorkflow"
-  role_arn = aws_iam_role.stepfn_role.arn
-  type     = "EXPRESS"
+# resource "aws_sfn_state_machine" "faq_workflow" {
+#   name     = "faqWorkflow"
+#   role_arn = aws_iam_role.stepfn_role.arn
+#   type     = "EXPRESS"
 
-  definition = jsonencode({
-    Comment = "FAQ Workflow"
-    StartAt = "Success"
-    States = {
-      Success = {
-        Type = "Succeed"
-      }
-    }
-  })
+#   definition = jsonencode({
+#     Comment = "FAQ Workflow"
+#     StartAt = "Success"
+#     States = {
+#       Success = {
+#         Type = "Succeed"
+#       }
+#     }
+#   })
 
-  logging_configuration {
-    level                  = "ALL"
-    include_execution_data = true
+#   logging_configuration {
+#     level                  = "ALL"
+#     include_execution_data = true
 
-    log_destination = "${aws_cloudwatch_log_group.faq_logs.arn}:*"
-  }
+#     log_destination = "${aws_cloudwatch_log_group.faq_logs.arn}:*"
+#   }
 
-  depends_on = [
-    aws_cloudwatch_log_group.faq_logs,
-    aws_iam_role_policy.stepfn_logs
-  ]
-}
+#   depends_on = [
+#     aws_cloudwatch_log_group.faq_logs,
+#     aws_iam_role_policy.stepfn_logs
+#   ]
+# }
