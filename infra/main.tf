@@ -227,10 +227,9 @@ resource "aws_iam_role_policy" "stepfn_policy" {
 
 # STEP FUNCTIONS
 resource "aws_sfn_state_machine" "faq" {
-  name     = "faqWorkflow"
-  role_arn = aws_iam_role.stepfn_role.arn
-
-  type = "EXPRESS"
+  name      = "faqWorkflow"
+  role_arn  = aws_iam_role.stepfn_role.arn
+  type      = "EXPRESS"
   definition = jsonencode({
     Comment = "FAQ Workflow"
 
@@ -286,7 +285,20 @@ resource "aws_sfn_state_machine" "faq" {
       }
     }
   })
+ 
+  logging_configuration {
+    level                  = "ALL"
+    include_execution_data = true
+
+    log_destination = "${aws_cloudwatch_log_group.faq_logs.arn}:*"
+  }
+
+  depends_on = [
+    aws_cloudwatch_log_group.faq_logs,
+    aws_iam_role_policy.stepfn_logs
+  ]
 }
+
 
 # API GATEWAY
 
