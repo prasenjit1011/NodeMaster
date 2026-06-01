@@ -413,3 +413,49 @@ resource "aws_apigatewayv2_route" "faq_route" {
   target = "integrations/${aws_apigatewayv2_integration.faq_lambda_integration.id}"
 }
 
+
+# Newly Added Code:
+resource "aws_cloudwatch_log_group" "faq_logs" {
+  name              = "/aws/vendedlogs/states/faqWorkflow"
+  retention_in_days = 7
+}
+
+resource "aws_sfn_state_machine" "faq_workflow" {
+  name     = "faqWorkflow"
+  role_arn = aws_iam_role.stepfn_role.arn
+
+  type = "EXPRESS"
+
+  definition = file("${path.module}/faq_workflow.json")
+
+  logging_configuration {
+    level                  = "ALL"
+    include_execution_data = true
+
+    log_destination = "${aws_cloudwatch_log_group.faq_logs.arn}:*"
+  }
+}
+
+resource "aws_iam_role_policy" "stepfn_logs" {
+  name = "stepfn-logs"
+  role = aws_iam_role.stepfn_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "logs:CreateLogDelivery",
+          "logs:GetLogDelivery",
+          "logs:UpdateLogDelivery",
+          "logs:DeleteLogDelivery",
+          "logs:ListLogDeliveries",
+          "logs:PutLogEvents",
+          "logs:CreateLogStream"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
