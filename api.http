@@ -1,26 +1,63 @@
-### HEALTH CHECK (basic test)
-GET https://kljs8m35ze.execute-api.ap-south-1.amazonaws.com/
+### =========================================
+### LEAVE APPROVAL SYSTEM API
+### =========================================
 
-### CALL FAQ API (MAIN TEST - Step Function trigger)
-POST https://kljs8m35ze.execute-api.ap-south-1.amazonaws.com/faq
+@baseUrl = https://vefrzob4u2.execute-api.ap-south-1.amazonaws.com/
+
+
+### =========================================
+### 1. APPLY FOR LEAVE (Employee)
+### =========================================
+POST {{baseUrl}}/leave/apply
 Content-Type: application/json
 
 {
-  "question": "NewlyDummy126878?"
+  "employeeId": "EMP001",
+  "name": "Prasenjit",
+  "email": "prasenjit@example.com",
+  "fromDate": "2026-06-10",
+  "toDate": "2026-06-12",
+  "reason": "Personal work",
+  "leaveType": "casual"
 }
 
-### ANOTHER TEST QUESTION
-POST https://kljs8m35ze.execute-api.ap-south-1.amazonaws.com/faq
+
+### =========================================
+### 2. APPROVE LEAVE (Manager)
+### =========================================
+POST {{baseUrl}}/leave/approve
 Content-Type: application/json
 
 {
-  "question": "what is aws lambda?"
+  "requestId": "LEAVE-12345",
+  "approvedBy": "MANAGER001",
+  "status": "approved",
+  "comment": "Approved for valid reason"
 }
 
-### INVALID TEST (to check validation Lambda)
-POST https://kljs8m35ze.execute-api.ap-south-1.amazonaws.com/faq
+
+### =========================================
+### 3. REJECT LEAVE (Manager / HR)
+### =========================================
+POST {{baseUrl}}/leave/reject
 Content-Type: application/json
 
 {
-  "question": "hi"
+  "requestId": "LEAVE-12345",
+  "rejectedBy": "MANAGER001",
+  "status": "rejected",
+  "comment": "Insufficient leave balance"
 }
+
+
+### =========================================
+### 4. GET LEAVE STATUS (Optional)
+### =========================================
+GET {{baseUrl}}/leave/status/LEAVE-12345
+Accept: application/json
+
+
+### =========================================
+### 5. HEALTH CHECK (if implemented)
+### =========================================
+GET {{baseUrl}}/health
