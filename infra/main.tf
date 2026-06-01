@@ -110,8 +110,8 @@ resource "aws_lambda_function" "validate_leave" {
   runtime       = "nodejs20.x"
   handler       = "index.handler"
 
-  filename         = data.archive_file.validate_leave_zip.output_path
-  source_code_hash = data.archive_file.validate_zip.output_base64sha256
+  filename         = data.archive_file.validate_leave_zip.output_path  
+  source_code_hash = data.archive_file.validate_leave_zip.output_base64sha256
 }
 
 resource "aws_lambda_function" "create_leave" {
@@ -334,7 +334,7 @@ output "api_gateway_url" {
 resource "aws_apigatewayv2_integration" "validate_integration" {
   api_id                 = aws_apigatewayv2_api.http_api.id
   integration_type       = "AWS_PROXY"
-  integration_uri        = aws_lambda_function.validate.invoke_arn
+  integration_uri        = aws_lambda_function.validate_leave.invoke_arn
   payload_format_version = "2.0"
 }
 
@@ -347,8 +347,8 @@ resource "aws_apigatewayv2_route" "validate_route" {
 
 resource "aws_lambda_permission" "apigw" {
   statement_id  = "AllowAPIGatewayInvoke"
-  action        = "lambda:InvokeFunction"
-  function_name = aws_lambda_function.validate.function_name
+  action        = "lambda:InvokeFunction" 
+  function_name = aws_lambda_function.validate_leave.function_name
   principal     = "apigateway.amazonaws.com"
 
   source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*/POST/validate"
@@ -366,23 +366,7 @@ resource "aws_apigatewayv2_integration" "faq_lambda_integration" {
     create_before_destroy = true
   }
 }
-
-
-
-resource "aws_iam_role" "api_gateway_stepfn_role" {
-  name = "${var.project_name}-${var.environment}-apigw-stepfn-role"
-
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Effect = "Allow"
-      Principal = {
-        Service = "apigateway.amazonaws.com"
-      }
-      Action = "sts:AssumeRole"
-    }]
-  })
-}
+ 
 
 resource "aws_iam_role_policy" "api_gateway_stepfn_policy" {
   role = aws_iam_role.api_gateway_stepfn_role.id
@@ -394,7 +378,7 @@ resource "aws_iam_role_policy" "api_gateway_stepfn_policy" {
       Action = [
         "states:StartExecution"
       ]
-      Resource = aws_sfn_state_machine.faq.arn
+      Resource = aws_sfn_state_machine.leave_workflow.arn
     }]
   })
 }
