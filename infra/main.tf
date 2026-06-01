@@ -420,8 +420,8 @@ resource "aws_cloudwatch_log_group" "faq_logs" {
   retention_in_days = 7
 }
 
-resource "aws_iam_role_policy" "stepfn_logs" {
-  name = "stepfn-logs"
+resource "aws_iam_role_policy" "stepfn_logging" {
+  name = "stepfn-logging"
   role = aws_iam_role.stepfn_role.id
 
   policy = jsonencode({
@@ -435,9 +435,9 @@ resource "aws_iam_role_policy" "stepfn_logs" {
           "logs:UpdateLogDelivery",
           "logs:DeleteLogDelivery",
           "logs:ListLogDeliveries",
-          "logs:PutLogEvents",
-          "logs:CreateLogStream",
           "logs:DescribeLogGroups",
+          "logs:PutResourcePolicy",
+          "logs:DescribeResourcePolicies",
           "logs:DescribeLogStreams"
         ]
         Resource = "*"
@@ -445,6 +445,33 @@ resource "aws_iam_role_policy" "stepfn_logs" {
     ]
   })
 }
+
+
+# resource "aws_iam_role_policy" "stepfn_logs" {
+#   name = "stepfn-logs"
+#   role = aws_iam_role.stepfn_role.id
+
+#   policy = jsonencode({
+#     Version = "2012-10-17"
+#     Statement = [
+#       {
+#         Effect = "Allow"
+#         Action = [
+#           "logs:CreateLogDelivery",
+#           "logs:GetLogDelivery",
+#           "logs:UpdateLogDelivery",
+#           "logs:DeleteLogDelivery",
+#           "logs:ListLogDeliveries",
+#           "logs:PutLogEvents",
+#           "logs:CreateLogStream",
+#           "logs:DescribeLogGroups",
+#           "logs:DescribeLogStreams"
+#         ]
+#         Resource = "*"
+#       }
+#     ]
+#   })
+# }
 
 resource "aws_sfn_state_machine" "faq_workflow" {
   name     = "faqWorkflow"
