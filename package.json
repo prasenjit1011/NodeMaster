@@ -1,15 +1,16 @@
 {
-  "name": "nodemaster-faq-workflow",
+  "name": "nodemaster-employee-leave-workflow",
   "version": "1.0.0",
-  "description": "Serverless FAQ workflow using AWS Lambda, Step Functions, Terraform, MongoDB, and GitHub Actions",
+  "description": "Employee Leave Approval Workflow using AWS Lambda, Step Functions, API Gateway, MongoDB, Terraform and GitHub Actions",
   "main": "index.js",
   "license": "MIT",
   "type": "commonjs",
   "scripts": {
     "test": "echo \"No tests configured\"",
-    "zip:lambdas": "echo \"Zip handled in GitHub Actions or Terraform\""
+    "zip:lambdas": "echo \"Lambda ZIP creation handled by GitHub Actions\""
   },
   "dependencies": {
-    "mongodb": "^6.18.0"
+    "mongodb": "^6.18.0",
+    "@aws-sdk/client-sfn": "^3.900.0"
   }
 }

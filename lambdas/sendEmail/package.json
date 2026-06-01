@@ -1,0 +1,7 @@
+{
+  "name": "sendemail",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "Send leave approval email notification",
+  "license": "MIT"
+}

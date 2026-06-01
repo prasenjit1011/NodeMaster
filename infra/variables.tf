@@ -11,11 +11,13 @@ variable "mongo_uri" {
 }
 
 variable "project_name" {
-  type    = string
-  default = "nodemaster"
+  description = "Project Name"
+  type        = string
+  default     = "nodemaster"
 }
 
 variable "environment" {
-  type    = string
-  default = "devd1"
+  description = "Environment Name"
+  type        = string
+  default     = "devd1"
 }

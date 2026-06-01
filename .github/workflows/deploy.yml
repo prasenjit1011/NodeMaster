@@ -2,7 +2,7 @@ name: deploy
 
 on:
   push:
-    branches: [terraform_aws_lambda_step_fn]
+    branches: [terraform_aws_lambda_step_fn_leave_approval_workflow]
 
 jobs:
   deploy:
@@ -12,117 +12,99 @@ jobs:
       AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
       AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
       AWS_REGION: ${{ secrets.AWS_REGION }}
+
       TF_VAR_mongo_uri: ${{ secrets.MONGO_URI }}
-      TF_LOG: INFO
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repository
+        uses: actions/checkout@v4
 
-      # -------------------------
-      # BUILD LAMBDAS (ADD THIS HERE)
-      # -------------------------
-      - name: Build Lambda ZIPs
+      # ==========================================
+      # BUILD LAMBDA ZIP FILES
+      # ==========================================
+
+      - name: Build Lambda Packages
         run: |
           mkdir -p build
 
-          cd lambdas/dbLookup
+          cd lambdas/validateLeave
           npm install --production
-          zip -r ../../build/dbLookup.zip .
+          zip -r ../../build/validateLeave.zip .
+          cd ../..
 
-          cd ../store
+          cd lambdas/createLeave
           npm install --production
-          zip -r ../../build/store.zip .
+          zip -r ../../build/createLeave.zip .
+          cd ../..
 
-          cd ../validate
+          cd lambdas/managerApproval
           npm install --production
-          zip -r ../../build/validate.zip .
+          zip -r ../../build/managerApproval.zip .
+          cd ../..
 
-          cd ../fallback
+          cd lambdas/hrApproval
           npm install --production
-          zip -r ../../build/fallback.zip .
+          zip -r ../../build/hrApproval.zip .
+          cd ../..
 
+          cd lambdas/updateBalance
+          npm install --production
+          zip -r ../../build/updateBalance.zip .
+          cd ../..
+
+          cd lambdas/sendEmail
+          npm install --production
+          zip -r ../../build/sendEmail.zip .
+          cd ../..
+
+          cd lambdas/stepfnInvoker
+          npm install --production
+          zip -r ../../build/stepfnInvoker.zip .
+          cd ../..
+
+      # ==========================================
+      # TERRAFORM
+      # ==========================================
 
       - name: Setup Terraform
         uses: hashicorp/setup-terraform@v3
 
-      # -------------------------
-      # INIT
-      # -------------------------
       - name: Terraform Init
         working-directory: infra
         run: terraform init -reconfigure
 
-      # -------------------------
-      # STATE CHECK
-      # -------------------------
-      - name: Terraform State Check
+      - name: Terraform Validate
         working-directory: infra
-        run: terraform state list || true
+        run: terraform validate
 
-      # -------------------------
-      # SMART IMPORT (SAFE)
-      # -------------------------
-      - name: Smart Import Lambda - fallback
-        working-directory: infra
-        run: |
-          terraform state list | grep aws_lambda_function.fallback || \
-          terraform import aws_lambda_function.fallback fallbackLambda || true
-
-      - name: Smart Import Lambda - validate
-        working-directory: infra
-        run: |
-          terraform state list | grep aws_lambda_function.validate || \
-          terraform import aws_lambda_function.validate validateLambda || true
-
-      - name: Smart Import Lambda - dblookup
-        working-directory: infra
-        run: |
-          terraform state list | grep aws_lambda_function.dblookup || \
-          terraform import aws_lambda_function.dblookup dbLookupLambda || true
-
-      - name: Smart Import Lambda - store
-        working-directory: infra
-        run: |
-          terraform state list | grep aws_lambda_function.store || \
-          terraform import aws_lambda_function.store storeLambda || true
-
-      - name: Smart Import IAM Role - lambda
-        working-directory: infra
-        run: |
-          terraform state list | grep aws_iam_role.lambda_role || \
-          terraform import aws_iam_role.lambda_role nodemaster-devd1-lambda-role || true
-
-      - name: Smart Import IAM Role - stepfn
-        working-directory: infra
-        run: |
-          terraform state list | grep aws_iam_role.stepfn_role || \
-          terraform import aws_iam_role.stepfn_role nodemaster-devd1-stepfn-role || true
-
-      # -------------------------
-      # PLAN
-      # -------------------------
       - name: Terraform Plan
         working-directory: infra
         run: terraform plan
 
-      - name: Show Terraform State
-        working-directory: infra
-        run: terraform state list
-
-      - name: Remove old integration from state
-        working-directory: infra
-        run: terraform state rm aws_apigatewayv2_integration.stepfn_integration || true
-
-      # -------------------------
-      # APPLY
-      # -------------------------
       - name: Terraform Apply
         working-directory: infra
-        run: terraform apply -auto-approve -input=false -lock-timeout=5m
+        run: terraform apply -auto-approve -input=false
 
-      # -------------------------
-      # OUTPUT
-      # -------------------------
-      - name: Print API Gateway URL
+      # ==========================================
+      # OUTPUTS
+      # ==========================================
+
+      - name: Show API Gateway URL
         working-directory: infra
         run: terraform output -raw api_gateway_url
+
+      - name: Show API Gateway URL with Endpoint
+        working-directory: infra
+        run: |
+          echo ""
+          echo "===================================="
+          echo "Employee Leave API URL"
+          echo "===================================="
+          echo "$(terraform output -raw api_gateway_url)/leave/apply"
+          echo "===================================="
+
+      - name: Show API Gateway URL Endpoint
+        working-directory: infra
+        run: |
+          echo "API URL:"
+          echo "$(terraform output -raw api_gateway_url)/leave/apply"

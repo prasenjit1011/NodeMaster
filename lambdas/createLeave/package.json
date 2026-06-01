@@ -1,0 +1,10 @@
+{
+  "name": "createleave",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "Create employee leave request",
+  "license": "MIT",
+  "dependencies": {
+    "mongodb": "^7.2.0"
+  }
+}

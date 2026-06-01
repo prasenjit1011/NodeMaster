@@ -1,6 +1,9 @@
 {
   "name": "stepfnInvoker",
   "version": "1.0.0",
+  "main": "index.js",
+  "description": "Invoke Employee Leave Approval Step Function",
+  "license": "MIT",
   "dependencies": {
     "@aws-sdk/client-sfn": "^3.900.0"
   }

@@ -1,0 +1,7 @@
+{
+  "name": "validateleave",
+  "version": "1.0.0",
+  "main": "index.js",
+  "description": "Validate employee leave request",
+  "license": "MIT"
+}
