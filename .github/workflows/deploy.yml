@@ -110,8 +110,11 @@ jobs:
         run: terraform state list
 
       - name: Remove old integration from state
-        working-directory: infra
-        run: terraform state rm aws_apigatewayv2_integration.stepfn_integration || true
+        working-directory: infra        
+        run: |
+          terraform state list | grep aws_apigatewayv2_integration.stepfn_integration && \
+          terraform state rm aws_apigatewayv2_integration.stepfn_integration || true
+
 
       # -------------------------
       # APPLY
