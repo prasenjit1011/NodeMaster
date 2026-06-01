@@ -181,10 +181,8 @@ resource "aws_lambda_permission" "faq_apigw" {
 
   source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*/POST/faq"
 }
-# ==========================================
-# STEP FUNCTION ROLE
-# ==========================================
 
+# STEP FUNCTION ROLE
 resource "aws_iam_role" "stepfn_role" {
   name = "${var.project_name}-${var.environment}-stepfn-role"
 
@@ -227,10 +225,7 @@ resource "aws_iam_role_policy" "stepfn_policy" {
   })
 }
 
-# ==========================================
 # STEP FUNCTIONS
-# ==========================================
-
 resource "aws_sfn_state_machine" "faq" {
   name     = "faqWorkflow"
   role_arn = aws_iam_role.stepfn_role.arn
@@ -293,9 +288,7 @@ resource "aws_sfn_state_machine" "faq" {
   })
 }
 
-# ==========================================
 # API GATEWAY
-# ==========================================
 
 resource "aws_apigatewayv2_api" "http_api" {
   name          = "faq-http-api"
@@ -308,9 +301,7 @@ resource "aws_apigatewayv2_stage" "default" {
   auto_deploy = true
 }
 
-# ==========================================
 # OUTPUT
-# ==========================================
 
 output "api_gateway_url" {
   value = aws_apigatewayv2_stage.default.invoke_url
@@ -329,7 +320,6 @@ resource "aws_apigatewayv2_route" "validate_route" {
   target    = "integrations/${aws_apigatewayv2_integration.validate_integration.id}"
 }
 
-
 resource "aws_lambda_permission" "apigw" {
   statement_id  = "AllowAPIGatewayInvoke"
   action        = "lambda:InvokeFunction"
@@ -338,9 +328,6 @@ resource "aws_lambda_permission" "apigw" {
 
   source_arn = "${aws_apigatewayv2_api.http_api.execution_arn}/*/POST/validate"
 }
-
-
-
 
 resource "aws_apigatewayv2_integration" "faq_lambda_integration" {
   api_id                 = aws_apigatewayv2_api.http_api.id
@@ -352,27 +339,6 @@ resource "aws_apigatewayv2_integration" "faq_lambda_integration" {
   }
 }
 
-# resource "aws_apigatewayv2_integration" "stepfn_integration" {
-#   api_id              = aws_apigatewayv2_api.http_api.id
-#   integration_type    = "AWS_PROXY"
-#   integration_subtype = "StepFunctions-StartExecution"
-#   payload_format_version = "1.0"
-
-#   credentials_arn     = aws_iam_role.api_gateway_stepfn_role.arn
-
-#   # payload_format_version = "1.0"
-
-#   request_parameters = {
-#     StateMachineArn = aws_sfn_state_machine.faq.arn
-#     Input = "$request.body"
-#   }
-
-#   # request_templates = {
-#   #  "application/json" = jsonencode({
-#   #    input = "$util.escapeJavaScript($input.body)"
-#   #  })
-#   # }
-# }
 
 
 resource "aws_iam_role" "api_gateway_stepfn_role" {
@@ -409,94 +375,35 @@ resource "aws_apigatewayv2_route" "faq_route" {
   api_id    = aws_apigatewayv2_api.http_api.id
   route_key = "POST /faq"
 
-  # target = "integrations/${aws_apigatewayv2_integration.stepfn_integration.id}"
   target = "integrations/${aws_apigatewayv2_integration.faq_lambda_integration.id}"
 }
 
-
 # Newly Added Code:
-# resource "aws_cloudwatch_log_group" "faq_logs" {
-#   name              = "/aws/vendedlogs/states/faqWorkflow"
-#   retention_in_days = 7
-# }
+resource "aws_cloudwatch_log_group" "faq_logs" {
+  name              = "/aws/vendedlogs/states/faqWorkflow"
+  retention_in_days = 1
+}
 
-# resource "aws_iam_role_policy" "stepfn_logging" {
-#   name = "stepfn-logging"
-#   role = aws_iam_role.stepfn_role.id
+resource "aws_iam_role_policy" "stepfn_logs" {
+  name = "stepfn-logs"
+  role = aws_iam_role.stepfn_role.id
 
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Effect = "Allow"
-#         Action = [
-#           "logs:CreateLogDelivery",
-#           "logs:GetLogDelivery",
-#           "logs:UpdateLogDelivery",
-#           "logs:DeleteLogDelivery",
-#           "logs:ListLogDeliveries",
-#           "logs:DescribeLogGroups",
-#           "logs:PutResourcePolicy",
-#           "logs:DescribeResourcePolicies",
-#           "logs:DescribeLogStreams"
-#         ]
-#         Resource = "*"
-#       }
-#     ]
-#   })
-# }
-
-
-# resource "aws_iam_role_policy" "stepfn_logs" {
-#   name = "stepfn-logs"
-#   role = aws_iam_role.stepfn_role.id
-
-#   policy = jsonencode({
-#     Version = "2012-10-17"
-#     Statement = [
-#       {
-#         Effect = "Allow"
-#         Action = [
-#           "logs:CreateLogDelivery",
-#           "logs:GetLogDelivery",
-#           "logs:UpdateLogDelivery",
-#           "logs:DeleteLogDelivery",
-#           "logs:ListLogDeliveries",
-#           "logs:PutLogEvents",
-#           "logs:CreateLogStream",
-#           "logs:DescribeLogGroups",
-#           "logs:DescribeLogStreams"
-#         ]
-#         Resource = "*"
-#       }
-#     ]
-#   })
-# }
-
-# resource "aws_sfn_state_machine" "faq_workflow" {
-#   name     = "faqWorkflow"
-#   role_arn = aws_iam_role.stepfn_role.arn
-#   type     = "EXPRESS"
-
-#   definition = jsonencode({
-#     Comment = "FAQ Workflow"
-#     StartAt = "Success"
-#     States = {
-#       Success = {
-#         Type = "Succeed"
-#       }
-#     }
-#   })
-
-#   logging_configuration {
-#     level                  = "ALL"
-#     include_execution_data = true
-
-#     log_destination = "${aws_cloudwatch_log_group.faq_logs.arn}:*"
-#   }
-
-#   depends_on = [
-#     aws_cloudwatch_log_group.faq_logs,
-#     aws_iam_role_policy.stepfn_logs
-#   ]
-# }
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Action = [
+        "logs:CreateLogDelivery",
+        "logs:GetLogDelivery",
+        "logs:UpdateLogDelivery",
+        "logs:DeleteLogDelivery",
+        "logs:ListLogDeliveries",
+        "logs:PutResourcePolicy",
+        "logs:DescribeResourcePolicies",
+        "logs:DescribeLogGroups",
+        "logs:DescribeLogStreams"
+      ]
+      Resource = "*"
+    }]
+  })
+}
