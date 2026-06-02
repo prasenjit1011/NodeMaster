@@ -112,6 +112,12 @@ resource "aws_lambda_function" "validate_leave" {
 
   filename         = data.archive_file.validate_leave_zip.output_path  
   source_code_hash = data.archive_file.validate_leave_zip.output_base64sha256
+  
+  environment {
+    variables = {
+      MONGO_URI = var.mongo_uri
+    }
+  }
 }
 
 resource "aws_lambda_function" "create_leave" {
