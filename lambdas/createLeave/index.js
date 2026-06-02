@@ -14,7 +14,7 @@ exports.handler = async (event) => {
     client = new MongoClient(process.env.MONGO_URI);   
     await client.connect();
 
-    const db = client.db("hrdb");
+    const db = client.db("demodb");
     const collection = db.collection("leave_requests");
 
     const leaveRequest = {

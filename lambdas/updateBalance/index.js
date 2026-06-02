@@ -8,7 +8,7 @@ exports.handler = async (event) => {
 
     await client.connect();
 
-    const db = client.db("hrdb");
+    const db = client.db("demodb");
 
     const leaveBalances = db.collection("leave_balances");
 
