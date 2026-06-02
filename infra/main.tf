@@ -144,6 +144,12 @@ resource "aws_lambda_function" "manager_approval" {
 
   filename         = data.archive_file.manager_approval_zip.output_path
   source_code_hash = data.archive_file.manager_approval_zip.output_base64sha256
+
+  environment {
+    variables = {
+      MONGO_URI = var.mongo_uri
+    }
+  }
 }
 
 resource "aws_lambda_function" "hr_approval" {
@@ -176,6 +182,12 @@ resource "aws_lambda_function" "update_balance" {
 
   filename         = data.archive_file.update_balance_zip.output_path
   source_code_hash = data.archive_file.update_balance_zip.output_base64sha256
+  
+  environment {
+    variables = {
+      MONGO_URI = var.mongo_uri
+    }
+  }
 }
 
 
@@ -187,6 +199,12 @@ resource "aws_lambda_function" "send_email" {
 
   filename         = data.archive_file.send_email_zip.output_path
   source_code_hash = data.archive_file.send_email_zip.output_base64sha256
+
+  environment {
+    variables = {
+      MONGO_URI = var.mongo_uri
+    }
+  }
 }
 
 
