@@ -28,7 +28,7 @@ exports.handler = async (event) => {
                 Data: `
 Hello ${event.employeeName},
 
-Your leave request has been approved.
+Your leave request has been approved at ${new Date().toLocaleString()}.
 
 Leave Type : ${event.leaveType}
 From Date  : ${event.fromDate}
