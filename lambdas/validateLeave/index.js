@@ -11,9 +11,6 @@ exports.handler = async (event) => {
   } = event;
 
 
-  // console.log("Create Leave Event:", JSON.stringify(event));
-  // console.log("Mongo URI:", process.env.MONGO_URI);
-  // client = new MongoClient(process.env.MONGO_URI);
   throw new Error("Mongo URI5:"+ process.env.MONGO_URI);
 
   if (!employeeId) {
