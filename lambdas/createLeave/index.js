@@ -6,10 +6,12 @@ exports.handler = async (event) => {
   
 
   try {
+
+    throw new Error("mongoURI"+process.env.MONGO_URI);
+
     console.log("Create Leave Event:", JSON.stringify(event));
     console.log("Mongo URI:", process.env.MONGO_URI);
-    client = new MongoClient(process.env.MONGO_URI);
-
+    client = new MongoClient(process.env.MONGO_URI);   
     await client.connect();
 
     const db = client.db("hrdb");
