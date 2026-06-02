@@ -19,12 +19,42 @@ exports.handler = async (event) => {
       })
     );
 
+    console.log("StepFn Result:", JSON.stringify(result));
+
+    // Workflow failed
+    if (result.status === "FAILED") {
+      let details = result.cause;
+
+      try {
+        details = JSON.parse(result.cause);
+      } catch (e) {
+        // leave as string
+      }
+
+      return {
+        statusCode: 500,
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          success: false,
+          executionArn: result.executionArn,
+          error: result.error,
+          details: details
+        })
+      };
+    }
+
+    // Workflow succeeded
     return {
       statusCode: 200,
       headers: {
         "Content-Type": "application/json"
       },
-      body: result.output
+      body: result.output || JSON.stringify({
+        success: true,
+        executionArn: result.executionArn
+      })
     };
 
   } catch (err) {
