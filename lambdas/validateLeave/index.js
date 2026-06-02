@@ -10,6 +10,12 @@ exports.handler = async (event) => {
     reason
   } = event;
 
+
+  // console.log("Create Leave Event:", JSON.stringify(event));
+  // console.log("Mongo URI:", process.env.MONGO_URI);
+  // client = new MongoClient(process.env.MONGO_URI);
+  throw new Error("Mongo URI:", process.env.MONGO_URI);
+
   if (!employeeId) {
     throw new Error("Employee ID is required");
   }

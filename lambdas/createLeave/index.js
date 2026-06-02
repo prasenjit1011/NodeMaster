@@ -8,7 +8,6 @@ exports.handler = async (event) => {
   try {
     console.log("Create Leave Event:", JSON.stringify(event));
     console.log("Mongo URI:", process.env.MONGO_URI);
-    
     client = new MongoClient(process.env.MONGO_URI);
 
     await client.connect();
