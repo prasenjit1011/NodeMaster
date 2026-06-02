@@ -213,6 +213,7 @@ resource "aws_lambda_function" "send_email" {
 resource "aws_lambda_function" "stepfn_invoker" {
   depends_on = [aws_sfn_state_machine.leave_workflow]
   function_name = "${var.project_name}-stepfn-invoker"
+  timeout = 30
   role    = aws_iam_role.lambda_role.arn
   runtime = "nodejs20.x"
   handler = "index.handler"

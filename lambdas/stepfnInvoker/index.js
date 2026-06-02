@@ -13,6 +13,7 @@ exports.handler = async (event) => {
         ? JSON.parse(event.body)
         : event;
 
+    
     const result = await client.send(
       new StartSyncExecutionCommand({
         stateMachineArn: process.env.STATE_MACHINE_ARN,
