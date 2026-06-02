@@ -77,9 +77,24 @@ jobs:
         working-directory: infra
         run: terraform validate
 
+      - name: Terraform Version
+        run: |
+          terraform version
+
+      - name: Check AWS Access
+        run: |
+          aws sts get-caller-identity
+          aws configure list
+
+      - name: Terraform State List
+        run: terraform state list || true
+
       - name: Terraform Plan
         working-directory: infra
-        run: terraform plan
+        run: terraform plan        
+        env:
+          TF_LOG: INFO
+
 
       - name: Terraform Apply
         working-directory: infra
