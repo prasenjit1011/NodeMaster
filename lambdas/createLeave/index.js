@@ -7,7 +7,7 @@ exports.handler = async (event) => {
 
   try {
 
-    throw new Error("mongoURI"+process.env.MONGO_URI);
+    // throw new Error("mongoURI"+process.env.MONGO_URI);
 
     console.log("Create Leave Event:", JSON.stringify(event));
     console.log("Mongo URI:", process.env.MONGO_URI);
