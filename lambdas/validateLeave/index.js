@@ -11,7 +11,7 @@ exports.handler = async (event) => {
   } = event;
 
 
-  throw new Error("Mongo URI5:"+ process.env.MONGO_URI);
+  // throw new Error("Mongo URI5:"+ process.env.MONGO_URI);
 
   if (!employeeId) {
     throw new Error("Employee ID is required");
