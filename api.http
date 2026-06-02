@@ -13,8 +13,8 @@ Content-Type: application/json
 
 {
   "employeeId": "EMP001",
-  "employeeName": "New Demo Employee",
-  "email": "prasenjit@example.com",
+  "employeeName": "Testing Demo Employee",
+  "email": "prasenjit10112@gmail.com",
   "fromDate": "2026-06-10",
   "toDate": "2026-06-12",
   "reason": "Personal work",

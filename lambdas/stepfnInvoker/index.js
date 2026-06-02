@@ -19,6 +19,8 @@ exports.handler = async (event) => {
       })
     );
 
+    console.log("Step Function Result");
+    console.log(JSON.stringify(result, null, 2));
     console.log("StepFn Result:", JSON.stringify(result));
 
     // Workflow failed
