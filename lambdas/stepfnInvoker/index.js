@@ -7,6 +7,7 @@ const client = new SFNClient({});
 
 exports.handler = async (event) => {
   try {
+    console.log('Hello: Step Function Invoker Lambda');
     const body =
       typeof event.body === "string"
         ? JSON.parse(event.body)

@@ -6,7 +6,7 @@ exports.handler = async (event) => {
   
 
   try {
-
+    console.log('Hello: Create Leave Lambda');
     // throw new Error("mongoURI"+process.env.MONGO_URI);
 
     console.log("Create Leave Event:", JSON.stringify(event));

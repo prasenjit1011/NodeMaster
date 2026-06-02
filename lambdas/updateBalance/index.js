@@ -4,6 +4,7 @@ exports.handler = async (event) => {
   let client;
 
   try {
+    console.log('Hello: Update Balance Lambda');
     client = new MongoClient(process.env.MONGO_URI);
 
     await client.connect();

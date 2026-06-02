@@ -10,6 +10,7 @@ exports.handler = async (event) => {
     reason
   } = event;
 
+  console.log('Hello: Validate Leave Lambda');
 
   // throw new Error("Mongo URI5:"+ process.env.MONGO_URI);
 

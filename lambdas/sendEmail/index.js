@@ -1,7 +1,8 @@
 exports.handler = async (event) => {
   try {
+    console.log('Hello: Send Email Lambda');
     const emailMessage = {
-      to: event.employeeEmail || "employee@example.com",
+      to: event.employeeEmail || "prasenjit10112@gmail.com",
       subject: "Leave Request Approved",
       body: `
 Hello ${event.employeeName},
@@ -18,6 +19,7 @@ HR Department
 `
     };
 
+    
     console.log("EMAIL NOTIFICATION");
     console.log(JSON.stringify(emailMessage, null, 2));
 
