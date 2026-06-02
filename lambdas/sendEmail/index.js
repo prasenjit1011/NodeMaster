@@ -1,10 +1,31 @@
+const {
+  SESv2Client,
+  SendEmailCommand
+} = require("@aws-sdk/client-sesv2");
+
+const ses = new SESv2Client({});
+
 exports.handler = async (event) => {
   try {
-    console.log('Hello: Send Email Lambda');
-    const emailMessage = {
-      to: event.employeeEmail || "prasenjit10112@gmail.com",
-      subject: "Leave Request Approved",
-      body: `
+    const recipient =
+      event.email ||
+      event.employeeEmail ||
+      "prasenjit10112@gmail.com";
+
+    await ses.send(
+      new SendEmailCommand({
+        FromEmailAddress: process.env.FROM_EMAIL,
+        Destination: {
+          ToAddresses: [recipient]
+        },
+        Content: {
+          Simple: {
+            Subject: {
+              Data: "Leave Request Approved"
+            },
+            Body: {
+              Text: {
+                Data: `
 Hello ${event.employeeName},
 
 Your leave request has been approved.
@@ -13,24 +34,20 @@ Leave Type : ${event.leaveType}
 From Date  : ${event.fromDate}
 To Date    : ${event.toDate}
 Status     : ${event.status}
-
-Thank you.
-HR Department
 `
-    };
-
-    
-    console.log("EMAIL NOTIFICATION");
-    console.log(JSON.stringify(emailMessage, null, 2));
+              }
+            }
+          }
+        }
+      })
+    );
 
     return {
       ...event,
-      emailSent: true,
-      message: "Leave approved and email notification sent"
+      emailSent: true
     };
   } catch (err) {
-    console.error("Send Email Error:", err);
-
-    throw new Error(err.message);
+    console.error(err);
+    throw err;
   }
 };

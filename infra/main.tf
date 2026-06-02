@@ -203,6 +203,7 @@ resource "aws_lambda_function" "send_email" {
   environment {
     variables = {
       MONGO_URI = var.mongo_uri
+      FROM_EMAIL = var.from_email
     }
   }
 }
@@ -443,5 +444,26 @@ resource "aws_iam_role_policy" "stepfn_logs" {
       ]
       Resource = "*"
     }]
+  })
+}
+
+# Additional Code SES Permissions for SendEmail Lambda:
+resource "aws_iam_role_policy" "ses_policy" {
+  name = "ses-send-email"
+
+  role = aws_iam_role.lambda_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ses:SendEmail",
+          "ses:SendRawEmail"
+        ]
+        Resource = "*"
+      }
+    ]
   })
 }

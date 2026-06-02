@@ -4,6 +4,13 @@ variable "aws_region" {
   default     = "ap-south-1"
 }
 
+variable "from_email" {
+  description = "Sender Email Address"
+  type        = string
+  default     = "riyan04314@gmail.com"
+}
+
+
 variable "mongo_uri" {
   description = "MongoDB Atlas Connection URI"
   type        = string

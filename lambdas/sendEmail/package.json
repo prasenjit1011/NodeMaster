@@ -3,5 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "description": "Send leave approval email notification",
-  "license": "MIT"
+  "license": "MIT",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "@aws-sdk/client-sesv2": "^3.x"
+  }
 }
