@@ -20,3 +20,4 @@ yarn-error.log
 /heapdump
 /coverage
 /dist
+/lambdas
