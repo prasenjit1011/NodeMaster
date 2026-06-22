@@ -5,7 +5,8 @@
   "main": "app.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "cls && nodemon src/app.js"
+    "dev": "cls && nodemon src/app.js",
+    "product": "cls && nodemon src/product.js"
   },
   "author": "",
   "license": "ISC",

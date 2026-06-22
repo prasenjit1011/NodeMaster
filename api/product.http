@@ -1,0 +1,40 @@
+### Create Product
+POST http://localhost:3000/products
+Content-Type: application/json
+
+{
+  "name": "Laptop",
+  "description": "Dell Inspiron 15",
+  "price": 55000,
+  "stock": 10
+}
+
+###
+
+### Get All Products
+GET http://localhost:3000/products
+
+###
+
+### Get Product By ID
+GET http://localhost:3000/products/1
+
+###
+
+### Update Product
+PUT http://localhost:3000/products/1
+Content-Type: application/json
+
+{
+  "name": "Gaming Laptop",
+  "description": "HP Omen 16",
+  "price": 85000,
+  "stock": 5
+}
+
+###
+
+### Delete Product
+DELETE http://localhost:3000/products/1
+
+###
