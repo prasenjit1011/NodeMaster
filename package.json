@@ -5,8 +5,8 @@
   "main": "app.js",
   "scripts": {
     "dev": "ts-node-dev --project tsconfig.json --respawn --transpile-only src/app.ts",
-    "mongoappseed": "ts-node-dev --project tsconfig.json --respawn --transpile-only src/mongoapp.js",
-    "mongoapp": "ts-node-dev --project tsconfig.json --respawn --transpile-only src/mongoapp.ts",
+    "mongoappseed": "cls && ts-node-dev --project tsconfig.json --respawn --transpile-only src/mongoapp.js",
+    "mongoapp": "cls && ts-node-dev --project tsconfig.json --respawn --transpile-only src/mongoapp.ts",
     "fastifyapp": "ts-node-dev --project tsconfig.json --respawn --transpile-only src/fastifyapp.ts",
     "test-watch": "echo Error: no test specified && exit 1",
     "test": "echo \"Error: no test specified\" && exit 1"

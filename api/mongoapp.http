@@ -1,0 +1,94 @@
+@baseUrl = http://localhost:3000
+
+### Get Users
+GET {{baseUrl}}/api/users
+
+###
+
+### Create Customer
+POST {{baseUrl}}/customers
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "city": "Kolkata"
+}
+
+###
+
+### Get Customers
+GET {{baseUrl}}/customers
+
+###
+
+### Create Product
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "Keyboard",
+  "price": 2500,
+  "stock": 50
+}
+
+###
+
+### Get Products (5 sec delay)
+GET {{baseUrl}}/products
+
+###
+
+### Get Product List - Page 1
+GET {{baseUrl}}/productlist?page=1&limit=5
+
+###
+
+### Get Product List - Page 2
+GET {{baseUrl}}/productlist?page=2&limit=10
+
+###
+
+### Create Order
+# Replace customerId with an actual customer _id
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerId": "PUT_CUSTOMER_ID_HERE",
+  "status": "completed"
+}
+
+###
+
+### Get Orders
+GET {{baseUrl}}/orders
+
+###
+
+### Create Order Item
+# Replace orderId and productId with actual IDs
+POST {{baseUrl}}/order-items
+Content-Type: application/json
+
+{
+  "orderId": "PUT_ORDER_ID_HERE",
+  "productId": "PUT_PRODUCT_ID_HERE",
+  "quantity": 2,
+  "price": 2500
+}
+
+###
+
+### Get Order Items
+GET {{baseUrl}}/order-items
+
+###
+
+### Seed Dummy Data
+POST {{baseUrl}}/seed
+
+###
+
+### Clear All Collections
+DELETE {{baseUrl}}/clear
