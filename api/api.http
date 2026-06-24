@@ -1,0 +1,134 @@
+@baseUrl = http://localhost:3000
+
+##################################################
+# USERS (Read from JSON file)
+##################################################
+
+### Get Users
+GET {{baseUrl}}/api/users
+
+##################################################
+# CUSTOMERS
+##################################################
+
+### Create Customer
+POST {{baseUrl}}/customers
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "john@example.com",
+  "city": "Kolkata"
+}
+
+###
+
+### Get Customers
+GET {{baseUrl}}/customers
+
+##################################################
+# PRODUCTS
+##################################################
+
+### Create Product - Laptop
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "Laptop",
+  "price": 65000,
+  "stock": 10
+}
+
+###
+
+### Create Product - Mobile
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "Mobile",
+  "price": 25000,
+  "stock": 25
+}
+
+###
+
+### Create Product - Watch
+POST {{baseUrl}}/products
+Content-Type: application/json
+
+{
+  "name": "Watch",
+  "price": 5000,
+  "stock": 30
+}
+
+###
+
+### Get Products
+GET {{baseUrl}}/products
+
+##################################################
+# PAGINATION
+##################################################
+
+### Product List - Page 1
+GET {{baseUrl}}/productlist?page=1&limit=5
+
+###
+
+### Product List - Page 2
+GET {{baseUrl}}/productlist?page=2&limit=5
+
+##################################################
+# ORDERS
+##################################################
+
+### Create Order
+# Replace customerId with an actual customer ID
+POST {{baseUrl}}/orders
+Content-Type: application/json
+
+{
+  "customerId": "REPLACE_CUSTOMER_ID",
+  "status": "completed"
+}
+
+###
+
+### Get Orders
+GET {{baseUrl}}/orders
+
+##################################################
+# ORDER ITEMS
+##################################################
+
+### Create Order Item
+# Replace orderId and productId with actual IDs
+POST {{baseUrl}}/order-items
+Content-Type: application/json
+
+{
+  "orderId": "REPLACE_ORDER_ID",
+  "productId": "REPLACE_PRODUCT_ID",
+  "quantity": 2,
+  "price": 65000
+}
+
+###
+
+### Get Order Items
+GET {{baseUrl}}/order-items
+
+##################################################
+# DATABASE UTILITIES
+##################################################
+
+### Seed Database
+POST {{baseUrl}}/seed
+
+###
+
+### Clear Database
+DELETE {{baseUrl}}/clear
