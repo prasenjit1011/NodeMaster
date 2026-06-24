@@ -79,6 +79,7 @@ app.post("/customers", async (req: Request, res: Response) => {
 
     res.json(customer);
   } catch (error) {
+    console.error(error);
     res.status(500).json(error);
   }
 });
