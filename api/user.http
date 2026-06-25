@@ -1,0 +1,158 @@
+#########################################################
+# 1. USER + PROFILE (One-to-One)
+#########################################################
+
+### Create User with Profile
+POST http://localhost:3000/users
+Content-Type: application/json
+
+{
+  "name": "Johny Doe",
+  "bio": "Full Stack Developer"
+}
+
+###
+
+### Get All Users
+GET http://localhost:3000/users
+
+
+#########################################################
+# 2. POST (One-to-Many / Many-to-One)
+#########################################################
+
+### Create Post
+# Replace USER_ID with actual id from /users response
+
+POST http://localhost:3000/posts
+Content-Type: application/json
+
+{
+  "title": "Learning Prisma ORM",
+  "authorId": "6a3c9332887f039b56da44e7"
+}
+
+###
+
+### Get All Posts
+
+GET http://localhost:3000/posts
+
+
+#########################################################
+# 3. STUDENT (Many-to-Many)
+#########################################################
+
+### Create Student
+
+POST http://localhost:3000/students
+Content-Type: application/json
+
+{
+  "name": "Rahul"
+}
+
+###
+
+### Create Another Student
+
+POST http://localhost:3000/students
+Content-Type: application/json
+
+{
+  "name": "Priya"
+}
+
+###
+
+### Get Students
+
+GET http://localhost:3000/students
+
+
+#########################################################
+# 4. COURSE (Many-to-Many)
+#########################################################
+
+### Create Course
+
+POST http://localhost:3000/courses
+Content-Type: application/json
+
+{
+  "title": "React"
+}
+
+###
+
+### Create Another Course
+
+POST http://localhost:3000/courses
+Content-Type: application/json
+
+{
+  "title": "Node.js"
+}
+
+
+#########################################################
+# 5. ENROLL STUDENT INTO COURSE
+#########################################################
+
+### Enroll Student
+
+# Replace STUDENT_ID and COURSE_ID
+
+POST http://localhost:3000/enroll
+Content-Type: application/json
+
+{
+  "studentId": "STUDENT_ID",
+  "courseId": "COURSE_ID"
+}
+
+
+#########################################################
+# 6. EMPLOYEE (Self Relation)
+#########################################################
+
+### Create Manager
+
+POST http://localhost:3000/employees
+Content-Type: application/json
+
+{
+  "name": "Alice"
+}
+
+###
+
+### Create Employee Under Manager
+
+# Replace MANAGER_ID with Alice's id
+
+POST http://localhost:3000/employees
+Content-Type: application/json
+
+{
+  "name": "Bob",
+  "managerId": "MANAGER_ID"
+}
+
+###
+
+### Create Another Employee
+
+POST http://localhost:3000/employees
+Content-Type: application/json
+
+{
+  "name": "Charlie",
+  "managerId": "MANAGER_ID"
+}
+
+###
+
+### Get All Employees
+
+GET http://localhost:3000/employees
