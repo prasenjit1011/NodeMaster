@@ -13,6 +13,8 @@ nodemon app.js <br />
 
 
 # Ejs Template Engine 
+# Env with MariaDB / MySQL
+# DATABASE_URL="mysql://company:Lnsel%40345@127.0.0.1:3306/nodedb"
 
 <%= %> <br />
 
