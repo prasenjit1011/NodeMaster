@@ -19,3 +19,17 @@ nodemon app.js <br />
 # replication:
 #  replSetName: rs0
 # DATABASE_URL="mongodb://127.0.0.1:27017/ecommerce?replicaSet=rs0"
+
+
+
+MongoDBStep01:
+cd "C:\Program Files\FlyEnv-Data\app\mongodb-8.2.7\bin"
+mongod --dbpath C:\data\db
+
+MongoDBStep02:
+cd "C:\Users\prase\Downloads\mongosh-2.9.1-win32-x64\bin"
+mongosh --version
+mongosh
+rs.status()
+rs.initiate()
+rs.status()
