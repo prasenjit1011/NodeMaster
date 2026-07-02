@@ -37,7 +37,7 @@ app.get("/health", async (_req: Request, res: Response) => {
 
     res.json({
       status: "UP",
-      database: "CONNECTED"
+      database: "CONNECTED Successfully"
     });
 
   } catch (error) {
