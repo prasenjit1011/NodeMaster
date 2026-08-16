@@ -2,7 +2,7 @@ name: Deploy SNS Lambda
 
 on:
   push:
-    branches: [main, master]
+    branches: [aws_sns]
   pull_request:
 
 permissions:
