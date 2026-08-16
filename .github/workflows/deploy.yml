@@ -64,16 +64,17 @@ jobs:
 
       - name: Check required secrets
         env:
-          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
         run: |
           missing=0
-          if [ -z "$AWS_ROLE_ARN" ]; then
-            echo "::error::Secret AWS_ROLE_ARN is empty. Add the IAM role ARN (OIDC) under Settings → Secrets and variables → Actions."
+          if [ -z "$AWS_ACCESS_KEY_ID" ] || [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "::error::Add secrets AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY under Settings → Secrets and variables → Actions."
             missing=1
           fi
           if [ -z "$TF_STATE_BUCKET" ]; then
-            echo "::error::Secret TF_STATE_BUCKET is empty. Add the S3 state bucket name under Settings → Secrets and variables → Actions."
+            echo "::error::Add secret TF_STATE_BUCKET (S3 bucket name for Terraform state)."
             missing=1
           fi
           exit "$missing"
@@ -81,7 +82,8 @@ jobs:
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v6
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Verify AWS identity
