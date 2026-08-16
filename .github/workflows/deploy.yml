@@ -10,37 +10,48 @@ permissions:
   contents: read
 
 env:
-  AWS_REGION: ${{ vars.AWS_REGION || 'us-east-1' }}
-  TF_VAR_aws_region: ${{ vars.AWS_REGION || 'us-east-1' }}
+  AWS_REGION: ${{ vars.AWS_REGION || 'ap-south-1' }}
+  TF_VAR_aws_region: ${{ vars.AWS_REGION || 'ap-south-1' }}
   TF_VAR_notification_email: ${{ vars.NOTIFICATION_EMAIL }}
   TF_IN_AUTOMATION: true
 
 jobs:
   test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
 
-      - run: npm ci
-      - run: npm test
-      - run: npm run build
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Build
+        run: npm run build
 
   terraform:
     needs: test
     runs-on: ubuntu-latest
+
     defaults:
       run:
         working-directory: terraform
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - uses: actions/setup-node@v4
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
@@ -57,7 +68,11 @@ jobs:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - uses: hashicorp/setup-terraform@v3
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.9.8
 
@@ -66,7 +81,10 @@ jobs:
 
       - name: Enable S3 backend
         run: |
-          printf '%s\n' 'terraform {' '  backend "s3" {}' '}' > backend.tf
+          printf '%s\n' \
+            'terraform {' \
+            '  backend "s3" {}' \
+            '}' > backend.tf
 
       - name: Terraform Init
         run: |

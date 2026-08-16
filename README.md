@@ -10,7 +10,7 @@ POST /notify  →  API Gateway HTTP API  →  Lambda  →  SNS topic  →  email
 
 ```powershell
 npm install
-$env:SNS_TOPIC_ARN = "arn:aws:sns:us-east-1:123456789012:nodemaster-notifications"
+$env:SNS_TOPIC_ARN = "arn:aws:sns:ap-south-1:123456789012:nodemaster-notifications"
 npm run dev
 ```
 
@@ -44,6 +44,6 @@ curl -X POST "$(terraform -chdir=terraform output -raw api_endpoint)" -H "Conten
 
 `.github/workflows/deploy.yml` runs tests and `tsc` on every push/PR, then `terraform plan`. It applies on `main` / `master`.
 
-**Variables:** `AWS_REGION` (default `us-east-1`), `NOTIFICATION_EMAIL`
+**Variables:** `AWS_REGION` (default `ap-south-1`), `NOTIFICATION_EMAIL`
 
 **Secrets:** `AWS_ROLE_ARN` (GitHub OIDC role), `TF_STATE_BUCKET` (S3 state bucket)

@@ -20,7 +20,7 @@ test('parseBody reads direct Lambda payloads', () => {
 
 test('returns 400 when message is missing', async () => {
   const handler = createHandler({
-    topicArn: 'arn:aws:sns:us-east-1:123456789012:demo',
+    topicArn: 'arn:aws:sns:ap-south-1:123456789012:demo',
     sns: snsStub(async () => ({ MessageId: 'should-not-run' })),
   });
 
@@ -32,7 +32,7 @@ test('returns 400 when message is missing', async () => {
 test('publishes to SNS and returns the message id', async () => {
   const sns = snsStub(async () => ({ MessageId: 'abc-123' }));
   const handler = createHandler({
-    topicArn: 'arn:aws:sns:us-east-1:123456789012:demo',
+    topicArn: 'arn:aws:sns:ap-south-1:123456789012:demo',
     sns,
   });
 
@@ -49,12 +49,12 @@ test('publishes to SNS and returns the message id', async () => {
   const command = send.mock.calls[0].arguments[0] as PublishCommand;
   assert.equal(command.input.Message, 'Deploy complete');
   assert.equal(command.input.Subject, 'CI');
-  assert.equal(command.input.TopicArn, 'arn:aws:sns:us-east-1:123456789012:demo');
+  assert.equal(command.input.TopicArn, 'arn:aws:sns:ap-south-1:123456789012:demo');
 });
 
 test('returns 502 when SNS publish fails', async () => {
   const handler = createHandler({
-    topicArn: 'arn:aws:sns:us-east-1:123456789012:demo',
+    topicArn: 'arn:aws:sns:ap-south-1:123456789012:demo',
     sns: snsStub(async () => {
       throw new Error('throttled');
     }),
