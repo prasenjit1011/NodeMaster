@@ -21,12 +21,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Install dependencies
@@ -48,12 +48,12 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
 
       - name: Build TypeScript Lambda
@@ -62,8 +62,24 @@ jobs:
           npm ci
           npm run build
 
+      - name: Check required secrets
+        env:
+          AWS_ROLE_ARN: ${{ secrets.AWS_ROLE_ARN }}
+          TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+        run: |
+          missing=0
+          if [ -z "$AWS_ROLE_ARN" ]; then
+            echo "::error::Secret AWS_ROLE_ARN is empty. Add the IAM role ARN (OIDC) under Settings → Secrets and variables → Actions."
+            missing=1
+          fi
+          if [ -z "$TF_STATE_BUCKET" ]; then
+            echo "::error::Secret TF_STATE_BUCKET is empty. Add the S3 state bucket name under Settings → Secrets and variables → Actions."
+            missing=1
+          fi
+          exit "$missing"
+
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v6
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ env.AWS_REGION }}
@@ -101,5 +117,5 @@ jobs:
         run: terraform plan -input=false -out=tfplan
 
       - name: Terraform Apply
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+        if: github.ref == 'refs/heads/aws_sns' && github.event_name == 'push'
         run: terraform apply -input=false -auto-approve tfplan
