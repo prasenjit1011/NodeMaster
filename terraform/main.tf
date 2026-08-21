@@ -51,9 +51,9 @@ data "archive_file" "lambda" {
   output_path = "${path.module}/build/function.zip"
 }
 
+# Topic kept for optional email alerts only. OTP SMS is sent directly to PhoneNumber.
 resource "aws_sns_topic" "notifications" {
-  name              = "${var.project_name}-notifications"
-  kms_master_key_id = "alias/aws/sns"
+  name = "${var.project_name}-notifications"
 }
 
 resource "aws_sns_topic_subscription" "email" {
@@ -77,23 +77,10 @@ data "aws_iam_policy_document" "lambda_assume" {
 
 data "aws_iam_policy_document" "lambda_sns" {
   statement {
-    sid       = "PublishToTopic"
+    sid       = "PublishSmsAndTopic"
     effect    = "Allow"
     actions   = ["sns:Publish"]
-    resources = [aws_sns_topic.notifications.arn]
-  }
-
-  statement {
-    sid       = "DecryptSnsKms"
-    effect    = "Allow"
-    actions   = ["kms:Decrypt", "kms:GenerateDataKey"]
     resources = ["*"]
-
-    condition {
-      test     = "StringEquals"
-      variable = "kms:ViaService"
-      values   = ["sns.${var.aws_region}.amazonaws.com"]
-    }
   }
 }
 
@@ -130,7 +117,7 @@ resource "aws_lambda_function" "notify" {
 
   environment {
     variables = {
-      SNS_TOPIC_ARN = aws_sns_topic.notifications.arn
+      SMS_TYPE = "Transactional"
     }
   }
 
@@ -156,6 +143,12 @@ resource "aws_apigatewayv2_integration" "lambda" {
   integration_type       = "AWS_PROXY"
   integration_uri        = aws_lambda_function.notify.invoke_arn
   payload_format_version = "2.0"
+}
+
+resource "aws_apigatewayv2_route" "otp" {
+  api_id    = aws_apigatewayv2_api.http.id
+  route_key = "POST /otp"
+  target    = "integrations/${aws_apigatewayv2_integration.lambda.id}"
 }
 
 resource "aws_apigatewayv2_route" "notify" {
@@ -194,7 +187,7 @@ resource "aws_lambda_permission" "apigw" {
 }
 
 output "api_endpoint" {
-  value = "${aws_apigatewayv2_api.http.api_endpoint}/notify"
+  value = "${aws_apigatewayv2_api.http.api_endpoint}/otp"
 }
 
 output "sns_topic_arn" {

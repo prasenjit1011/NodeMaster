@@ -1,0 +1,37 @@
+@baseUrl = https://vv7z192paj.execute-api.ap-south-1.amazonaws.com
+@phone = +919051495239
+
+### Send OTP SMS (phone + otp from API)
+POST {{baseUrl}}/otp
+Content-Type: application/json
+
+{
+  "phone": "{{phone}}",
+  "otp": "482910"
+}
+
+### Send OTP SMS (API generates OTP)
+POST {{baseUrl}}/otp
+Content-Type: application/json
+
+{
+  "phone": "{{phone}}"
+}
+
+### Custom OTP message
+POST {{baseUrl}}/otp
+Content-Type: application/json
+
+{
+  "mobile": "{{phone}}",
+  "otp": "123456",
+  "message": "Your login OTP is 123456"
+}
+
+### Missing phone (expects 400)
+POST {{baseUrl}}/otp
+Content-Type: application/json
+
+{
+  "otp": "111111"
+}
