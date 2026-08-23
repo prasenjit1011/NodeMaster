@@ -9,12 +9,6 @@ permissions:
   id-token: write
   contents: read
 
-env:
-  AWS_REGION: ap-south-1
-  LAMBDA_FUNCTION_NAME: nutrisoft-api
-  LAMBDA_RUNTIME: nodejs20.x
-  LAMBDA_HANDLER: app.handler
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -26,51 +20,64 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: 20
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
+      - name: Build
+        run: |
+          if npm run | grep -q " build"; then
+            npm run build
+          else
+            echo "No build script found. Skipping build."
+          fi
+
+      - name: Create Lambda deployment package
+        run: |
+          rm -rf lambda-package
+          mkdir lambda-package
+
+          if [ -d "dist" ]; then
+            cp -r dist/* lambda-package/
+          else
+            cp -r . lambda-package/
+            rm -rf lambda-package/.git
+            rm -rf lambda-package/node_modules
+          fi
+
+          cp package.json lambda-package/
+
+          if [ -f "package-lock.json" ]; then
+            cp package-lock.json lambda-package/
+          fi
+
+          cd lambda-package
+          npm ci --omit=dev
+          zip -r ../lambda.zip .
+
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
+        uses: aws-actions/configure-aws-credentials@v5
         with:
+          aws-region: ap-south-1
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ${{ env.AWS_REGION }}
 
-      - name: Verify AWS identity
-        run: aws sts get-caller-identity
-
-      - name: Check Lambda
-        id: check_lambda
-        continue-on-error: true
-        run: |
-          aws lambda get-function \
-            --function-name "$LAMBDA_FUNCTION_NAME" \
-            --region "$AWS_REGION"
-
-      - name: Create deployment package
-        run: |
-          zip -r function.zip . \
-            -x ".git/*" \
-            -x ".github/*" \
-            -x "function.zip"
-
-      - name: Create Lambda function
-        if: steps.check_lambda.outcome == 'failure'
-        run: |
-          aws lambda create-function \
-            --function-name "$LAMBDA_FUNCTION_NAME" \
-            --runtime "$LAMBDA_RUNTIME" \
-            --handler "$LAMBDA_HANDLER" \
-            --role "${{ secrets.LAMBDA_EXECUTION_ROLE_ARN }}" \
-            --zip-file fileb://function.zip \
-            --region "$AWS_REGION"
-
-      - name: Update Lambda function
-        if: steps.check_lambda.outcome == 'success'
+      - name: Deploy Lambda
         run: |
           aws lambda update-function-code \
-            --function-name "$LAMBDA_FUNCTION_NAME" \
-            --zip-file fileb://function.zip \
-            --region "$AWS_REGION"
+            --function-name nutriapp \
+            --zip-file fileb://lambda.zip \
+            --publish
+
+      - name: Update Lambda execution role
+        run: |
+          aws lambda update-function-configuration \
+            --function-name nutriapp \
+            --role arn:aws:iam::466015320752:role/nutriapp-lambda-execution-role
+
+      - name: Deployment complete
+        run: |
+          echo "Lambda deployed successfully."
+          echo "Function: nutriapp"
+          echo "Region: ap-south-1"
