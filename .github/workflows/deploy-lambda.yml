@@ -1,4 +1,4 @@
-name: Deploy Lambda
+name: Deploy NutriSoft Lambda
 
 on:
   push:
@@ -20,64 +20,30 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: '20'
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Build
+      - name: Create Lambda ZIP
         run: |
-          if npm run | grep -q " build"; then
-            npm run build
-          else
-            echo "No build script found. Skipping build."
-          fi
-
-      - name: Create Lambda deployment package
-        run: |
-          rm -rf lambda-package
-          mkdir lambda-package
-
-          if [ -d "dist" ]; then
-            cp -r dist/* lambda-package/
-          else
-            cp -r . lambda-package/
-            rm -rf lambda-package/.git
-            rm -rf lambda-package/node_modules
-          fi
-
-          cp package.json lambda-package/
-
-          if [ -f "package-lock.json" ]; then
-            cp package-lock.json lambda-package/
-          fi
-
-          cd lambda-package
-          npm ci --omit=dev
-          zip -r ../lambda.zip .
+          zip -r lambda.zip . \
+            -x ".git/*" \
+            -x ".github/*" \
+            -x "lambda.zip"
 
       - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v5
+        uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-region: ap-south-1
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ap-south-1
+
+      - name: Verify AWS identity
+        run: aws sts get-caller-identity
 
       - name: Deploy Lambda
         run: |
           aws lambda update-function-code \
-            --function-name nutriapp \
-            --zip-file fileb://lambda.zip \
-            --publish
-
-      - name: Update Lambda execution role
-        run: |
-          aws lambda update-function-configuration \
-            --function-name nutriapp \
-            --role arn:aws:iam::466015320752:role/nutriapp-lambda-execution-role
-
-      - name: Deployment complete
-        run: |
-          echo "Lambda deployed successfully."
-          echo "Function: nutriapp"
-          echo "Region: ap-south-1"
+            --function-name nutrisoft-api \
+            --zip-file fileb://lambda.zip
