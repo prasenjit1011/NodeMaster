@@ -1,4 +1,4 @@
-name: Deploy NutriSoft Lambda
+name: Deploy Lambda
 
 on:
   push:
@@ -8,6 +8,12 @@ on:
 permissions:
   id-token: write
   contents: read
+
+env:
+  AWS_REGION: ap-south-1
+  LAMBDA_FUNCTION_NAME: nutrisoft-api
+  LAMBDA_RUNTIME: nodejs20.x
+  LAMBDA_HANDLER: app.handler
 
 jobs:
   deploy:
@@ -20,31 +26,51 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
           cache: npm
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Create Lambda deployment package
-        run: |
-          zip -r lambda.zip . \
-            -x ".git/*" \
-            -x ".github/*" \
-            -x "lambda.zip" \
-            -x "node_modules/.cache/*"
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ap-south-1
+          aws-region: ${{ env.AWS_REGION }}
 
       - name: Verify AWS identity
         run: aws sts get-caller-identity
 
-      - name: Deploy Lambda
+      - name: Check Lambda
+        id: check_lambda
+        continue-on-error: true
+        run: |
+          aws lambda get-function \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --region "$AWS_REGION"
+
+      - name: Create deployment package
+        run: |
+          zip -r function.zip . \
+            -x ".git/*" \
+            -x ".github/*" \
+            -x "function.zip"
+
+      - name: Create Lambda function
+        if: steps.check_lambda.outcome == 'failure'
+        run: |
+          aws lambda create-function \
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --runtime "$LAMBDA_RUNTIME" \
+            --handler "$LAMBDA_HANDLER" \
+            --role "${{ secrets.LAMBDA_EXECUTION_ROLE_ARN }}" \
+            --zip-file fileb://function.zip \
+            --region "$AWS_REGION"
+
+      - name: Update Lambda function
+        if: steps.check_lambda.outcome == 'success'
         run: |
           aws lambda update-function-code \
-            --function-name nutrisoft-api \
-            --zip-file fileb://lambda.zip
+            --function-name "$LAMBDA_FUNCTION_NAME" \
+            --zip-file fileb://function.zip \
+            --region "$AWS_REGION"
