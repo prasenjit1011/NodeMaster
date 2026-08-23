@@ -1,0 +1,90 @@
+@baseUrl = http://localhost:3000
+@categoryId = REPLACE_WITH_CATEGORY_ID
+@dataId = REPLACE_WITH_DATA_ID
+
+### Root
+GET {{baseUrl}}/
+
+###
+
+### Get all categories
+GET {{baseUrl}}/categories
+
+###
+
+### Get categories updated since timestamp
+GET {{baseUrl}}/categories?since=0
+
+###
+
+### Get category by ID
+GET {{baseUrl}}/categories/{{categoryId}}
+
+###
+
+### Create category
+POST {{baseUrl}}/categories
+Content-Type: application/json
+
+{
+  "name": "AA8 Apple Phones",
+  "description": "Apple Mobile phones and smartphones",
+  "status": "active"
+}
+
+###
+
+### Create category - minimal
+POST {{baseUrl}}/categories
+Content-Type: application/json
+
+{
+  "name": "Accessories"
+}
+
+###
+
+### Update category
+PUT {{baseUrl}}/categories/{{categoryId}}
+Content-Type: application/json
+
+{
+  "name": "Smartphones",
+  "description": "Smartphones and mobile devices",
+  "status": "active"
+}
+
+###
+
+### Update category name only
+PUT {{baseUrl}}/categories/{{categoryId}}
+Content-Type: application/json
+
+{
+  "name": "Electronics"
+}
+
+###
+
+### Soft delete category
+DELETE {{baseUrl}}/categories/{{categoryId}}
+
+###
+
+### Restore category
+PUT {{baseUrl}}/categories/{{categoryId}}
+Content-Type: application/json
+
+{
+  "isDeleted": false
+}
+
+###
+
+### Get all data
+GET {{baseUrl}}/data
+
+###
+
+### Get data document by ID
+GET {{baseUrl}}/data/{{dataId}}
