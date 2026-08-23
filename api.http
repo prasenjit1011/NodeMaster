@@ -1,90 +1,171 @@
 @baseUrl = http://localhost:3000
-@categoryId = REPLACE_WITH_CATEGORY_ID
-@dataId = REPLACE_WITH_DATA_ID
+@categoryId = 1755940000000
 
-### Root
+### Health / Welcome
 GET {{baseUrl}}/
 
-###
+
+### =========================================================
+### CATEGORIES
+### =========================================================
 
 ### Get all categories
 GET {{baseUrl}}/categories
 
-###
 
-### Get categories updated since timestamp
+### Get categories updated after timestamp
 GET {{baseUrl}}/categories?since=0
 
-###
 
 ### Get category by ID
 GET {{baseUrl}}/categories/{{categoryId}}
 
-###
 
 ### Create category
 POST {{baseUrl}}/categories
 Content-Type: application/json
 
 {
-  "name": "AA8 Apple Phones",
-  "description": "Apple Mobile phones and smartphones",
-  "status": "active"
+  "title": "Electronics",
+  "shortDetails": "Electronic products",
+  "longDetails": "All types of electronic products",
+  "status": true,
+  "orderBy": 1,
+  "thumbUrl": "",
+  "bannerUrl": "",
+  "imageUrls": [],
+  "types": [
+    {
+      "id": 1,
+      "title": "Mobile",
+      "status": true,
+      "orderBy": 1
+    },
+    {
+      "id": 2,
+      "title": "Laptop",
+      "status": true,
+      "orderBy": 2
+    }
+  ]
 }
 
-###
 
-### Create category - minimal
+### Create category with custom ID
 POST {{baseUrl}}/categories
 Content-Type: application/json
 
 {
-  "name": "Accessories"
+  "id": "electronics",
+  "title": "Electronics",
+  "shortDetails": "Electronic products",
+  "longDetails": "All types of electronic products",
+  "status": true,
+  "orderBy": 1,
+  "types": []
 }
 
-###
 
-### Update category
+### Update / Upsert category
 PUT {{baseUrl}}/categories/{{categoryId}}
 Content-Type: application/json
 
 {
-  "name": "Smartphones",
-  "description": "Smartphones and mobile devices",
-  "status": "active"
+  "title": "Electronics Updated",
+  "shortDetails": "Updated electronic products",
+  "longDetails": "Updated details",
+  "status": true,
+  "orderBy": 2,
+  "thumbUrl": "https://example.com/thumb.jpg",
+  "bannerUrl": "https://example.com/banner.jpg",
+  "imageUrls": [
+    "https://example.com/image1.jpg",
+    "https://example.com/image2.jpg"
+  ],
+  "types": [
+    {
+      "id": 1,
+      "title": "Mobile",
+      "status": true,
+      "orderBy": 1
+    },
+    {
+      "id": 2,
+      "title": "Laptop",
+      "status": true,
+      "orderBy": 2
+    }
+  ]
 }
 
-###
-
-### Update category name only
-PUT {{baseUrl}}/categories/{{categoryId}}
-Content-Type: application/json
-
-{
-  "name": "Electronics"
-}
-
-###
 
 ### Soft delete category
 DELETE {{baseUrl}}/categories/{{categoryId}}
 
-###
 
-### Restore category
-PUT {{baseUrl}}/categories/{{categoryId}}
+### Upload image through API (binary body)
+POST {{baseUrl}}/uploads?categoryId={{categoryId}}&kind=thumb&imageId=thumb
+Content-Type: image/jpeg
+
+< ./sample-thumb.jpg
+
+### =========================================================
+### S3 IMAGE UPLOAD
+### =========================================================
+
+### Get presigned URL for thumbnail
+POST {{baseUrl}}/uploads/presign
 Content-Type: application/json
 
 {
-  "isDeleted": false
+  "categoryId": "{{categoryId}}",
+  "kind": "thumb",
+  "contentType": "image/jpeg"
 }
 
-###
+
+### Get presigned URL for banner
+POST {{baseUrl}}/uploads/presign
+Content-Type: application/json
+
+{
+  "categoryId": "{{categoryId}}",
+  "kind": "banner",
+  "contentType": "image/jpeg"
+}
+
+
+### Get presigned URL for gallery image
+POST {{baseUrl}}/uploads/presign
+Content-Type: application/json
+
+{
+  "categoryId": "{{categoryId}}",
+  "kind": "gallery",
+  "imageId": "1",
+  "contentType": "image/jpeg"
+}
+
+
+### Gallery image - PNG example
+POST {{baseUrl}}/uploads/presign
+Content-Type: application/json
+
+{
+  "categoryId": "{{categoryId}}",
+  "kind": "gallery",
+  "imageId": "2",
+  "contentType": "image/png"
+}
+
+
+### =========================================================
+### DATA
+### =========================================================
 
 ### Get all data
 GET {{baseUrl}}/data
 
-###
 
-### Get data document by ID
-GET {{baseUrl}}/data/{{dataId}}
+### Get data by ID
+GET {{baseUrl}}/data/123
