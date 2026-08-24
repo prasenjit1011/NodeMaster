@@ -14,56 +14,126 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # ---------------------------------------------------------
+      # Checkout
+      # ---------------------------------------------------------
       - name: Checkout source
         uses: actions/checkout@v4
 
+      # ---------------------------------------------------------
+      # Node.js
+      # ---------------------------------------------------------
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
           cache: npm
 
+      # ---------------------------------------------------------
+      # Install dependencies
+      # ---------------------------------------------------------
       - name: Install dependencies
         run: npm ci
 
+      # ---------------------------------------------------------
+      # Create Lambda deployment package
+      # ---------------------------------------------------------
       - name: Create Lambda ZIP
         run: |
+          rm -f lambda.zip
+
           zip -r lambda.zip . \
             -x ".git/*" \
             -x ".github/*" \
             -x "lambda.zip"
 
+          echo "Lambda package created:"
+          ls -lh lambda.zip
+
+      # ---------------------------------------------------------
+      # Configure AWS using GitHub OIDC
+      # ---------------------------------------------------------
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ap-south-1
 
+      # ---------------------------------------------------------
+      # Verify AWS account / role
+      # ---------------------------------------------------------
       - name: Verify AWS identity
-        run: aws sts get-caller-identity
+        run: |
+          aws sts get-caller-identity
 
+      # ---------------------------------------------------------
+      # Deploy Lambda
+      # ---------------------------------------------------------
       - name: Deploy Lambda
         env:
+          FUNCTION_NAME: nutrisoft-api
           LAMBDA_ROLE_ARN: ${{ secrets.LAMBDA_ROLE_ARN }}
+          AWS_REGION: ap-south-1
         run: |
-          FUNCTION_NAME=nutrisoft-api
-          if aws lambda get-function --function-name "$FUNCTION_NAME" >/dev/null 2>&1; then
+          set -e
+
+          echo "Deploying Lambda: $FUNCTION_NAME"
+          echo "Region: $AWS_REGION"
+
+          # -----------------------------------------------------
+          # Check whether Lambda already exists
+          # -----------------------------------------------------
+          if aws lambda get-function \
+            --function-name "$FUNCTION_NAME" \
+            >/dev/null 2>&1; then
+
+            echo "Lambda function already exists."
+
+            # ---------------------------------------------------
+            # Update Lambda code
+            # ---------------------------------------------------
+            echo "Updating Lambda code..."
+
             aws lambda update-function-code \
               --function-name "$FUNCTION_NAME" \
               --zip-file fileb://lambda.zip
-            aws lambda wait function-updated --function-name "$FUNCTION_NAME"
+
+            echo "Waiting for Lambda update..."
+
+            aws lambda wait function-updated \
+              --function-name "$FUNCTION_NAME"
+
+            # ---------------------------------------------------
+            # Update Lambda configuration
+            # ---------------------------------------------------
+            echo "Updating Lambda configuration..."
+
             aws lambda update-function-configuration \
               --function-name "$FUNCTION_NAME" \
               --handler handler.handler \
               --runtime nodejs20.x \
               --timeout 30 \
               --memory-size 512
+
+            echo "Lambda configuration updated."
+
           else
+
+            echo "Lambda function does not exist."
+
+            # ---------------------------------------------------
+            # Validate Lambda execution role
+            # ---------------------------------------------------
             if [ -z "$LAMBDA_ROLE_ARN" ]; then
-              echo "Function $FUNCTION_NAME does not exist in ap-south-1."
-              echo "Create it once, or add GitHub secret LAMBDA_ROLE_ARN (Lambda execution role)."
+              echo "ERROR: LAMBDA_ROLE_ARN secret is missing."
               exit 1
             fi
+
+            echo "Creating Lambda function..."
+
+            # ---------------------------------------------------
+            # Create Lambda
+            # ---------------------------------------------------
             aws lambda create-function \
               --function-name "$FUNCTION_NAME" \
               --runtime nodejs20.x \
@@ -73,14 +143,77 @@ jobs:
               --zip-file fileb://lambda.zip \
               --timeout 30 \
               --memory-size 512
+
+            echo "Lambda function created."
+
+            # ---------------------------------------------------
+            # Wait until Lambda is active
+            # ---------------------------------------------------
+            aws lambda wait function-active \
+              --function-name "$FUNCTION_NAME"
+
+          fi
+
+          # -----------------------------------------------------
+          # Create / update Lambda Function URL
+          # -----------------------------------------------------
+          echo "Configuring Lambda Function URL..."
+
+          if aws lambda get-function-url-config \
+            --function-name "$FUNCTION_NAME" \
+            >/dev/null 2>&1; then
+
+            echo "Function URL already exists."
+
+            aws lambda update-function-url-config \
+              --function-name "$FUNCTION_NAME" \
+              --auth-type NONE \
+              --cors '{
+                "AllowOrigins": ["*"],
+                "AllowMethods": ["*"],
+                "AllowHeaders": ["*"]
+              }'
+
+          else
+
+            echo "Creating Function URL..."
+
             aws lambda create-function-url-config \
               --function-name "$FUNCTION_NAME" \
               --auth-type NONE \
-              --cors '{"AllowOrigins":["*"],"AllowMethods":["*"],"AllowHeaders":["*"]}' || true
+              --cors '{
+                "AllowOrigins": ["*"],
+                "AllowMethods": ["*"],
+                "AllowHeaders": ["*"]
+              }'
+
+            # ---------------------------------------------------
+            # Allow public Function URL invocation
+            # ---------------------------------------------------
             aws lambda add-permission \
               --function-name "$FUNCTION_NAME" \
               --statement-id FunctionURLAllowPublic \
               --action lambda:InvokeFunctionUrl \
               --principal "*" \
-              --function-url-auth-type NONE || true
+              --function-url-auth-type NONE \
+              || true
+
           fi
+
+          # -----------------------------------------------------
+          # Display Lambda information
+          # -----------------------------------------------------
+          echo "Lambda deployment completed."
+
+          aws lambda get-function \
+            --function-name "$FUNCTION_NAME" \
+            --query 'Configuration.[FunctionName,Runtime,Handler,State,LastUpdateStatus]' \
+            --output table
+
+          echo ""
+          echo "Function URL:"
+
+          aws lambda get-function-url-config \
+            --function-name "$FUNCTION_NAME" \
+            --query 'FunctionUrl' \
+            --output text

@@ -11,3 +11,9 @@ nodemon app.js <br />
 # Ejs Template Engine 
 
 <%= %> <br />
+
+
+rmdir /S /Q node_modules
+del package-lock.json
+npm cache verify
+npm install
