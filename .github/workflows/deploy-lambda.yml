@@ -43,7 +43,44 @@ jobs:
         run: aws sts get-caller-identity
 
       - name: Deploy Lambda
+        env:
+          LAMBDA_ROLE_ARN: ${{ secrets.LAMBDA_ROLE_ARN }}
         run: |
-          aws lambda update-function-code \
-            --function-name nutrisoft-api \
-            --zip-file fileb://lambda.zip
+          FUNCTION_NAME=nutrisoft-api
+          if aws lambda get-function --function-name "$FUNCTION_NAME" >/dev/null 2>&1; then
+            aws lambda update-function-code \
+              --function-name "$FUNCTION_NAME" \
+              --zip-file fileb://lambda.zip
+            aws lambda wait function-updated --function-name "$FUNCTION_NAME"
+            aws lambda update-function-configuration \
+              --function-name "$FUNCTION_NAME" \
+              --handler handler.handler \
+              --runtime nodejs20.x \
+              --timeout 30 \
+              --memory-size 512
+          else
+            if [ -z "$LAMBDA_ROLE_ARN" ]; then
+              echo "Function $FUNCTION_NAME does not exist in ap-south-1."
+              echo "Create it once, or add GitHub secret LAMBDA_ROLE_ARN (Lambda execution role)."
+              exit 1
+            fi
+            aws lambda create-function \
+              --function-name "$FUNCTION_NAME" \
+              --runtime nodejs20.x \
+              --handler handler.handler \
+              --architectures x86_64 \
+              --role "$LAMBDA_ROLE_ARN" \
+              --zip-file fileb://lambda.zip \
+              --timeout 30 \
+              --memory-size 512
+            aws lambda create-function-url-config \
+              --function-name "$FUNCTION_NAME" \
+              --auth-type NONE \
+              --cors '{"AllowOrigins":["*"],"AllowMethods":["*"],"AllowHeaders":["*"]}' || true
+            aws lambda add-permission \
+              --function-name "$FUNCTION_NAME" \
+              --statement-id FunctionURLAllowPublic \
+              --action lambda:InvokeFunctionUrl \
+              --principal "*" \
+              --function-url-auth-type NONE || true
+          fi
