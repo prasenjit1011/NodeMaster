@@ -242,19 +242,23 @@ jobs:
           # PUBLIC FUNCTION URL PERMISSIONS
           # =====================================================
 
+
+
+          # =====================================================
+          # PUBLIC FUNCTION URL PERMISSIONS
+          # =====================================================
+
           echo ""
           echo "=============================================="
           echo "Configuring public Function URL permissions"
           echo "=============================================="
 
-          URL_PERMISSION_ID="FunctionURLAllowPublic"
-          INVOKE_PERMISSION_ID="FunctionURLInvokePublic"
+          URL_PERMISSION_ID="FunctionUrlAllowPublic"
+          INVOKE_PERMISSION_ID="FunctionUrlInvokePublic"
 
           # -----------------------------------------------------
-          # 1. lambda:InvokeFunctionUrl
+          # Get existing Lambda resource policy
           # -----------------------------------------------------
-
-          echo "Checking lambda:InvokeFunctionUrl permission..."
 
           POLICY=$(aws lambda get-policy \
             --function-name "$FUNCTION_NAME" \
@@ -262,9 +266,19 @@ jobs:
             --query 'Policy' \
             --output text 2>/dev/null || true)
 
-          if echo "$POLICY" | grep -q "\"Sid\":\"$URL_PERMISSION_ID\""; then
+          # =====================================================
+          # 1. lambda:InvokeFunctionUrl
+          # =====================================================
+
+          echo "Checking lambda:InvokeFunctionUrl permission..."
+
+          if echo "$POLICY" | jq -e \
+            --arg SID "$URL_PERMISSION_ID" \
+            '.Statement[] | select(.Sid == $SID)' \
+            >/dev/null 2>&1; then
 
             echo "lambda:InvokeFunctionUrl permission already exists."
+            echo "Statement ID: $URL_PERMISSION_ID"
 
           else
 
@@ -282,9 +296,9 @@ jobs:
 
           fi
 
-          # -----------------------------------------------------
+          # =====================================================
           # 2. lambda:InvokeFunction
-          # -----------------------------------------------------
+          # =====================================================
 
           echo "Checking lambda:InvokeFunction permission..."
 
@@ -294,9 +308,13 @@ jobs:
             --query 'Policy' \
             --output text 2>/dev/null || true)
 
-          if echo "$POLICY" | grep -q "\"Sid\":\"$INVOKE_PERMISSION_ID\""; then
+          if echo "$POLICY" | jq -e \
+            --arg SID "$INVOKE_PERMISSION_ID" \
+            '.Statement[] | select(.Sid == $SID)' \
+            >/dev/null 2>&1; then
 
             echo "lambda:InvokeFunction permission already exists."
+            echo "Statement ID: $INVOKE_PERMISSION_ID"
 
           else
 
