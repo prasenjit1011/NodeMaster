@@ -238,42 +238,77 @@ jobs:
           echo "Function URL:"
           echo "$FUNCTION_URL"
 
+          # ===== Start ======
           # =====================================================
-          # PUBLIC FUNCTION URL PERMISSION
+          # PUBLIC FUNCTION URL PERMISSIONS
           # =====================================================
 
           echo ""
           echo "=============================================="
-          echo "Checking public Function URL permission"
+          echo "Configuring public Function URL permissions"
           echo "=============================================="
 
-          STATEMENT_ID="FunctionURLAllowPublic"
+          URL_PERMISSION_ID="FunctionURLAllowPublic"
+          INVOKE_PERMISSION_ID="FunctionURLInvokePublic"
 
           # -----------------------------------------------------
-          # Check existing permission
+          # Permission 1:
+          # lambda:InvokeFunctionUrl
           # -----------------------------------------------------
+
           if aws lambda get-policy \
             --function-name "$FUNCTION_NAME" \
-            --query "Policy" \
+            --query 'Policy' \
             --output text 2>/dev/null \
-            | grep -q "$STATEMENT_ID"; then
+            | grep -q "\"Sid\":\"$URL_PERMISSION_ID\""; then
 
-            echo "Public Function URL permission already exists."
+            echo "lambda:InvokeFunctionUrl permission already exists."
 
           else
 
-            echo "Adding public Function URL permission..."
+            echo "Adding lambda:InvokeFunctionUrl permission..."
 
             aws lambda add-permission \
               --function-name "$FUNCTION_NAME" \
-              --statement-id "$STATEMENT_ID" \
+              --statement-id "$URL_PERMISSION_ID" \
               --action lambda:InvokeFunctionUrl \
               --principal "*" \
               --function-url-auth-type NONE
 
-            echo "Public Function URL permission added."
+            echo "lambda:InvokeFunctionUrl permission added."
 
           fi
+
+          # -----------------------------------------------------
+          # Permission 2:
+          # lambda:InvokeFunction
+          # -----------------------------------------------------
+
+          if aws lambda get-policy \
+            --function-name "$FUNCTION_NAME" \
+            --query 'Policy' \
+            --output text 2>/dev/null \
+            | grep -q "\"Sid\":\"$INVOKE_PERMISSION_ID\""; then
+
+            echo "lambda:InvokeFunction permission already exists."
+
+          else
+
+            echo "Adding lambda:InvokeFunction permission..."
+
+            aws lambda add-permission \
+              --function-name "$FUNCTION_NAME" \
+              --statement-id "$INVOKE_PERMISSION_ID" \
+              --action lambda:InvokeFunction \
+              --principal "*" \
+              --invoked-via-function-url
+
+            echo "lambda:InvokeFunction permission added."
+
+          fi
+          # ===== End ========
+
+          
 
           # =====================================================
           # Verify Function URL configuration
