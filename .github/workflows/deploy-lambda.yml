@@ -237,6 +237,8 @@ jobs:
           echo "Function URL:"
           echo "$FUNCTION_URL"
 
+
+
           # =====================================================
           # PUBLIC FUNCTION URL PERMISSIONS
           # =====================================================
@@ -250,25 +252,33 @@ jobs:
           INVOKE_PERMISSION_ID="FunctionURLInvokePublic"
 
           # -----------------------------------------------------
-          # Get current Lambda policy
+          # Get current Lambda resource policy
           # -----------------------------------------------------
 
-          POLICY_JSON=$(aws lambda get-policy \
+          echo "Reading current Lambda resource policy..."
+
+          POLICY=$(aws lambda get-policy \
             --function-name "$FUNCTION_NAME" \
             --region "$AWS_REGION" \
             --query 'Policy' \
-            --output text 2>/dev/null || echo "")
+            --output text 2>/dev/null || true)
 
-          # -----------------------------------------------------
-          # Permission 1:
-          # lambda:InvokeFunctionUrl
-          # -----------------------------------------------------
+          # =====================================================
+          # 1. lambda:InvokeFunctionUrl
+          # =====================================================
 
+          echo ""
           echo "Checking lambda:InvokeFunctionUrl permission..."
 
-          if echo "$POLICY_JSON" | grep -q "$URL_PERMISSION_ID"; then
+          if echo "$POLICY" | grep -q "$URL_PERMISSION_ID"; then
 
             echo "lambda:InvokeFunctionUrl permission already exists."
+            echo "Statement ID: $URL_PERMISSION_ID"
+
+          elif echo "$POLICY" | grep -q "FunctionUrlAllowPublic"; then
+
+            echo "Existing public Function URL permission detected."
+            echo "No new permission will be created."
 
           else
 
@@ -286,26 +296,27 @@ jobs:
 
           fi
 
-          # -----------------------------------------------------
+          # =====================================================
           # Refresh policy after first permission
-          # -----------------------------------------------------
+          # =====================================================
 
-          POLICY_JSON=$(aws lambda get-policy \
+          POLICY=$(aws lambda get-policy \
             --function-name "$FUNCTION_NAME" \
             --region "$AWS_REGION" \
             --query 'Policy' \
-            --output text 2>/dev/null || echo "")
+            --output text 2>/dev/null || true)
 
-          # -----------------------------------------------------
-          # Permission 2:
-          # lambda:InvokeFunction
-          # -----------------------------------------------------
+          # =====================================================
+          # 2. lambda:InvokeFunction
+          # =====================================================
 
+          echo ""
           echo "Checking lambda:InvokeFunction permission..."
 
-          if echo "$POLICY_JSON" | grep -q "$INVOKE_PERMISSION_ID"; then
+          if echo "$POLICY" | grep -q "$INVOKE_PERMISSION_ID"; then
 
             echo "lambda:InvokeFunction permission already exists."
+            echo "Statement ID: $INVOKE_PERMISSION_ID"
 
           else
 
@@ -322,6 +333,12 @@ jobs:
             echo "lambda:InvokeFunction permission added."
 
           fi
+
+
+
+
+
+
 
           # =====================================================
           # VERIFY POLICY
