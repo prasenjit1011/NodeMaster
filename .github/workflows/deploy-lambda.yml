@@ -33,7 +33,9 @@ jobs:
       # Install dependencies
       # ---------------------------------------------------------
       - name: Install dependencies
-        run: npm ci
+        run: |
+          set -e
+          npm ci
 
       # ---------------------------------------------------------
       # Create Lambda deployment package
@@ -63,13 +65,11 @@ jobs:
           aws-region: ap-south-1
 
       # ---------------------------------------------------------
-      # Verify AWS account / role
+      # Verify AWS identity
       # ---------------------------------------------------------
       - name: Verify AWS identity
         run: |
           set -e
-
-          echo "AWS Identity:"
           aws sts get-caller-identity
 
       # ---------------------------------------------------------
@@ -81,7 +81,6 @@ jobs:
           LAMBDA_ROLE_ARN: ${{ secrets.LAMBDA_ROLE_ARN }}
           AWS_REGION: ap-south-1
           CATEGORY_PATH: /categories
-
         run: |
           set -e
 
@@ -143,21 +142,15 @@ jobs:
             echo "Lambda function does not exist."
 
             # ---------------------------------------------------
-            # Validate Lambda execution role
+            # Validate execution role
             # ---------------------------------------------------
             if [ -z "$LAMBDA_ROLE_ARN" ]; then
               echo "ERROR: LAMBDA_ROLE_ARN secret is missing."
               exit 1
             fi
 
-            echo "Using Lambda execution role:"
-            echo "$LAMBDA_ROLE_ARN"
-
             echo "Creating Lambda function..."
 
-            # ---------------------------------------------------
-            # Create Lambda
-            # ---------------------------------------------------
             aws lambda create-function \
               --function-name "$FUNCTION_NAME" \
               --runtime nodejs20.x \
@@ -193,11 +186,6 @@ jobs:
           echo "Configuring Lambda Function URL"
           echo "=============================================="
 
-          FUNCTION_URL=""
-
-          # -----------------------------------------------------
-          # Check whether Function URL already exists
-          # -----------------------------------------------------
           if aws lambda get-function-url-config \
             --function-name "$FUNCTION_NAME" \
             --region "$AWS_REGION" \
@@ -205,9 +193,6 @@ jobs:
 
             echo "Function URL already exists."
 
-            # ---------------------------------------------------
-            # Update Function URL configuration
-            # ---------------------------------------------------
             aws lambda update-function-url-config \
               --function-name "$FUNCTION_NAME" \
               --auth-type NONE \
@@ -239,10 +224,18 @@ jobs:
           fi
 
           # =====================================================
-          # PUBLIC FUNCTION URL PERMISSIONS
+          # GET FUNCTION URL
           # =====================================================
 
+          FUNCTION_URL=$(aws lambda get-function-url-config \
+            --function-name "$FUNCTION_NAME" \
+            --region "$AWS_REGION" \
+            --query 'FunctionUrl' \
+            --output text)
 
+          echo ""
+          echo "Function URL:"
+          echo "$FUNCTION_URL"
 
           # =====================================================
           # PUBLIC FUNCTION URL PERMISSIONS
@@ -253,32 +246,29 @@ jobs:
           echo "Configuring public Function URL permissions"
           echo "=============================================="
 
-          URL_PERMISSION_ID="FunctionUrlAllowPublic"
-          INVOKE_PERMISSION_ID="FunctionUrlInvokePublic"
+          URL_PERMISSION_ID="FunctionURLAllowPublic"
+          INVOKE_PERMISSION_ID="FunctionURLInvokePublic"
 
           # -----------------------------------------------------
-          # Get existing Lambda resource policy
+          # Get current Lambda policy
           # -----------------------------------------------------
 
-          POLICY=$(aws lambda get-policy \
+          POLICY_JSON=$(aws lambda get-policy \
             --function-name "$FUNCTION_NAME" \
             --region "$AWS_REGION" \
             --query 'Policy' \
-            --output text 2>/dev/null || true)
+            --output text 2>/dev/null || echo "")
 
-          # =====================================================
-          # 1. lambda:InvokeFunctionUrl
-          # =====================================================
+          # -----------------------------------------------------
+          # Permission 1:
+          # lambda:InvokeFunctionUrl
+          # -----------------------------------------------------
 
           echo "Checking lambda:InvokeFunctionUrl permission..."
 
-          if echo "$POLICY" | jq -e \
-            --arg SID "$URL_PERMISSION_ID" \
-            '.Statement[] | select(.Sid == $SID)' \
-            >/dev/null 2>&1; then
+          if echo "$POLICY_JSON" | grep -q "$URL_PERMISSION_ID"; then
 
             echo "lambda:InvokeFunctionUrl permission already exists."
-            echo "Statement ID: $URL_PERMISSION_ID"
 
           else
 
@@ -296,25 +286,26 @@ jobs:
 
           fi
 
-          # =====================================================
-          # 2. lambda:InvokeFunction
-          # =====================================================
+          # -----------------------------------------------------
+          # Refresh policy after first permission
+          # -----------------------------------------------------
 
-          echo "Checking lambda:InvokeFunction permission..."
-
-          POLICY=$(aws lambda get-policy \
+          POLICY_JSON=$(aws lambda get-policy \
             --function-name "$FUNCTION_NAME" \
             --region "$AWS_REGION" \
             --query 'Policy' \
-            --output text 2>/dev/null || true)
+            --output text 2>/dev/null || echo "")
 
-          if echo "$POLICY" | jq -e \
-            --arg SID "$INVOKE_PERMISSION_ID" \
-            '.Statement[] | select(.Sid == $SID)' \
-            >/dev/null 2>&1; then
+          # -----------------------------------------------------
+          # Permission 2:
+          # lambda:InvokeFunction
+          # -----------------------------------------------------
+
+          echo "Checking lambda:InvokeFunction permission..."
+
+          if echo "$POLICY_JSON" | grep -q "$INVOKE_PERMISSION_ID"; then
 
             echo "lambda:InvokeFunction permission already exists."
-            echo "Statement ID: $INVOKE_PERMISSION_ID"
 
           else
 
@@ -333,21 +324,17 @@ jobs:
           fi
 
           # =====================================================
-          # GET FUNCTION URL
+          # VERIFY POLICY
           # =====================================================
-
-          FUNCTION_URL=$(aws lambda get-function-url-config \
-            --function-name "$FUNCTION_NAME" \
-            --region "$AWS_REGION" \
-            --query 'FunctionUrl' \
-            --output text)
 
           echo ""
           echo "=============================================="
-          echo "Function URL"
+          echo "Lambda resource policy"
           echo "=============================================="
 
-          echo "$FUNCTION_URL"
+          aws lambda get-policy \
+            --function-name "$FUNCTION_NAME" \
+            --region "$AWS_REGION"
 
           # =====================================================
           # VERIFY FUNCTION URL CONFIGURATION
@@ -363,7 +350,7 @@ jobs:
             --region "$AWS_REGION"
 
           # =====================================================
-          # VERIFY LAMBDA
+          # VERIFY LAMBDA STATUS
           # =====================================================
 
           echo ""
@@ -383,9 +370,10 @@ jobs:
 
           echo ""
           echo "=============================================="
-          echo "NutriSoft API"
+          echo "NutriSoft API URLs"
           echo "=============================================="
 
+          echo ""
           echo "Base URL:"
           echo "$FUNCTION_URL"
 
@@ -399,7 +387,7 @@ jobs:
 
           echo ""
           echo "=============================================="
-          echo "Testing Function URL"
+          echo "Testing Lambda Function URL"
           echo "=============================================="
 
           HTTP_STATUS=$(curl \
@@ -410,14 +398,20 @@ jobs:
 
           echo "HTTP Status: $HTTP_STATUS"
 
+          echo ""
           echo "Response:"
           cat /tmp/lambda-response.txt
 
           echo ""
 
+          # -----------------------------------------------------
+          # Only fail for AWS Function URL authorization 403
+          # -----------------------------------------------------
+
           if [ "$HTTP_STATUS" = "403" ]; then
-            echo "ERROR: Function URL returned HTTP 403."
-            echo "Check lambda:InvokeFunctionUrl permission."
+            echo ""
+            echo "ERROR: Lambda Function URL returned HTTP 403."
+            echo "The Function URL permissions are still incorrect."
             exit 1
           fi
 
