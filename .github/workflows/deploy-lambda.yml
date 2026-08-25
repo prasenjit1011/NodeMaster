@@ -40,12 +40,15 @@ jobs:
       # ---------------------------------------------------------
       - name: Create Lambda ZIP
         run: |
+          set -e
+
           rm -f lambda.zip
 
           zip -r lambda.zip . \
             -x ".git/*" \
             -x ".github/*" \
-            -x "lambda.zip"
+            -x "lambda.zip" \
+            -x "node_modules/.cache/*"
 
           echo "Lambda package created:"
           ls -lh lambda.zip
@@ -64,6 +67,9 @@ jobs:
       # ---------------------------------------------------------
       - name: Verify AWS identity
         run: |
+          set -e
+
+          echo "AWS Identity:"
           aws sts get-caller-identity
 
       # ---------------------------------------------------------
@@ -74,11 +80,14 @@ jobs:
           FUNCTION_NAME: nutrisoft-api
           LAMBDA_ROLE_ARN: ${{ secrets.LAMBDA_ROLE_ARN }}
           AWS_REGION: ap-south-1
+          CATEGORY_PATH: /categories
         run: |
           set -e
 
+          echo "=============================================="
           echo "Deploying Lambda: $FUNCTION_NAME"
           echo "Region: $AWS_REGION"
+          echo "=============================================="
 
           # -----------------------------------------------------
           # Check whether Lambda already exists
@@ -98,7 +107,7 @@ jobs:
               --function-name "$FUNCTION_NAME" \
               --zip-file fileb://lambda.zip
 
-            echo "Waiting for Lambda update..."
+            echo "Waiting for Lambda code update..."
 
             aws lambda wait function-updated \
               --function-name "$FUNCTION_NAME"
@@ -115,6 +124,11 @@ jobs:
               --timeout 30 \
               --memory-size 512
 
+            echo "Waiting for Lambda configuration update..."
+
+            aws lambda wait function-updated \
+              --function-name "$FUNCTION_NAME"
+
             echo "Lambda configuration updated."
 
           else
@@ -128,6 +142,9 @@ jobs:
               echo "ERROR: LAMBDA_ROLE_ARN secret is missing."
               exit 1
             fi
+
+            echo "Using Lambda execution role:"
+            echo "$LAMBDA_ROLE_ARN"
 
             echo "Creating Lambda function..."
 
@@ -149,22 +166,38 @@ jobs:
             # ---------------------------------------------------
             # Wait until Lambda is active
             # ---------------------------------------------------
+            echo "Waiting for Lambda to become active..."
+
             aws lambda wait function-active \
               --function-name "$FUNCTION_NAME"
 
+            echo "Lambda is active."
+
           fi
 
-          # -----------------------------------------------------
-          # Create / update Lambda Function URL
-          # -----------------------------------------------------
-          echo "Configuring Lambda Function URL..."
+          # =====================================================
+          # FUNCTION URL
+          # =====================================================
 
+          echo ""
+          echo "=============================================="
+          echo "Configuring Lambda Function URL"
+          echo "=============================================="
+
+          FUNCTION_URL=""
+
+          # -----------------------------------------------------
+          # Check whether Function URL already exists
+          # -----------------------------------------------------
           if aws lambda get-function-url-config \
             --function-name "$FUNCTION_NAME" \
             >/dev/null 2>&1; then
 
             echo "Function URL already exists."
 
+            # ---------------------------------------------------
+            # Update Function URL configuration
+            # ---------------------------------------------------
             aws lambda update-function-url-config \
               --function-name "$FUNCTION_NAME" \
               --auth-type NONE \
@@ -173,6 +206,8 @@ jobs:
                 "AllowMethods": ["*"],
                 "AllowHeaders": ["*"]
               }'
+
+            echo "Function URL configuration updated."
 
           else
 
@@ -187,33 +222,130 @@ jobs:
                 "AllowHeaders": ["*"]
               }'
 
-            # ---------------------------------------------------
-            # Allow public Function URL invocation
-            # ---------------------------------------------------
-            aws lambda add-permission \
-              --function-name "$FUNCTION_NAME" \
-              --statement-id FunctionURLAllowPublic \
-              --action lambda:InvokeFunctionUrl \
-              --principal "*" \
-              --function-url-auth-type NONE \
-              || true
+            echo "Function URL created."
 
           fi
 
           # -----------------------------------------------------
-          # Display Lambda information
+          # Get Function URL
           # -----------------------------------------------------
-          echo "Lambda deployment completed."
+          FUNCTION_URL=$(aws lambda get-function-url-config \
+            --function-name "$FUNCTION_NAME" \
+            --query 'FunctionUrl' \
+            --output text)
+
+          echo ""
+          echo "Function URL:"
+          echo "$FUNCTION_URL"
+
+          # =====================================================
+          # PUBLIC FUNCTION URL PERMISSION
+          # =====================================================
+
+          echo ""
+          echo "=============================================="
+          echo "Checking public Function URL permission"
+          echo "=============================================="
+
+          STATEMENT_ID="FunctionURLAllowPublic"
+
+          # -----------------------------------------------------
+          # Check existing permission
+          # -----------------------------------------------------
+          if aws lambda get-policy \
+            --function-name "$FUNCTION_NAME" \
+            --query "Policy" \
+            --output text 2>/dev/null \
+            | grep -q "$STATEMENT_ID"; then
+
+            echo "Public Function URL permission already exists."
+
+          else
+
+            echo "Adding public Function URL permission..."
+
+            aws lambda add-permission \
+              --function-name "$FUNCTION_NAME" \
+              --statement-id "$STATEMENT_ID" \
+              --action lambda:InvokeFunctionUrl \
+              --principal "*" \
+              --function-url-auth-type NONE
+
+            echo "Public Function URL permission added."
+
+          fi
+
+          # =====================================================
+          # Verify Function URL configuration
+          # =====================================================
+
+          echo ""
+          echo "=============================================="
+          echo "Function URL configuration"
+          echo "=============================================="
+
+          aws lambda get-function-url-config \
+            --function-name "$FUNCTION_NAME"
+
+          # =====================================================
+          # Verify Lambda
+          # =====================================================
+
+          echo ""
+          echo "=============================================="
+          echo "Lambda status"
+          echo "=============================================="
 
           aws lambda get-function \
             --function-name "$FUNCTION_NAME" \
             --query 'Configuration.[FunctionName,Runtime,Handler,State,LastUpdateStatus]' \
             --output table
 
-          echo ""
-          echo "Function URL:"
+          # =====================================================
+          # Print API URLs
+          # =====================================================
 
-          aws lambda get-function-url-config \
-            --function-name "$FUNCTION_NAME" \
-            --query 'FunctionUrl' \
-            --output text
+          echo ""
+          echo "=============================================="
+          echo "NutriSoft API"
+          echo "=============================================="
+
+          echo "Base URL:"
+          echo "$FUNCTION_URL"
+
+          echo ""
+          echo "Category Listing URL:"
+          echo "${FUNCTION_URL}${CATEGORY_PATH}"
+
+          # =====================================================
+          # Test Function URL
+          # =====================================================
+
+          echo ""
+          echo "=============================================="
+          echo "Testing Function URL"
+          echo "=============================================="
+
+          HTTP_STATUS=$(curl \
+            -s \
+            -o /tmp/lambda-response.txt \
+            -w "%{http_code}" \
+            "$FUNCTION_URL")
+
+          echo "HTTP Status: $HTTP_STATUS"
+
+          echo "Response:"
+          cat /tmp/lambda-response.txt
+
+          echo ""
+
+          if [ "$HTTP_STATUS" = "403" ]; then
+            echo "ERROR: Function URL returned HTTP 403."
+            echo "Check lambda:InvokeFunctionUrl permission."
+            exit 1
+          fi
+
+          echo ""
+          echo "=============================================="
+          echo "Lambda deployment completed successfully."
+          echo "=============================================="
