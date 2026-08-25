@@ -239,6 +239,9 @@ jobs:
 
 
 
+
+          # ==== Start =====
+
           # =====================================================
           # PUBLIC FUNCTION URL PERMISSIONS
           # =====================================================
@@ -252,16 +255,26 @@ jobs:
           INVOKE_PERMISSION_ID="FunctionURLInvokePublic"
 
           # -----------------------------------------------------
-          # Get current Lambda resource policy
+          # Get existing Lambda resource policy
           # -----------------------------------------------------
 
           echo "Reading current Lambda resource policy..."
 
-          POLICY=$(aws lambda get-policy \
+          POLICY_RAW=$(aws lambda get-policy \
             --function-name "$FUNCTION_NAME" \
             --region "$AWS_REGION" \
             --query 'Policy' \
             --output text 2>/dev/null || true)
+
+          # Convert the Policy string into JSON
+          if [ -n "$POLICY_RAW" ] && [ "$POLICY_RAW" != "None" ]; then
+            POLICY_JSON=$(echo "$POLICY_RAW" | jq -c '.')
+          else
+            POLICY_JSON='{"Statement":[]}'
+          fi
+
+          echo "Current Lambda policy:"
+          echo "$POLICY_JSON" | jq .
 
           # =====================================================
           # 1. lambda:InvokeFunctionUrl
@@ -270,41 +283,61 @@ jobs:
           echo ""
           echo "Checking lambda:InvokeFunctionUrl permission..."
 
-          if echo "$POLICY" | grep -q "$URL_PERMISSION_ID"; then
+          URL_PERMISSION_EXISTS=$(echo "$POLICY_JSON" | jq -r \
+            --arg SID "$URL_PERMISSION_ID" \
+            '.Statement[]? | select(.Sid == $SID) | .Sid' \
+            2>/dev/null || true)
+
+          # Also check for the old/existing statement ID
+          OLD_URL_PERMISSION_EXISTS=$(echo "$POLICY_JSON" | jq -r \
+            '.Statement[]? | select(.Sid == "FunctionURLAllowPublic" or .Sid == "FunctionUrlAllowPublic") | .Sid' \
+            2>/dev/null || true)
+
+          if [ -n "$URL_PERMISSION_EXISTS" ]; then
 
             echo "lambda:InvokeFunctionUrl permission already exists."
-            echo "Statement ID: $URL_PERMISSION_ID"
+            echo "Statement ID: $URL_PERMISSION_EXISTS"
 
-          elif echo "$POLICY" | grep -q "FunctionUrlAllowPublic"; then
+          elif [ -n "$OLD_URL_PERMISSION_EXISTS" ]; then
 
-            echo "Existing public Function URL permission detected."
-            echo "No new permission will be created."
+            echo "Existing Function URL permission found."
+            echo "Statement ID: $OLD_URL_PERMISSION_EXISTS"
+            echo "No new permission required."
 
           else
 
             echo "Adding lambda:InvokeFunctionUrl permission..."
 
-            aws lambda add-permission \
-              --function-name "$FUNCTION_NAME" \
-              --statement-id "$URL_PERMISSION_ID" \
-              --action lambda:InvokeFunctionUrl \
-              --principal "*" \
-              --function-url-auth-type NONE \
-              --region "$AWS_REGION"
+            # aws lambda add-permission \
+            #   --function-name "$FUNCTION_NAME" \
+            #   --statement-id "$URL_PERMISSION_ID" \
+            #   --action lambda:InvokeFunctionUrl \
+            #   --principal "*" \
+            #   --function-url-auth-type NONE \
+            #   --region "$AWS_REGION"
 
             echo "lambda:InvokeFunctionUrl permission added."
 
           fi
 
           # =====================================================
-          # Refresh policy after first permission
+          # Refresh policy
           # =====================================================
 
-          POLICY=$(aws lambda get-policy \
+          echo ""
+          echo "Refreshing Lambda resource policy..."
+
+          POLICY_RAW=$(aws lambda get-policy \
             --function-name "$FUNCTION_NAME" \
             --region "$AWS_REGION" \
             --query 'Policy' \
             --output text 2>/dev/null || true)
+
+          if [ -n "$POLICY_RAW" ] && [ "$POLICY_RAW" != "None" ]; then
+            POLICY_JSON=$(echo "$POLICY_RAW" | jq -c '.')
+          else
+            POLICY_JSON='{"Statement":[]}'
+          fi
 
           # =====================================================
           # 2. lambda:InvokeFunction
@@ -313,10 +346,15 @@ jobs:
           echo ""
           echo "Checking lambda:InvokeFunction permission..."
 
-          if echo "$POLICY" | grep -q "$INVOKE_PERMISSION_ID"; then
+          INVOKE_PERMISSION_EXISTS=$(echo "$POLICY_JSON" | jq -r \
+            --arg SID "$INVOKE_PERMISSION_ID" \
+            '.Statement[]? | select(.Sid == $SID) | .Sid' \
+            2>/dev/null || true)
+
+          if [ -n "$INVOKE_PERMISSION_EXISTS" ]; then
 
             echo "lambda:InvokeFunction permission already exists."
-            echo "Statement ID: $INVOKE_PERMISSION_ID"
+            echo "Statement ID: $INVOKE_PERMISSION_EXISTS"
 
           else
 
@@ -333,6 +371,9 @@ jobs:
             echo "lambda:InvokeFunction permission added."
 
           fi
+
+
+          # ==== End ====
 
 
 
