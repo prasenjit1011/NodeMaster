@@ -124,7 +124,6 @@ jobs:
             --arg MONGODB_PRODUCTS "${MONGODB_PRODUCTS:-products}" \
             --arg S3_BUCKET "$S3_BUCKET" \
             --arg CDN_BASE "${CDN_BASE:-}" \
-            --arg AWS_REGION "$AWS_REGION" \
             '{Variables: {
               MONGODB_URI: $MONGODB_URI,
               MONGODB_DB: $MONGODB_DB,
@@ -132,8 +131,7 @@ jobs:
               MONGODB_CATEGORIES: $MONGODB_CATEGORIES,
               MONGODB_PRODUCTS: $MONGODB_PRODUCTS,
               S3_BUCKET: $S3_BUCKET,
-              CDN_BASE: $CDN_BASE,
-              AWS_REGION: $AWS_REGION
+              CDN_BASE: $CDN_BASE
             }}' > /tmp/lambda-env.json
 
           # =====================================================
