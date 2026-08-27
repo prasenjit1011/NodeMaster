@@ -22,7 +22,9 @@ import {
     getSignedUrl
 } from '@aws-sdk/s3-request-presigner';
 
-console.clear();
+if (!process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    console.clear();
+}
 console.log('\n\n-: App Started :-');
 
 // =====================================================

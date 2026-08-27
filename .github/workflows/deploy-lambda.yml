@@ -37,19 +37,23 @@ jobs:
           set -e
           npm ci
 
-      # ---------------------------------------------------------
-      # Create Lambda deployment package
-      # ---------------------------------------------------------
+      - name: Build TypeScript
+        run: |
+          set -e
+          npm run build
+
       - name: Create Lambda ZIP
         run: |
           set -e
 
           rm -f lambda.zip
+          npm prune --omit=dev
 
-          zip -r lambda.zip . \
-            -x ".git/*" \
-            -x ".github/*" \
-            -x "lambda.zip" \
+          (
+            cd dist
+            zip -r ../lambda.zip .
+          )
+          zip -r lambda.zip node_modules \
             -x "node_modules/.cache/*"
 
           echo "Lambda package created:"
@@ -79,6 +83,13 @@ jobs:
         env:
           FUNCTION_NAME: nutrisoft-api
           LAMBDA_ROLE_ARN: ${{ secrets.LAMBDA_ROLE_ARN }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          MONGODB_DB: ${{ secrets.MONGODB_DB }}
+          MONGODB_COLLECTION: ${{ secrets.MONGODB_COLLECTION }}
+          MONGODB_CATEGORIES: ${{ secrets.MONGODB_CATEGORIES }}
+          MONGODB_PRODUCTS: ${{ secrets.MONGODB_PRODUCTS }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          CDN_BASE: ${{ secrets.CDN_BASE }}
           AWS_REGION: ap-south-1
           CATEGORY_PATH: /categories
         run: |
@@ -88,6 +99,29 @@ jobs:
           echo "Deploying Lambda: $FUNCTION_NAME"
           echo "Region: $AWS_REGION"
           echo "=============================================="
+
+          if [ -z "$MONGODB_URI" ]; then
+            echo "ERROR: GitHub secret MONGODB_URI is missing."
+            exit 1
+          fi
+
+          jq -n \
+            --arg MONGODB_URI "$MONGODB_URI" \
+            --arg MONGODB_DB "${MONGODB_DB:-nutrisoft}" \
+            --arg MONGODB_COLLECTION "${MONGODB_COLLECTION:-mytable}" \
+            --arg MONGODB_CATEGORIES "${MONGODB_CATEGORIES:-categories}" \
+            --arg MONGODB_PRODUCTS "${MONGODB_PRODUCTS:-products}" \
+            --arg S3_BUCKET "${S3_BUCKET:-}" \
+            --arg CDN_BASE "${CDN_BASE:-}" \
+            '{Variables: {
+              MONGODB_URI: $MONGODB_URI,
+              MONGODB_DB: $MONGODB_DB,
+              MONGODB_COLLECTION: $MONGODB_COLLECTION,
+              MONGODB_CATEGORIES: $MONGODB_CATEGORIES,
+              MONGODB_PRODUCTS: $MONGODB_PRODUCTS,
+              S3_BUCKET: $S3_BUCKET,
+              CDN_BASE: $CDN_BASE
+            }}' > /tmp/lambda-env.json
 
           # =====================================================
           # CREATE / UPDATE LAMBDA
@@ -127,6 +161,7 @@ jobs:
               --runtime nodejs20.x \
               --timeout 30 \
               --memory-size 512 \
+              --environment file:///tmp/lambda-env.json \
               --region "$AWS_REGION"
 
             echo "Waiting for Lambda configuration update..."
@@ -160,6 +195,7 @@ jobs:
               --zip-file fileb://lambda.zip \
               --timeout 30 \
               --memory-size 512 \
+              --environment file:///tmp/lambda-env.json \
               --region "$AWS_REGION"
 
             echo "Lambda function created."
@@ -308,13 +344,13 @@ jobs:
 
             echo "Adding lambda:InvokeFunctionUrl permission..."
 
-            # aws lambda add-permission \
-            #   --function-name "$FUNCTION_NAME" \
-            #   --statement-id "$URL_PERMISSION_ID" \
-            #   --action lambda:InvokeFunctionUrl \
-            #   --principal "*" \
-            #   --function-url-auth-type NONE \
-            #   --region "$AWS_REGION"
+            aws lambda add-permission \
+              --function-name "$FUNCTION_NAME" \
+              --statement-id "$URL_PERMISSION_ID" \
+              --action lambda:InvokeFunctionUrl \
+              --principal "*" \
+              --function-url-auth-type NONE \
+              --region "$AWS_REGION"
 
             echo "lambda:InvokeFunctionUrl permission added."
 

@@ -1,64 +1,73 @@
-const serverless = require("serverless-http");
-
-const { app, ensureMongo } = require("./app");
+import serverless from 'serverless-http';
+import { app, ensureMongo } from './app';
 
 const proxy = serverless(app);
 
-let mongoInitialized = false;
-let mongoInitPromise = null;
+let mongoInitPromise: Promise<void> | null = null;
 
-async function initializeMongo() {
-  if (mongoInitialized) {
-    return;
-  }
+async function initializeMongo(): Promise<void> {
+    if (!mongoInitPromise) {
+        mongoInitPromise = ensureMongo()
+            .then(() => {
+                console.log('MongoDB connection initialized.');
+            })
+            .catch((error: unknown) => {
+                mongoInitPromise = null;
+                console.error('MongoDB initialization failed:', error);
+                throw error;
+            });
+    }
 
-  if (!mongoInitPromise) {
-    mongoInitPromise = ensureMongo()
-      .then(() => {
-        mongoInitialized = true;
-        console.log("MongoDB connection initialized.");
-      })
-      .catch((error) => {
-        mongoInitPromise = null;
-        console.error("MongoDB initialization failed:", error);
-        throw error;
-      });
-  }
-
-  await mongoInitPromise;
+    await mongoInitPromise;
 }
 
-exports.handler = async (event, context) => {
-  context.callbackWaitsForEmptyEventLoop = false;
+interface LambdaContext {
+    callbackWaitsForEmptyEventLoop: boolean;
+}
 
-  try {
-    console.log("Lambda request:", {
-      requestContext: event?.requestContext,
-      rawPath: event?.rawPath,
-      path: event?.path,
-      httpMethod: event?.httpMethod
-    });
+interface LambdaEvent {
+    requestContext?: unknown;
+    rawPath?: string;
+    path?: string;
+    httpMethod?: string;
+}
 
-    await initializeMongo();
+export async function handler(
+    event: LambdaEvent,
+    context: LambdaContext
+): Promise<unknown> {
+    context.callbackWaitsForEmptyEventLoop = false;
 
-    return await proxy(event, context);
+    try {
+        console.log('Lambda request:', {
+            requestContext: event?.requestContext,
+            rawPath: event?.rawPath,
+            path: event?.path,
+            httpMethod: event?.httpMethod,
+        });
 
-  } catch (error) {
-    console.error("Lambda handler error:", error);
+        await initializeMongo();
+        return await proxy(event as Parameters<typeof proxy>[0], context as Parameters<typeof proxy>[1]);
+    } catch (error) {
+        console.error('Lambda handler error:', error);
 
-    return {
-      statusCode: 500,
-      headers: {
-        "Content-Type": "application/json",
-        "Access-Control-Allow-Origin": "*"
-      },
-      body: JSON.stringify({
-        success: false,
-        message: "Internal Server Error",
-        error: process.env.NODE_ENV === "production"
-          ? undefined
-          : error.message
-      })
-    };
-  }
-};
+        const message =
+            error instanceof Error ? error.message : 'Unknown error';
+
+        return {
+            statusCode: 500,
+            headers: {
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+            },
+            body: JSON.stringify({
+                success: false,
+                message: 'Internal Server Error',
+                error:
+                    process.env.NODE_ENV === 'production'
+                        ? undefined
+                        : message,
+            }),
+        };
+    }
+}
