@@ -263,6 +263,24 @@ function categoryId(
     return text || null;
 }
 
+function asImageBuffer(body: unknown): Buffer {
+    if (Buffer.isBuffer(body)) {
+        return body;
+    }
+    if (body instanceof Uint8Array) {
+        return Buffer.from(body);
+    }
+    if (typeof body === 'string' && body.length > 0) {
+        const base64 = body.includes(',') ? body.slice(body.indexOf(',') + 1) : body;
+        const decoded = Buffer.from(base64, 'base64');
+        if (decoded.length > 0) {
+            return decoded;
+        }
+        return Buffer.from(body);
+    }
+    return Buffer.alloc(0);
+}
+
 // =====================================================
 
 function asBoolean(
@@ -1892,12 +1910,7 @@ app.post(
                     });
             }
 
-            const body =
-                Buffer.isBuffer(
-                    req.body
-                )
-                    ? req.body
-                    : Buffer.alloc(0);
+            const body = asImageBuffer(req.body);
 
             if (!body.length) {
 

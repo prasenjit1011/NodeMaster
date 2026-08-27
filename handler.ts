@@ -1,7 +1,9 @@
 import serverless from 'serverless-http';
 import { app, ensureMongo } from './app';
 
-const proxy = serverless(app);
+const proxy = serverless(app, {
+    binary: ['image/jpeg', 'image/png', 'image/webp', 'image/*', 'application/octet-stream'],
+});
 
 let mongoInitPromise: Promise<void> | null = null;
 
