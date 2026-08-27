@@ -229,23 +229,25 @@ let products:
 // S3
 // =====================================================
 
+const runningOnLambda = Boolean(
+    process.env.AWS_LAMBDA_FUNCTION_NAME
+);
+
 const s3: S3Client | null = S3_BUCKET
     ? new S3Client({
         region: AWS_REGION,
-
-        credentials:
-            process.env.AWS_ACCESS_KEY_ID
-                ? {
+        ...(runningOnLambda || !process.env.AWS_ACCESS_KEY_ID
+            ? {}
+            : {
+                credentials: {
                     accessKeyId:
                         process.env.AWS_ACCESS_KEY_ID,
-
                     secretAccessKey:
-                        process.env.AWS_SECRET_ACCESS_KEY || ''
-                }
-                : undefined,
-
+                        process.env.AWS_SECRET_ACCESS_KEY || '',
+                },
+            }),
         requestChecksumCalculation:
-            'WHEN_REQUIRED'
+            'WHEN_REQUIRED',
     })
     : null;
 
@@ -675,6 +677,13 @@ app.get(
 
             s3:
                 Boolean(S3_BUCKET),
+
+            s3Auth:
+                runningOnLambda
+                    ? 'lambda-role'
+                    : process.env.AWS_ACCESS_KEY_ID
+                        ? 'env-keys'
+                        : 'default-chain',
 
             endpoints: {
 
