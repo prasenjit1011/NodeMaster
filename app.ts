@@ -1793,10 +1793,7 @@ app.post(
                             key,
 
                         ContentType:
-                            contentType,
-
-                        ChecksumAlgorithm:
-                            undefined
+                            contentType
                     }),
 
                     {

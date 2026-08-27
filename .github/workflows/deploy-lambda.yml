@@ -66,7 +66,7 @@ jobs:
         uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: ap-south-1
+          aws-region: ${{ secrets.AWS_REGION }}
 
       # ---------------------------------------------------------
       # Verify AWS identity
@@ -90,20 +90,31 @@ jobs:
           MONGODB_PRODUCTS: ${{ secrets.MONGODB_PRODUCTS }}
           S3_BUCKET: ${{ secrets.S3_BUCKET }}
           CDN_BASE: ${{ secrets.CDN_BASE }}
-          AWS_REGION: ap-south-1
+          AWS_REGION: ${{ secrets.AWS_REGION }}
           CATEGORY_PATH: /categories
         run: |
           set -e
 
           echo "=============================================="
           echo "Deploying Lambda: $FUNCTION_NAME"
-          echo "Region: $AWS_REGION"
+          echo "Region: ${AWS_REGION:-ap-south-1}"
           echo "=============================================="
+
+          AWS_REGION="${AWS_REGION:-ap-south-1}"
 
           if [ -z "$MONGODB_URI" ]; then
             echo "ERROR: GitHub secret MONGODB_URI is missing."
             exit 1
           fi
+
+          if [ -z "$S3_BUCKET" ]; then
+            echo "ERROR: GitHub secret S3_BUCKET is missing."
+            echo "Lambda S3 uploads will stay disabled until this secret is set."
+            exit 1
+          fi
+
+          echo "S3_BUCKET is set. Lambda will use LAMBDA_ROLE_ARN for S3."
+          echo "That role must allow s3:PutObject and s3:GetObject on s3://${S3_BUCKET}/*"
 
           jq -n \
             --arg MONGODB_URI "$MONGODB_URI" \
@@ -111,8 +122,9 @@ jobs:
             --arg MONGODB_COLLECTION "${MONGODB_COLLECTION:-mytable}" \
             --arg MONGODB_CATEGORIES "${MONGODB_CATEGORIES:-categories}" \
             --arg MONGODB_PRODUCTS "${MONGODB_PRODUCTS:-products}" \
-            --arg S3_BUCKET "${S3_BUCKET:-}" \
+            --arg S3_BUCKET "$S3_BUCKET" \
             --arg CDN_BASE "${CDN_BASE:-}" \
+            --arg AWS_REGION "$AWS_REGION" \
             '{Variables: {
               MONGODB_URI: $MONGODB_URI,
               MONGODB_DB: $MONGODB_DB,
@@ -120,7 +132,8 @@ jobs:
               MONGODB_CATEGORIES: $MONGODB_CATEGORIES,
               MONGODB_PRODUCTS: $MONGODB_PRODUCTS,
               S3_BUCKET: $S3_BUCKET,
-              CDN_BASE: $CDN_BASE
+              CDN_BASE: $CDN_BASE,
+              AWS_REGION: $AWS_REGION
             }}' > /tmp/lambda-env.json
 
           # =====================================================
