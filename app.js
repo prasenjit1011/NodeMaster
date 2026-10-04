@@ -8,7 +8,7 @@ const tradebookDir = require('./util/tradebookPath');
 
 // Set by GitHub Secret MONGODB_URI → Terraform → Lambda environment
 // Locally: use .env (see .env.example)
-const MONGODB_URI = process.env.MONGODB_URI;
+const MONGODB_URI = process.env.MONGODB_URI_TICKERTAPE;
 if (!MONGODB_URI) {
     console.warn('MONGODB_URI is not set. Use GitHub secret MONGODB_URI for deploy, or .env for local.');
 }
