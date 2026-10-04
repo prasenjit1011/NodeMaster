@@ -12,7 +12,7 @@ permissions:
 #   AWS_ACCESS_KEY_ID
 #   AWS_SECRET_ACCESS_KEY
 #   AWS_REGION
-#   MONGODB_URI
+#   MONGODB_URI_TICKERTAPE  (or MONGODB_URI)
 #   TF_STATE_BUCKET
 #
 # Optional secrets:
@@ -36,16 +36,21 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+          MONGODB_URI_TICKERTAPE: ${{ secrets.MONGODB_URI_TICKERTAPE }}
           MONGODB_URI: ${{ secrets.MONGODB_URI }}
           TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
         run: |
           missing=0
-          for name in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION MONGODB_URI TF_STATE_BUCKET; do
+          for name in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION TF_STATE_BUCKET; do
             if [ -z "${!name}" ]; then
               echo "::error::Missing GitHub secret: $name"
               missing=1
             fi
           done
+          if [ -z "$MONGODB_URI_TICKERTAPE" ] && [ -z "$MONGODB_URI" ]; then
+            echo "::error::Missing GitHub secret: MONGODB_URI_TICKERTAPE or MONGODB_URI"
+            missing=1
+          fi
           if [ "$missing" -ne 0 ]; then
             exit 1
           fi
@@ -95,8 +100,8 @@ jobs:
       - name: Terraform Plan
         working-directory: ${{ env.TF_WORKING_DIR }}
         env:
-          # Injected into Lambda as process.env.MONGODB_URI_TICKERTAPE by Terraform
-          TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI }}
+          # Becomes Lambda process.env.MONGODB_URI_TICKERTAPE (+ MONGODB_URI)
+          TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI_TICKERTAPE || secrets.MONGODB_URI }}
           TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
           TF_VAR_project_name: ${{ secrets.PROJECT_NAME || 'nodemaster' }}
           TF_VAR_environment: ${{ secrets.ENVIRONMENT || 'dev' }}
@@ -106,7 +111,7 @@ jobs:
       - name: Terraform Apply
         working-directory: ${{ env.TF_WORKING_DIR }}
         env:
-          TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI }}
+          TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI_TICKERTAPE || secrets.MONGODB_URI }}
           TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
           TF_VAR_project_name: ${{ secrets.PROJECT_NAME || 'nodemaster' }}
           TF_VAR_environment: ${{ secrets.ENVIRONMENT || 'dev' }}

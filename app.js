@@ -6,11 +6,11 @@ const mongoose = require('mongoose');
 const multer = require('multer');
 const tradebookDir = require('./util/tradebookPath');
 
-// Set by GitHub Secret MONGODB_URI → Terraform → Lambda environment
-// Locally: use .env (see .env.example)
-const MONGODB_URI = process.env.MONGODB_URI_TICKERTAPE;
+// Deploy: GitHub secret → Terraform → Lambda env
+// Local: .env (see .env.example)
+const MONGODB_URI = process.env.MONGODB_URI_TICKERTAPE || process.env.MONGODB_URI;
 if (!MONGODB_URI) {
-    console.warn('MONGODB_URI is not set. Use GitHub secret MONGODB_URI for deploy, or .env for local.');
+    console.warn('Mongo URI missing. Set MONGODB_URI_TICKERTAPE or MONGODB_URI (GitHub secret / .env).');
 }
 
 const app = express();
@@ -54,7 +54,7 @@ let mongoReady;
 
 async function connectMongo() {
     if (!MONGODB_URI) {
-        throw new Error('MONGODB_URI environment variable is required');
+        throw new Error('MONGODB_URI_TICKERTAPE or MONGODB_URI environment variable is required');
     }
 
     if (mongoose.connection.readyState === 1) {

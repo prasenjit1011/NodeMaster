@@ -104,8 +104,9 @@ resource "aws_lambda_function" "api" {
 
   environment {
     variables = {
-      MONGODB_URI = var.mongodb_uri
-      NODE_ENV    = var.environment
+      MONGODB_URI_TICKERTAPE = var.mongodb_uri
+      MONGODB_URI            = var.mongodb_uri
+      NODE_ENV               = var.environment
     }
   }
 
