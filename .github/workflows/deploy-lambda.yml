@@ -2,7 +2,7 @@ name: Deploy Lambda (Terraform)
 
 on:
   push:
-    branches: [main, master, tickertape_awslambda]
+    branches: [tickertape_awslambda]
   workflow_dispatch:
 
 permissions:
