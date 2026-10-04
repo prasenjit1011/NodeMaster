@@ -1,23 +1,23 @@
 console.log('\n\n-: App Started :-');
 
-const express       = require('express');
-const bodyParser    = require('body-parser');
-const mongoose      = require('mongoose');
-const MONGODB_URI   = "mongodb+srv://tester:tester1234@cluster0.hlicuim.mongodb.net/demat?retryWrites=true&w=majority";//&replicaSet=rs0";
-//https://cloud.mongodb.com/
-//Login with prasenjit.aluni@gmail.com
-//Prasenjit's Org - 2021-07-09
-//project01
-//Cluster->Browse Collection->demat
-//git push https://prasenjit1011:ACCESS_TOKEN@github.com/prasenjit1011/NodeJSMongoDBMaster
-//https://github.com/settings/tokens?type=beta
+const express = require('express');
+const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
+const multer = require('multer');
+const tradebookDir = require('./util/tradebookPath');
 
+// Set by GitHub Secret MONGODB_URI → Terraform → Lambda environment
+// Locally: use .env (see .env.example)
+const MONGODB_URI = process.env.MONGODB_URI;
+if (!MONGODB_URI) {
+    console.warn('MONGODB_URI is not set. Use GitHub secret MONGODB_URI for deploy, or .env for local.');
+}
 
-const app   = express();
+const app = express();
 
 app.use(express.static('images'));
 app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json()); 
+app.use(bodyParser.json());
 
 app.use((req, res, next) => {
     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -26,25 +26,23 @@ app.use((req, res, next) => {
     next();
 });
 
-const multer        = require('multer');
-const fileStorage   = multer.diskStorage({
-                                destination: 'public/tradebook',
-                                filename: (req, file, cb) => { cb(null, parseInt(100*Math.random())+'-'+file.originalname); }
-                            });
-
+const fileStorage = multer.diskStorage({
+    destination: tradebookDir,
+    filename: (req, file, cb) => {
+        cb(null, parseInt(100 * Math.random()) + '-' + file.originalname);
+    }
+});
 
 const fileFilter = (req, file, cb) => {
     cb(null, true);
-                                        //if ( file.mimetype === 'image/png' || file.mimetype === 'image/jpg' || file.mimetype === 'image/jpeg' ) { cb(null, true); } 
-                                        //else { cb(null, false); }
-                                    };
-app.use(multer({ storage: fileStorage, fileFilter: fileFilter }).single('tradebook'));
+};
+
+app.use(multer({ storage: fileStorage, fileFilter }).single('tradebook'));
 
 const stock = require('./routes/stockapi');
 app.use(stock);
 
-
-app.use('/', (req, res, next)=>{
+app.use('/', (req, res, next) => {
     console.log('-: Welcome :-');
     res.send('-: Welcome :-');
     next();
@@ -52,9 +50,33 @@ app.use('/', (req, res, next)=>{
 
 console.log('-: App Running :-');
 
+let mongoReady;
 
+async function connectMongo() {
+    if (!MONGODB_URI) {
+        throw new Error('MONGODB_URI environment variable is required');
+    }
 
-/////app.listen(3000);///
-mongoose.connect(MONGODB_URI)
-        .then(result =>{ console.log("-: MongoDB connected :-"); app.listen(3000)})
-        .catch(err=>{console.log('MongoDB not connected'); console.log(err)});
+    if (mongoose.connection.readyState === 1) {
+        return mongoose.connection;
+    }
+
+    if (!mongoReady) {
+        mongoReady = mongoose
+            .connect(MONGODB_URI)
+            .then((connection) => {
+                console.log('-: MongoDB connected :-');
+                return connection;
+            })
+            .catch((err) => {
+                mongoReady = undefined;
+                console.log('MongoDB not connected');
+                console.log(err);
+                throw err;
+            });
+    }
+
+    return mongoReady;
+}
+
+module.exports = { app, connectMongo };

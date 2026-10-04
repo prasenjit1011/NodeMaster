@@ -1,0 +1,118 @@
+name: Deploy Lambda (Terraform)
+
+on:
+  push:
+    branches: [main, master]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Required GitHub Secrets (Settings → Secrets and variables → Actions):
+#   AWS_ACCESS_KEY_ID
+#   AWS_SECRET_ACCESS_KEY
+#   AWS_REGION
+#   MONGODB_URI
+#   TF_STATE_BUCKET
+#
+# Optional secrets:
+#   TF_STATE_KEY      (default: nodemaster/lambda/terraform.tfstate)
+#   PROJECT_NAME      (default: nodemaster)
+#   ENVIRONMENT       (default: dev)
+
+env:
+  TF_WORKING_DIR: terraform
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required secrets
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          TF_STATE_BUCKET: ${{ secrets.TF_STATE_BUCKET }}
+        run: |
+          missing=0
+          for name in AWS_ACCESS_KEY_ID AWS_SECRET_ACCESS_KEY AWS_REGION MONGODB_URI TF_STATE_BUCKET; do
+            if [ -z "${!name}" ]; then
+              echo "::error::Missing GitHub secret: $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            exit 1
+          fi
+          echo "All required secrets are present."
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build Lambda zip
+        run: npm run build:lambda
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.9.8
+
+      - name: Terraform Init
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: |
+          terraform init -input=false \
+            -backend-config="bucket=${{ secrets.TF_STATE_BUCKET }}" \
+            -backend-config="key=${{ secrets.TF_STATE_KEY || 'nodemaster/lambda/terraform.tfstate' }}" \
+            -backend-config="region=${{ secrets.AWS_REGION }}" \
+            -backend-config="encrypt=true"
+
+      - name: Terraform Format Check
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform fmt -check -recursive
+
+      - name: Terraform Validate
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform validate
+
+      - name: Terraform Plan
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          # Injected into Lambda as process.env.MONGODB_URI by Terraform
+          TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI }}
+          TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+          TF_VAR_project_name: ${{ secrets.PROJECT_NAME || 'nodemaster' }}
+          TF_VAR_environment: ${{ secrets.ENVIRONMENT || 'dev' }}
+          TF_VAR_lambda_zip_path: ../dist/function.zip
+        run: terraform plan -input=false -out=tfplan
+
+      - name: Terraform Apply
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        env:
+          TF_VAR_mongodb_uri: ${{ secrets.MONGODB_URI }}
+          TF_VAR_aws_region: ${{ secrets.AWS_REGION }}
+          TF_VAR_project_name: ${{ secrets.PROJECT_NAME || 'nodemaster' }}
+          TF_VAR_environment: ${{ secrets.ENVIRONMENT || 'dev' }}
+          TF_VAR_lambda_zip_path: ../dist/function.zip
+        run: terraform apply -input=false -auto-approve tfplan
+
+      - name: Print outputs
+        working-directory: ${{ env.TF_WORKING_DIR }}
+        run: terraform output

@@ -1,4 +1,5 @@
 const fs            = require("fs");
+const path          = require("path");
 const { parse }     = require("csv-parse");
 const csvParser     = require("csv-parser");
 const nodeCache     = require("node-cache");
@@ -9,6 +10,7 @@ const Transaction   = require('../models/transaction');
 const Tradebook     = require('../models/tradebook');
 const Tradebookipo  = require('../models/tradebookipo');
 const lib           = require("../controllers/library");
+const tradebookDir  = require('../util/tradebookPath');
     
 const apiList       = {
                         tickertape: 'https://quotes-api.tickertape.in/quotes?sids=',//DABU
@@ -473,7 +475,7 @@ exports.tradeBook = async (req, res, next) => {
     let sid         = '';
     console.log('-: '+fileName+' :-')
 
-    fs.createReadStream("./public/tradebook/"+fileName)
+    fs.createReadStream(path.join(tradebookDir, fileName))
             //.pipe(csvParser())
             .pipe(parse({ delimiter: ",", from_line: 2, to_line: 4000 }))
             .on("data", (data) => {

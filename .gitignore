@@ -14,3 +14,13 @@ npm-debug.log
 yarn-error.log
 /.idea
 /.vscode
+
+# Lambda / Terraform
+/dist
+*.zip
+terraform/.terraform/
+terraform/*.tfstate
+terraform/*.tfstate.*
+terraform/.terraform.lock.hcl
+terraform/tfplan
+terraform/terraform.tfvars
