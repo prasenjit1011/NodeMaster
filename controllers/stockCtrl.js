@@ -15,6 +15,7 @@ const tradebookDir  = require('../util/tradebookPath');
 const apiList       = {
                         tickertape: 'https://quotes-api.tickertape.in/quotes?sids=',//DABU
                         groww: 'https://groww.in/v1/api/charting_service/v2/chart/delayed/exchange/NSE/segment/CASH/',//CAMPUS/all?intervalInDays=3&minimal=true';
+                        tickertape_analyze: 'https://analyze.api.tickertape.in/v2/stocks/summary/',//RELI
                     };
 
                
@@ -361,7 +362,16 @@ exports.getShareDetails = async (req, res, next) => {
                                                 })
                                                 .catch(err=>console.log(err));
 
-    
+
+    apiUrl          = apiList['tickertape_analyze']+sid;
+    let tickertapeAnalyze = await fetch(apiUrl)
+                        .then((res)=>res.json())
+                        .then(async (res)=>{
+                            return res['data'];
+                        });
+
+console.log('Tickertape Analyze : ', tickertapeAnalyze);
+
     apiUrl          = apiList['tickertape']+sid;
     let ltpPrice    = await fetch(apiUrl)
                         .then((res)=>res.json())

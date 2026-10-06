@@ -18,6 +18,14 @@ const stockSchema = new Schema({
     type: String,
     required: false
   },
+  marketcap: {
+    type: Number,
+    required: false
+  },
+  tickertape_prediction: {
+    type: Number,
+    required: false
+  },
   rank:{
     type: Number,
     require: false
