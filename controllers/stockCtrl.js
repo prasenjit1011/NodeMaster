@@ -48,7 +48,7 @@ exports.getStockList = async (req, res, next) => {
         //return res.end(JSON.stringify(resData));
     }
    
-    let fields      = { "_id": 1, "iciciCode": 1, "nseCode": 1, "sid": 1, "share_name": 1, "rank": 1, "qty": 1, "sold_qty": 1, "stock": 1, "sharecode": 1 };
+    let fields      = { "_id": 1, "iciciCode": 1, "nseCode": 1, "sid": 1, "share_name": 1, "rank": 1, "marketcap": 1, "marketcap_type": 1, "tickertape_prediction": 1, "qty": 1, "sold_qty": 1, "stock": 1, "sharecode": 1 };
     let sidsData    = await Stock.aggregate([
                                 { $sort:{ sid : 1 }},
                                 { 
@@ -62,11 +62,17 @@ exports.getStockList = async (req, res, next) => {
                                         sid: {$ne:null} 
                                     } 
                                 },
-                                //{ $match: { sid:{ $in:['DABU', 'TCS', 'ADAN']}} },//'HAP', 'HUDC', 'ASOK', 'DOLA', , 'BION'
+                                // { $match: { sid:{ $in:['DABU', 'TCS', 'ADAN']}} },//'HAP', 'HUDC', 'ASOK', 'DOLA', , 'BION'
                                 { $project: fields }
                             ])
-                            .limit(1000)
+                            .limit(50000)
                             .then(data=>{
+                                data.map(async (item, index)=>{
+                                    if(item?.marketcap === 'Small' || item?.marketcap === 'Large'){
+                                        await Stock.findOneAndUpdate({sid:item.sid}, {marketcap:''});
+                                        console.log('Marketcap', item?.share_name, item?.marketcap);
+                                    }
+                                });
                                 return data;
                             })
                             .catch(err=>{
@@ -76,7 +82,8 @@ exports.getStockList = async (req, res, next) => {
                             });
                             //.find({}, fields).limit(3000)
     
-    console.log('Type of  ='+ typeof(sidsData), sidsData);
+    // console.log('Type of  ='+ typeof(sidsData), sidsData);
+
     if(typeof(sidsData) !== 'object'){
         let resData = {"status":201, msg:"LTP not fetch from API!", sidData: [], apiData: []};
         return res.end(JSON.stringify(resData));
@@ -98,7 +105,8 @@ exports.getStockList = async (req, res, next) => {
         //stockName = data.stock;
 
         
-        sidData[data.sid] = {"sid": data.sid, "sharecode": data.sharecode, "nseCode": nseCode, "iciciCode": data.iciciCode, "stock": stockName, "share_name": data.share_name, "rank": rank, "qty": data.qty, "sold_qty": data.sold_qty, "cqty": (data.qty-data.sold_qty)};
+        sidData[data.sid] = {"sid": data.sid, "sharecode": data.sharecode, "nseCode": nseCode, "iciciCode": data.iciciCode, "stock": stockName, "share_name": data.share_name, "rank": rank, 
+            "marketcap_type": data.marketcap_type, "marketcap": parseInt(data.marketcap), "tickertape_prediction": data.tickertape_prediction, "qty": data.qty, "sold_qty": data.sold_qty, "cqty": (data.qty-data.sold_qty)};
     });
 
 
@@ -366,11 +374,31 @@ exports.getShareDetails = async (req, res, next) => {
     apiUrl          = apiList['tickertape_analyze']+sid;
     let tickertapeAnalyze = await fetch(apiUrl)
                         .then((res)=>res.json())
-                        .then(async (res)=>{
-                            return res['data'];
+                        .then((res)=>{
+                            return res?.data?.aboutAndPeers ?? {};
+                        })
+                        .catch((err)=>{
+                            console.log('tickertape_analyze fetch failed', err);
+                            return {};
                         });
 
-console.log('Tickertape Analyze : ', tickertapeAnalyze);
+    
+    for (const [key, value] of Object.entries(tickertapeAnalyze)) {
+        const ratios = value?.ratios;
+        const marketCap = Number(ratios?.marketCap);
+        const breco = Number(ratios?.breco);
+        if (!value?.sid || !Number.isFinite(marketCap) || !Number.isFinite(breco)) {
+            continue;
+        }
+        console.log(key, value.sid, marketCap.toFixed(2), Math.ceil(breco));
+        await Stock.findOneAndUpdate(
+            {sid: value.sid},
+            {marketcap: marketCap.toFixed(2), tickertape_prediction: Math.ceil(breco)}
+        );
+    }
+
+
+    
 
     apiUrl          = apiList['tickertape']+sid;
     let ltpPrice    = await fetch(apiUrl)

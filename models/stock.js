@@ -18,6 +18,10 @@ const stockSchema = new Schema({
     type: String,
     required: false
   },
+  marketcap_type: {
+    type: String,
+    required: false
+  },
   marketcap: {
     type: Number,
     required: false
